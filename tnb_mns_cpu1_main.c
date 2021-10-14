@@ -53,12 +53,7 @@
 #include "driverlib.h"
 #include "device.h"
 #include "tnb_mns_cpu1.h"
-
-#define EPWM_TIMER_TBPRD    1024UL
-void setup_pin_config_buck(struct buck_configuration);
-void setup_pin_config_bridge(struct bridge_configuration config);
-void initEPWMWithoutDB(uint32_t);
-void setupEPWMActiveHighComplementary(uint32_t);
+#include "tnb_mns_epwm.h"
 
 void main(void)
 {
@@ -82,20 +77,14 @@ void main(void)
     //
     Device_initGPIO();
 
-    // define half bridge pinouts
+    // initialize half bridges
     //channel A
-    struct buck_configuration cha_buck={40,41,8,GPIO_8_EPWM5A,9,GPIO_9_EPWM5B,EPWM5_BASE};
-    struct bridge_configuration cha_bridge={30,22,23,12,GPIO_12_EPWM7A,13,GPIO_13_EPWM7B,EPWM7_BASE};
     setup_pin_config_buck(cha_buck);
     setup_pin_config_bridge(cha_bridge);
     //channel B
-    struct buck_configuration chb_buck={35,61,14,GPIO_14_EPWM8A,15,GPIO_15_EPWM8B,EPWM8_BASE};
-    struct bridge_configuration chb_bridge={63,61,65,6,GPIO_6_EPWM4A,7,GPIO_7_EPWM4B,EPWM4_BASE};
     setup_pin_config_buck(chb_buck);
     setup_pin_config_bridge(chb_bridge);
     //channel C
-    struct buck_configuration chc_buck={48,89,4,GPIO_4_EPWM3A,5,GPIO_5_EPWM3B,EPWM3_BASE};
-    struct bridge_configuration chc_bridge={164,133,93,0,GPIO_0_EPWM1A,1,GPIO_1_EPWM1B,EPWM1_BASE};
     setup_pin_config_buck(chc_buck);
     setup_pin_config_bridge(chc_bridge);
 
@@ -302,160 +291,4 @@ void main(void)
     //
     SysCtl_setCMClk(SYSCTL_CMCLKOUT_DIV_1, SYSCTL_SOURCE_AUXPLL);
 #endif
-}
-
-//sets up the pinmux and config for a buck stage
-void setup_pin_config_buck(struct buck_configuration config){
-    //----- Buck
-    //Buck Enable
-    GPIO_setDirectionMode(config.enable_gpio, GPIO_DIR_MODE_OUT);   //output
-    GPIO_setPadConfig(config.enable_gpio,GPIO_PIN_TYPE_STD);        //push pull output
-    //a call to GPIO_setPinConfig(..) here is not necessary since default pin config is as GPIO
-    //Buck State
-    GPIO_setDirectionMode(config.state_gpio,GPIO_DIR_MODE_IN);     //input
-    GPIO_setPadConfig(config.state_gpio,GPIO_PIN_TYPE_STD);        //floating input
-    //a call to GPIO_setPinConfig(..) here is not necessary since default pin config is as GPIO
-    //Bridge H
-    GPIO_setDirectionMode(config.bridge_h_pin,GPIO_DIR_MODE_OUT);     //output
-    GPIO_setPinConfig(config.bridge_h_pinconfig);
-    //Bridge L
-    GPIO_setDirectionMode(config.bridge_l_pin,GPIO_DIR_MODE_OUT);     //output
-    GPIO_setPinConfig(config.bridge_l_pinconfig);
-    //PWM Setup
-    initEPWMWithoutDB(config.epwmbase);
-    setupEPWMActiveHighComplementary(config.epwmbase);
-}
-
-//sets up the pinmux and config for a bridge stage
-void setup_pin_config_bridge(struct bridge_configuration config){
-    //----- Bridge U
-    //Bridge Enable
-    GPIO_setDirectionMode(config.enable_gpio, GPIO_DIR_MODE_OUT);   //output
-    GPIO_setPadConfig(config.enable_gpio,GPIO_PIN_TYPE_STD);        //push pull output
-    //a call to GPIO_setPinConfig(..) here is not necessary since default pin config is as GPIO
-    //Bridge State U
-    GPIO_setDirectionMode(config.state_u_gpio,GPIO_DIR_MODE_IN);     //input
-    GPIO_setPadConfig(config.state_u_gpio,GPIO_PIN_TYPE_STD);        //floating input
-    //a call to GPIO_setPinConfig(..) here is not necessary since default pin config is as GPIO
-    //Bridge State V
-    GPIO_setDirectionMode(config.state_v_gpio,GPIO_DIR_MODE_IN);     //input
-    GPIO_setPadConfig(config.state_v_gpio,GPIO_PIN_TYPE_STD);        //floating input
-    //a call to GPIO_setPinConfig(..) here is not necessary since default pin config is as GPIO
-    //Bridge H
-    GPIO_setDirectionMode(config.bridge_h_pin,GPIO_DIR_MODE_OUT);     //output
-    GPIO_setPinConfig(config.bridge_h_pinconfig);
-    //Bridge L
-    GPIO_setDirectionMode(config.bridge_l_pin,GPIO_DIR_MODE_OUT);     //output
-    GPIO_setPinConfig(config.bridge_l_pinconfig);
-    //PWM Setup
-    initEPWMWithoutDB(config.epwmbase);
-    setupEPWMActiveHighComplementary(config.epwmbase);
-}
-
-//
-// initEPWM - Configure ePWM1
-//
-void initEPWMWithoutDB(uint32_t base)
-{
-    //
-    // Set-up TBCLK
-    //
-    EPWM_setTimeBasePeriod(base, EPWM_TIMER_TBPRD);
-    EPWM_setPhaseShift(base, 0U);
-    EPWM_setTimeBaseCounter(base, 0U);
-    EPWM_setTimeBaseCounterMode(base, EPWM_COUNTER_MODE_UP_DOWN);
-    EPWM_disablePhaseShiftLoad(base);
-
-    //
-    // Set ePWM clock pre-scaler
-    //
-    EPWM_setClockPrescaler(base,
-                           EPWM_CLOCK_DIVIDER_1,
-                           EPWM_HSCLOCK_DIVIDER_1);
-
-    //
-    // Set up shadowing
-    //
-    EPWM_setCounterCompareShadowLoadMode(base,
-                                         EPWM_COUNTER_COMPARE_A,
-                                         EPWM_COMP_LOAD_ON_CNTR_ZERO);
-
-    //
-    // Set-up compare
-    //
-    EPWM_setCounterCompareValue(base, EPWM_COUNTER_COMPARE_A, EPWM_TIMER_TBPRD/4);
-    EPWM_setCounterCompareValue(base, EPWM_COUNTER_COMPARE_B, 3*EPWM_TIMER_TBPRD/4);
-
-    //
-    // Set actions
-    //
-    EPWM_setActionQualifierAction(base,
-                                      EPWM_AQ_OUTPUT_A,
-                                      EPWM_AQ_OUTPUT_LOW,
-                                      EPWM_AQ_OUTPUT_ON_TIMEBASE_ZERO);
-    EPWM_setActionQualifierAction(base,
-                                      EPWM_AQ_OUTPUT_A,
-                                      EPWM_AQ_OUTPUT_HIGH,
-                                      EPWM_AQ_OUTPUT_ON_TIMEBASE_UP_CMPA);
-    EPWM_setActionQualifierAction(base,
-                                      EPWM_AQ_OUTPUT_A,
-                                      EPWM_AQ_OUTPUT_NO_CHANGE,
-                                      EPWM_AQ_OUTPUT_ON_TIMEBASE_PERIOD);
-    EPWM_setActionQualifierAction(base,
-                                      EPWM_AQ_OUTPUT_A,
-                                      EPWM_AQ_OUTPUT_LOW,
-                                      EPWM_AQ_OUTPUT_ON_TIMEBASE_DOWN_CMPA);
-
-
-    EPWM_setActionQualifierAction(base,
-                                      EPWM_AQ_OUTPUT_B,
-                                      EPWM_AQ_OUTPUT_LOW,
-                                      EPWM_AQ_OUTPUT_ON_TIMEBASE_ZERO);
-    EPWM_setActionQualifierAction(base,
-                                      EPWM_AQ_OUTPUT_B,
-                                      EPWM_AQ_OUTPUT_HIGH,
-                                      EPWM_AQ_OUTPUT_ON_TIMEBASE_UP_CMPB);
-    EPWM_setActionQualifierAction(base,
-                                      EPWM_AQ_OUTPUT_B,
-                                      EPWM_AQ_OUTPUT_NO_CHANGE,
-                                      EPWM_AQ_OUTPUT_ON_TIMEBASE_PERIOD);
-    EPWM_setActionQualifierAction(base,
-                                      EPWM_AQ_OUTPUT_B,
-                                      EPWM_AQ_OUTPUT_LOW,
-                                      EPWM_AQ_OUTPUT_ON_TIMEBASE_DOWN_CMPB);
-
-}
-
-void setupEPWMActiveHighComplementary(uint32_t base)
-{
-    //
-    // Use EPWMA as the input for both RED and FED
-    //
-    EPWM_setRisingEdgeDeadBandDelayInput(base, EPWM_DB_INPUT_EPWMA);
-    EPWM_setFallingEdgeDeadBandDelayInput(base, EPWM_DB_INPUT_EPWMA);
-
-    //
-    // Set the RED and FED values
-    //
-    EPWM_setFallingEdgeDelayCount(base, 25);
-    EPWM_setRisingEdgeDelayCount(base, 25);
-
-    //
-    // Invert only the Falling Edge delayed output (AHC)
-    //
-    EPWM_setDeadBandDelayPolarity(base, EPWM_DB_RED, EPWM_DB_POLARITY_ACTIVE_HIGH);
-    EPWM_setDeadBandDelayPolarity(base, EPWM_DB_FED, EPWM_DB_POLARITY_ACTIVE_LOW);
-
-    //
-    // Use the delayed signals instead of the original signals
-    //
-    EPWM_setDeadBandDelayMode(base, EPWM_DB_RED, true);
-    EPWM_setDeadBandDelayMode(base, EPWM_DB_FED, true);
-
-    //
-    // DO NOT Switch Output A with Output B
-    //
-    EPWM_setDeadBandOutputSwapMode(base, EPWM_DB_OUTPUT_A, false);
-    EPWM_setDeadBandOutputSwapMode(base, EPWM_DB_OUTPUT_B, false);
-
 }
