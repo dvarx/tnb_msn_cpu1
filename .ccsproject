@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<?ccsproject version="1.0"?>
+<projectOptions>
+	<ccsVersion value="11.0.0"/>
+	<deviceVariant value="TMS320C28XX.TMS320F28388D"/>
+	<deviceFamily value="C2000"/>
+	<deviceEndianness value="little"/>
+	<codegenToolVersion value="20.2.5.LTS"/>
+	<isElfFormat value="true"/>
+	<rts value="libc.a"/>
+	<createSlaveProjects value=""/>
+	<templateProperties value="id=ethernet_c28x_config.projectspec.ethernet_c28x_config"/>
+	<origin value="C:\ti\C2000Ware_3_04_00_00_Software\driverlib\f2838x\examples\cm\ethernet\CCS\ethernet_c28x_config.projectspec"/>
+	<filesToOpen value=""/>
+</projectOptions>
