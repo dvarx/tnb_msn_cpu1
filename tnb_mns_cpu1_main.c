@@ -77,7 +77,9 @@ void main(void)
     //
     Device_initGPIO();
 
-    // initialize half bridges
+    //
+    // Initialize Half Bridges
+    //
     //channel A
     setup_pin_config_buck(cha_buck);
     setup_pin_config_bridge(cha_bridge);
@@ -87,6 +89,37 @@ void main(void)
     //channel C
     setup_pin_config_buck(chc_buck);
     setup_pin_config_bridge(chc_bridge);
+
+    //
+    // Enable Half Bridges
+    //
+    set_enabled(&cha_buck,true,true);
+    set_enabled(&cha_bridge,false,true);
+    set_enabled(&chb_buck,true,true);
+    set_enabled(&chb_bridge,false,true);
+    set_enabled(&chc_buck,true,true);
+    set_enabled(&chc_bridge,false,true);
+
+    //
+    // Setup main control task interrupt
+    //
+    // Initializes PIE and clears PIE registers. Disables CPU interrupts.
+    Interrupt_initModule();
+    // Initializes the PIE vector table with pointers to the shell Interrupt Service Routines (ISRs)
+    Interrupt_initVectorTable();
+    // Register ISR for cupTimer0
+    Interrupt_register(INT_TIMER0, &cpuTimer0ISR);
+    // Initialize CPUTimer0
+    configCPUTimer(CPUTIMER0_BASE, 1000000);
+    // Enable CPUTimer0 Interrupt within CPUTimer0 Module
+    CPUTimer_enableInterrupt(CPUTIMER0_BASE);
+    // Enable TIMER0 Interrupt on CPU coming from TIMER0
+    Interrupt_enable(INT_TIMER0);
+    // Start CPUTimer0
+    CPUTimer_startTimer(CPUTIMER0_BASE);
+    // Enable Global Interrupt (INTM) and realtime interrupt (DBGM)
+    EINT;
+    ERTM;
 
 #ifdef ETHERNET
     //
@@ -291,4 +324,24 @@ void main(void)
     //
     SysCtl_setCMClk(SYSCTL_CMCLKOUT_DIV_1, SYSCTL_SOURCE_AUXPLL);
 #endif
+
+    while(1){
+        //spin forever, all the work is done in ISRs
+        //
+        // Read State Of Half Bridges
+        //
+        uint32_t cha_buck_state=GPIO_readPin(cha_buck.state_gpio);
+        uint32_t cha_bridge_state_u=GPIO_readPin(cha_bridge.state_v_gpio);
+        uint32_t cha_bridge_state_v=GPIO_readPin(cha_bridge.state_u_gpio);
+
+        uint32_t chb_buck_state=GPIO_readPin(chb_buck.state_gpio);
+        uint32_t chb_bridge_state_u=GPIO_readPin(chb_bridge.state_v_gpio);
+        uint32_t chb_bridge_state_v=GPIO_readPin(chb_bridge.state_u_gpio);
+
+        uint32_t chc_buck_state=GPIO_readPin(chc_buck.state_gpio);
+        uint32_t chc_bridge_state_u=GPIO_readPin(chc_bridge.state_v_gpio);
+        uint32_t chc_bridge_state_v=GPIO_readPin(chc_bridge.state_u_gpio);
+    }
 }
+
+

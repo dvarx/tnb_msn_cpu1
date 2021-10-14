@@ -42,5 +42,20 @@ extern struct bridge_configuration cha_bridge;
 extern struct bridge_configuration chb_bridge;
 extern struct bridge_configuration chc_bridge;
 
+// ---------------------
+// Main CPU Timer Related Functions
+// ---------------------
+
+//
+// Globals
+//
+extern uint16_t cpuTimer0IntCount;
+//extern uint16_t cpuTimer1IntCount;
+//extern uint16_t cpuTimer2IntCount;
+
+__interrupt void cpuTimer0ISR(void);
+void initCPUTimers(void);
+void configCPUTimer(uint32_t, uint32_t);
+
 
 #endif /* TNB_MNS_CPU1_H_ */

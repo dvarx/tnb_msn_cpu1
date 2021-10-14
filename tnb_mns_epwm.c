@@ -8,7 +8,7 @@
 #include "tnb_mns_epwm.h"
 #include "driverlib.h"
 #include "device.h"
-
+#include "stdint.h"
 
 //sets up the pinmux and config for a buck stage
 void setup_pin_config_buck(struct buck_configuration config){
@@ -185,4 +185,22 @@ void setupEPWMActiveHighComplementary(uint32_t base)
     EPWM_setDeadBandOutputSwapMode(base, EPWM_DB_OUTPUT_A, false);
     EPWM_setDeadBandOutputSwapMode(base, EPWM_DB_OUTPUT_B, false);
 
+}
+
+void set_enabled(void* config,bool is_buck,bool enable){
+    if(is_buck){
+        struct buck_configuration* config_=config;
+        if(enable)
+            GPIO_writePin(config_->enable_gpio,1);
+        else
+            GPIO_writePin(config_->enable_gpio,0);
+    }
+    else{
+        struct bridge_configuration* config_=config;
+        if(enable)
+            GPIO_writePin(config_->enable_gpio,1);
+        else
+            GPIO_writePin(config_->enable_gpio,0);
+
+    }
 }
