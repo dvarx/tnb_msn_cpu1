@@ -54,7 +54,7 @@
 #include "device.h"
 #include "tnb_mns_cpu1.h"
 
-#define EPWM_TIMER_TBPRD    2000UL
+#define EPWM_TIMER_TBPRD    1024UL
 void setup_pin_config_buck(struct buck_configuration);
 void setup_pin_config_bridge(struct bridge_configuration config);
 void initEPWMWithoutDB(uint32_t);
@@ -83,10 +83,21 @@ void main(void)
     Device_initGPIO();
 
     // define half bridge pinouts
+    //channel A
     struct buck_configuration cha_buck={40,41,8,GPIO_8_EPWM5A,9,GPIO_9_EPWM5B,EPWM5_BASE};
     struct bridge_configuration cha_bridge={30,22,23,12,GPIO_12_EPWM7A,13,GPIO_13_EPWM7B,EPWM7_BASE};
     setup_pin_config_buck(cha_buck);
     setup_pin_config_bridge(cha_bridge);
+    //channel B
+    struct buck_configuration chb_buck={35,61,14,GPIO_14_EPWM8A,15,GPIO_15_EPWM8B,EPWM8_BASE};
+    struct bridge_configuration chb_bridge={63,61,65,6,GPIO_6_EPWM4A,7,GPIO_7_EPWM4B,EPWM4_BASE};
+    setup_pin_config_buck(chb_buck);
+    setup_pin_config_bridge(chb_bridge);
+    //channel C
+    struct buck_configuration chc_buck={48,89,4,GPIO_4_EPWM3A,5,GPIO_5_EPWM3B,EPWM3_BASE};
+    struct bridge_configuration chc_bridge={164,133,93,0,GPIO_0_EPWM1A,1,GPIO_1_EPWM1B,EPWM1_BASE};
+    setup_pin_config_buck(chc_buck);
+    setup_pin_config_bridge(chc_bridge);
 
 #ifdef ETHERNET
     //
@@ -359,8 +370,8 @@ void initEPWMWithoutDB(uint32_t base)
     // Set ePWM clock pre-scaler
     //
     EPWM_setClockPrescaler(base,
-                           EPWM_CLOCK_DIVIDER_4,
-                           EPWM_HSCLOCK_DIVIDER_4);
+                           EPWM_CLOCK_DIVIDER_1,
+                           EPWM_HSCLOCK_DIVIDER_1);
 
     //
     // Set up shadowing
@@ -426,8 +437,8 @@ void setupEPWMActiveHighComplementary(uint32_t base)
     //
     // Set the RED and FED values
     //
-    EPWM_setFallingEdgeDelayCount(base, 200);
-    EPWM_setRisingEdgeDelayCount(base, 400);
+    EPWM_setFallingEdgeDelayCount(base, 25);
+    EPWM_setRisingEdgeDelayCount(base, 25);
 
     //
     // Invert only the Falling Edge delayed output (AHC)
