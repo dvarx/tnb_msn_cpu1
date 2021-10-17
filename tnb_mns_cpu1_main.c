@@ -54,6 +54,10 @@
 #include "device.h"
 #include "tnb_mns_cpu1.h"
 #include "tnb_mns_epwm.h"
+#include "tnb_mns_adc.h"
+#include "stdbool.h"
+
+bool run_main_control_task=false;
 
 void main(void)
 {
@@ -76,6 +80,14 @@ void main(void)
     // Disable pin locks and enable internal pull-ups.
     //
     Device_initGPIO();
+
+    //
+    // Initialize ADCs
+    //
+    //setup ADC clock, single-ended mode, enable ADCs
+    initADCs();
+    //setup ADC SOC configurations
+    initADCSOCs();
 
     //
     // Initialize Half Bridges
@@ -326,21 +338,29 @@ void main(void)
 #endif
 
     while(1){
-        //spin forever, all the work is done in ISRs
-        //
-        // Read State Of Half Bridges
-        //
-        uint32_t cha_buck_state=GPIO_readPin(cha_buck.state_gpio);
-        uint32_t cha_bridge_state_u=GPIO_readPin(cha_bridge.state_v_gpio);
-        uint32_t cha_bridge_state_v=GPIO_readPin(cha_bridge.state_u_gpio);
+        if(run_main_task){
+            //
+            // Read ADCs sequentially, this updates the system_dyn_state structure
+            //
+            readAnalogInputs();
 
-        uint32_t chb_buck_state=GPIO_readPin(chb_buck.state_gpio);
-        uint32_t chb_bridge_state_u=GPIO_readPin(chb_bridge.state_v_gpio);
-        uint32_t chb_bridge_state_v=GPIO_readPin(chb_bridge.state_u_gpio);
+            //
+            // Read State Of Half Bridges
+            //
+            uint32_t cha_buck_state=GPIO_readPin(cha_buck.state_gpio);
+            uint32_t cha_bridge_state_u=GPIO_readPin(cha_bridge.state_v_gpio);
+            uint32_t cha_bridge_state_v=GPIO_readPin(cha_bridge.state_u_gpio);
 
-        uint32_t chc_buck_state=GPIO_readPin(chc_buck.state_gpio);
-        uint32_t chc_bridge_state_u=GPIO_readPin(chc_bridge.state_v_gpio);
-        uint32_t chc_bridge_state_v=GPIO_readPin(chc_bridge.state_u_gpio);
+            uint32_t chb_buck_state=GPIO_readPin(chb_buck.state_gpio);
+            uint32_t chb_bridge_state_u=GPIO_readPin(chb_bridge.state_v_gpio);
+            uint32_t chb_bridge_state_v=GPIO_readPin(chb_bridge.state_u_gpio);
+
+            uint32_t chc_buck_state=GPIO_readPin(chc_buck.state_gpio);
+            uint32_t chc_bridge_state_u=GPIO_readPin(chc_bridge.state_v_gpio);
+            uint32_t chc_bridge_state_v=GPIO_readPin(chc_bridge.state_u_gpio);
+
+            run_main_task=false;
+        }
     }
 }
 

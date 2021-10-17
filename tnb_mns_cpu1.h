@@ -34,6 +34,15 @@ struct bridge_configuration{
     uint32_t epwmbase;
 };
 
+struct system_dynamic_state{
+    float ia;
+    float ib;
+    float ic;
+    float va;
+    float vb;
+    float vc;
+};
+
 extern struct buck_configuration cha_buck;
 extern struct buck_configuration chb_buck;
 extern struct buck_configuration chc_buck;
@@ -41,6 +50,12 @@ extern struct buck_configuration chc_buck;
 extern struct bridge_configuration cha_bridge;
 extern struct bridge_configuration chb_bridge;
 extern struct bridge_configuration chc_bridge;
+
+// ---------------------
+// Main Program related globals
+// ---------------------
+extern bool run_main_task;      //variable is set by CPU1 ISR
+extern struct system_dynamic_state system_dyn_state;
 
 // ---------------------
 // Main CPU Timer Related Functions
