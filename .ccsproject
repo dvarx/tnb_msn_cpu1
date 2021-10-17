@@ -10,6 +10,6 @@
 	<rts value="libc.a"/>
 	<createSlaveProjects value=""/>
 	<templateProperties value="id=ethernet_c28x_config.projectspec.ethernet_c28x_config"/>
-	<origin value="C:\ti\C2000Ware_3_04_00_00_Software\driverlib\f2838x\examples\cm\ethernet\CCS\ethernet_c28x_config.projectspec"/>
+	<origin value="C:/Users/dvarx/src/tnb_msn_cpu1"/>
 	<filesToOpen value=""/>
 </projectOptions>
