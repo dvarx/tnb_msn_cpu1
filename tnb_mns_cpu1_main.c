@@ -113,6 +113,16 @@ void main(void)
     set_enabled(&chc_bridge,false,true);
 
     //
+    // Initialize Reed Switch Interface
+    //
+    GPIO_setDirectionMode(ENABLE_RES_CAP_A_GPIO, GPIO_DIR_MODE_OUT);   //output
+    GPIO_setPadConfig(ENABLE_RES_CAP_A_GPIO,GPIO_PIN_TYPE_STD);        //push pull output
+    GPIO_setDirectionMode(ENABLE_RES_CAP_B_GPIO, GPIO_DIR_MODE_OUT);   //output
+    GPIO_setPadConfig(ENABLE_RES_CAP_B_GPIO,GPIO_PIN_TYPE_STD);        //push pull output
+    GPIO_setDirectionMode(ENABLE_RES_CAP_C_GPIO, GPIO_DIR_MODE_OUT);   //output
+    GPIO_setPadConfig(ENABLE_RES_CAP_C_GPIO,GPIO_PIN_TYPE_STD);        //push pull output
+
+    //
     // Setup main control task interrupt
     //
     // Initializes PIE and clears PIE registers. Disables CPU interrupts.
@@ -343,6 +353,13 @@ void main(void)
             // Read ADCs sequentially, this updates the system_dyn_state structure
             //
             readAnalogInputs();
+
+            //
+            // Enable Reed Relay
+            //
+            GPIO_writePin(ENABLE_RES_CAP_A_GPIO,enable_res_cap_a);
+            GPIO_writePin(ENABLE_RES_CAP_B_GPIO,enable_res_cap_b);
+            GPIO_writePin(ENABLE_RES_CAP_C_GPIO,enable_res_cap_c);
 
             //
             // Read State Of Half Bridges

@@ -29,6 +29,9 @@ struct bridge_configuration chc_bridge={107,133,93,0,GPIO_0_EPWM1A,1,GPIO_1_EPWM
 
 bool run_main_task=false;
 struct system_dynamic_state system_dyn_state;
+uint32_t enable_res_cap_a=0;     //variable control the resonant relay of channel a, if it is set to 1, res cap switched in
+uint32_t enable_res_cap_b=0;     //variable control the resonant relay of channel b, if it is set to 1, res cap switched in
+uint32_t enable_res_cap_c=0;     //variable control the resonant relay of channel c, if it is set to 1, res cap switched in
 
 // ------------------------------------------------------------------------------------
 // Main CPU Timer Related Functions

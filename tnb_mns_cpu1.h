@@ -56,6 +56,12 @@ extern struct bridge_configuration chc_bridge;
 // ---------------------
 extern bool run_main_task;      //variable is set by CPU1 ISR
 extern struct system_dynamic_state system_dyn_state;
+extern uint32_t enable_res_cap_a;     //variable control the resonant relay of channel a, if it is set to 1, res cap switched in
+extern uint32_t enable_res_cap_b;     //variable control the resonant relay of channel b, if it is set to 1, res cap switched in
+extern uint32_t enable_res_cap_c;     //variable control the resonant relay of channel c, if it is set to 1, res cap switched in
+#define ENABLE_RES_CAP_A_GPIO 78
+#define ENABLE_RES_CAP_B_GPIO 80
+#define ENABLE_RES_CAP_C_GPIO 82
 
 // ---------------------
 // Main CPU Timer Related Functions
