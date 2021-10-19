@@ -28,7 +28,14 @@ void setup_pin_config_buck(struct buck_configuration config){
     GPIO_setDirectionMode(config.bridge_l_pin,GPIO_DIR_MODE_OUT);     //output
     GPIO_setPinConfig(config.bridge_l_pinconfig);
     //PWM Setup
-    setup_epwm_buck(config.epwmbase);
+    initEPWMWithoutDB(config.epwmbase);
+    setupEPWMActiveHighComplementary(config.epwmbase);
+    //clock prescaling results in a PWM clock of around 50kHz
+    EPWM_setClockPrescaler(config.epwmbase,
+                           EPWM_CLOCK_DIVIDER_1,
+                           EPWM_HSCLOCK_DIVIDER_1);
+    //PWM Setup to ~ 50kHz 50% duty
+    set_duty_buck(config.epwmbase,0.5);
 }
 
 //sets up the pinmux and config for a bridge stage
@@ -52,26 +59,11 @@ void setup_pin_config_bridge(struct bridge_configuration config){
     //Bridge L
     GPIO_setDirectionMode(config.bridge_l_pin,GPIO_DIR_MODE_OUT);     //output
     GPIO_setPinConfig(config.bridge_l_pinconfig);
-    //PWM Setup
-    setup_epwm_bridge(config.epwmbase);
-}
-
-void setup_epwm_buck(uint32_t base){
-    initEPWMWithoutDB(base);
-    setupEPWMActiveHighComplementary(base);
+    //PWM Setup to ~ 50kHz 50% duty
+    initEPWMWithoutDB(config.epwmbase);
+    setupEPWMActiveHighComplementary(config.epwmbase);
     //clock prescaling results in a PWM clock of around 50kHz
-    EPWM_setClockPrescaler(base,
-                           EPWM_CLOCK_DIVIDER_1,
-                           EPWM_HSCLOCK_DIVIDER_1);
-    //
-    set_duty_buck(&cha_buck,0.5);
-}
-
-void setup_epwm_bridge(uint32_t base){
-    initEPWMWithoutDB(base);
-    setupEPWMActiveHighComplementary(base);
-    //clock prescaling results in a PWM clock of around 50kHz
-    EPWM_setClockPrescaler(base,
+    EPWM_setClockPrescaler(config.epwmbase,
                            EPWM_CLOCK_DIVIDER_1,
                            EPWM_HSCLOCK_DIVIDER_1);
 }
@@ -110,8 +102,8 @@ void initEPWMWithoutDB(uint32_t base)
     //
     // Set-up compare
     //
-    EPWM_setCounterCompareValue(base, EPWM_COUNTER_COMPARE_A, EPWM_TIMER_TBPRD_BUCK/4);
-    EPWM_setCounterCompareValue(base, EPWM_COUNTER_COMPARE_B, 3*EPWM_TIMER_TBPRD_BUCK/4);
+    EPWM_setCounterCompareValue(base, EPWM_COUNTER_COMPARE_A, EPWM_TIMER_TBPRD_BUCK/2);
+    EPWM_setCounterCompareValue(base, EPWM_COUNTER_COMPARE_B, EPWM_TIMER_TBPRD_BUCK/2);
 
     //
     // Set actions

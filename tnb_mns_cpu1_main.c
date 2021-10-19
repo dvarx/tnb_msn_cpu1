@@ -362,6 +362,13 @@ void main(void)
             GPIO_writePin(ENABLE_RES_CAP_C_GPIO,enable_res_cap_c);
 
             //
+            // Enable / Disable Half Bridges
+            //
+            GPIO_writePin(ENABLE_BUCK_A_GPIO,enable_bridge_a);
+            GPIO_writePin(ENABLE_BUCK_B_GPIO,enable_bridge_b);
+            GPIO_writePin(ENABLE_BUCK_C_GPIO,enable_bridge_c);
+
+            //
             // Read State Of Half Bridges
             //
             uint32_t cha_buck_state=GPIO_readPin(cha_buck.state_gpio);

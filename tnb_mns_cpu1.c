@@ -32,6 +32,12 @@ struct system_dynamic_state system_dyn_state;
 uint32_t enable_res_cap_a=0;     //variable control the resonant relay of channel a, if it is set to 1, res cap switched in
 uint32_t enable_res_cap_b=0;     //variable control the resonant relay of channel b, if it is set to 1, res cap switched in
 uint32_t enable_res_cap_c=0;     //variable control the resonant relay of channel c, if it is set to 1, res cap switched in
+uint32_t enable_buck_a=0;        //variable to enable buck stage of channel a
+uint32_t enable_buck_b=0;        //variable to enable buck stage of channel b
+uint32_t enable_buck_c=0;        //variable to enable buck stage of channel c
+uint32_t enable_bridge_a=0;      //variable to enable bridge state of channel a
+uint32_t enable_bridge_b=0;      //variable to enable bridge state of channel a
+uint32_t enable_bridge_c=0;      //variable to enable bridge state of channel a
 
 // ------------------------------------------------------------------------------------
 // Main CPU Timer Related Functions
