@@ -374,12 +374,19 @@ void main(void)
             //
             // Set Duty Of Half Bridges
             //
+            /*
             set_duty_buck(&cha_buck,duty_buck_a);
             set_duty_buck(&chb_buck,duty_buck_b);
             set_duty_buck(&chc_buck,duty_buck_c);
             set_duty_bridge(&cha_bridge,duty_bridge_a);
             set_duty_bridge(&chb_bridge,duty_bridge_b);
             set_duty_bridge(&chc_bridge,duty_bridge_c);
+            */
+
+            //
+            // Set Frequency Of Resonant Bridge
+            //
+            set_freq_bridge(&cha_bridge,freq_cha_resonant_mhz);
 
             //
             // Read State Of Half Bridges

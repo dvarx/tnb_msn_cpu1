@@ -12,6 +12,7 @@
 #include "driverlib.h"
 #include "device.h"
 #include "tnb_mns_cpu1.h"
+#include "stdint.h"
 
 struct buck_configuration{
     uint32_t enable_gpio;
@@ -32,6 +33,7 @@ struct bridge_configuration{
     uint32_t bridge_l_pin;
     uint32_t bridge_l_pinconfig;
     uint32_t epwmbase;
+    bool resonant_active;
 };
 
 struct system_dynamic_state{
@@ -80,6 +82,9 @@ extern uint32_t enable_bridge_c;      //variable to enable bridge state of chann
 #define ENABLE_BRIDGE_A_GPIO 30
 #define ENABLE_BRIDGE_B_GPIO 63
 #define ENABLE_BRIDGE_C_GPIO 107
+extern uint32_t freq_cha_resonant_mhz;
+extern uint32_t freq_chb_resonant_mhz;
+extern uint32_t freq_chc_resonant_mhz;
 
 // ---------------------
 // Main CPU Timer Related Functions

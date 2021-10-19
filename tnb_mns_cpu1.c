@@ -14,14 +14,14 @@
 // ------------------------------------------------------------------------------------
 
 struct buck_configuration cha_buck={40,41,8,GPIO_8_EPWM5A,9,GPIO_9_EPWM5B,EPWM5_BASE};
-struct bridge_configuration cha_bridge={30,22,23,12,GPIO_12_EPWM7A,13,GPIO_13_EPWM7B,EPWM7_BASE};
+struct bridge_configuration cha_bridge={30,22,23,12,GPIO_12_EPWM7A,13,GPIO_13_EPWM7B,EPWM7_BASE,false};
 
 struct buck_configuration chb_buck={35,60,14,GPIO_14_EPWM8A,15,GPIO_15_EPWM8B,EPWM8_BASE};
-struct bridge_configuration chb_bridge={63,61,65,6,GPIO_6_EPWM4A,7,GPIO_7_EPWM4B,EPWM4_BASE};
+struct bridge_configuration chb_bridge={63,61,65,6,GPIO_6_EPWM4A,7,GPIO_7_EPWM4B,EPWM4_BASE,false};
 
 
 struct buck_configuration chc_buck={95,89,5,GPIO_5_EPWM3B,4,GPIO_4_EPWM3A,EPWM3_BASE};              // ! Buck H & L Pins seemingly exchanged on board
-struct bridge_configuration chc_bridge={107,133,93,0,GPIO_0_EPWM1A,1,GPIO_1_EPWM1B,EPWM1_BASE};
+struct bridge_configuration chc_bridge={107,133,93,0,GPIO_0_EPWM1A,1,GPIO_1_EPWM1B,EPWM1_BASE,false};
 
 
 // ---------------------
@@ -45,6 +45,9 @@ double duty_bridge_c=0.5;
 double duty_buck_a=0.5;
 double duty_buck_b=0.5;
 double duty_buck_c=0.5;
+uint32_t freq_cha_resonant_mhz=5000000;
+uint32_t freq_chb_resonant_mhz=5000000;
+uint32_t freq_chc_resonant_mhz=5000000;
 
 // ------------------------------------------------------------------------------------
 // Main CPU Timer Related Functions

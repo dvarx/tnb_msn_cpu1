@@ -23,6 +23,8 @@ void initEPWMWithoutDB(uint32_t);
 void setupEPWMActiveHighComplementary(uint32_t);
 //set the duty cycle of a buck half bridge
 void set_duty_buck(const struct buck_configuration*,float);
+//set pwm frequency of bridge
+void set_freq_bridge(const struct bridge_configuration*,const uint32_t);
 //set the duty cycle of bridge half bridegs
 void set_duty_bridge(const struct bridge_configuration*,float);
 //enables or disables the associated half bridge

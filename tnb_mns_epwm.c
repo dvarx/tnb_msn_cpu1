@@ -202,3 +202,16 @@ void set_enabled(void* config,bool is_buck,bool enable){
 
     }
 }
+
+//set pwm frequency of bridge
+void set_freq_bridge(const struct bridge_configuration* config,const uint32_t freq_mhz){
+    //adjust the ePWM clock prescaler
+    EPWM_setClockPrescaler(config->epwmbase, EPWM_CLOCK_DIVIDER_32, EPWM_HSCLOCK_DIVIDER_1);
+
+    const uint32_t f0_mhz=23841;
+    unsigned int divider=freq_mhz/f0_mhz;     //additional factor 2 needed for correct frequency
+    unsigned int counterlimit=(65536)/divider;
+    EPWM_setTimeBasePeriod(config->epwmbase, counterlimit);
+    EPWM_setCounterCompareValue(config->epwmbase, EPWM_COUNTER_COMPARE_A, counterlimit/2);
+    EPWM_setCounterCompareValue(config->epwmbase, EPWM_COUNTER_COMPARE_B, counterlimit/2);
+}
