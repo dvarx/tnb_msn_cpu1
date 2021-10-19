@@ -56,6 +56,12 @@ extern struct bridge_configuration chc_bridge;
 // ---------------------
 extern bool run_main_task;      //variable is set by CPU1 ISR
 extern struct system_dynamic_state system_dyn_state;
+extern double duty_bridge_a;
+extern double duty_bridge_b;
+extern double duty_bridge_c;
+extern double duty_buck_a;
+extern double duty_buck_b;
+extern double duty_buck_c;
 extern uint32_t enable_res_cap_a;     //variable control the resonant relay of channel a, if it is set to 1, res cap switched in
 extern uint32_t enable_res_cap_b;     //variable control the resonant relay of channel b, if it is set to 1, res cap switched in
 extern uint32_t enable_res_cap_c;     //variable control the resonant relay of channel c, if it is set to 1, res cap switched in

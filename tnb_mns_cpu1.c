@@ -38,6 +38,12 @@ uint32_t enable_buck_c=0;        //variable to enable buck stage of channel c
 uint32_t enable_bridge_a=0;      //variable to enable bridge state of channel a
 uint32_t enable_bridge_b=0;      //variable to enable bridge state of channel a
 uint32_t enable_bridge_c=0;      //variable to enable bridge state of channel a
+double duty_bridge_a=0;
+double duty_bridge_b=0;
+double duty_bridge_c=0;
+double duty_buck_a=0;
+double duty_buck_b=0;
+double duty_buck_c=0;
 
 // ------------------------------------------------------------------------------------
 // Main CPU Timer Related Functions
