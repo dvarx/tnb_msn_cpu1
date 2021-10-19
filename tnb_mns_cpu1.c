@@ -19,7 +19,8 @@ struct bridge_configuration cha_bridge={30,22,23,12,GPIO_12_EPWM7A,13,GPIO_13_EP
 struct buck_configuration chb_buck={35,60,14,GPIO_14_EPWM8A,15,GPIO_15_EPWM8B,EPWM8_BASE};
 struct bridge_configuration chb_bridge={63,61,65,6,GPIO_6_EPWM4A,7,GPIO_7_EPWM4B,EPWM4_BASE};
 
-struct buck_configuration chc_buck={95,89,4,GPIO_4_EPWM3A,5,GPIO_5_EPWM3B,EPWM3_BASE};
+
+struct buck_configuration chc_buck={95,89,5,GPIO_5_EPWM3B,4,GPIO_4_EPWM3A,EPWM3_BASE};              // ! Buck H & L Pins seemingly exchanged on board
 struct bridge_configuration chc_bridge={107,133,93,0,GPIO_0_EPWM1A,1,GPIO_1_EPWM1B,EPWM1_BASE};
 
 
@@ -38,12 +39,12 @@ uint32_t enable_buck_c=0;        //variable to enable buck stage of channel c
 uint32_t enable_bridge_a=0;      //variable to enable bridge state of channel a
 uint32_t enable_bridge_b=0;      //variable to enable bridge state of channel a
 uint32_t enable_bridge_c=0;      //variable to enable bridge state of channel a
-double duty_bridge_a=0;
-double duty_bridge_b=0;
-double duty_bridge_c=0;
-double duty_buck_a=0;
-double duty_buck_b=0;
-double duty_buck_c=0;
+double duty_bridge_a=0.5;
+double duty_bridge_b=0.5;
+double duty_bridge_c=0.5;
+double duty_buck_a=0.5;
+double duty_buck_b=0.5;
+double duty_buck_c=0.5;
 
 // ------------------------------------------------------------------------------------
 // Main CPU Timer Related Functions

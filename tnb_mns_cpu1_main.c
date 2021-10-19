@@ -372,16 +372,6 @@ void main(void)
             GPIO_writePin(ENABLE_BRIDGE_C_GPIO,enable_bridge_c);
 
             //
-            // Set Duties
-            //
-            set_duty_buck(&cha_buck,0.5);
-            set_duty_buck(&chb_buck,0.5);
-            set_duty_buck(&chc_buck,0.5);
-            set_duty_bridge(&cha_bridge,0.5);
-            set_duty_bridge(&chb_bridge,0.5);
-            set_duty_bridge(&chc_bridge,0.5);
-
-            //
             // Set Duty Of Half Bridges
             //
             set_duty_buck(&cha_buck,duty_buck_a);
