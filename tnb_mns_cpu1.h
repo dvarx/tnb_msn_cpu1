@@ -71,6 +71,9 @@ extern uint32_t enable_bridge_c;      //variable to enable bridge state of chann
 #define ENABLE_BUCK_A_GPIO 40
 #define ENABLE_BUCK_B_GPIO 35
 #define ENABLE_BUCK_C_GPIO 95
+#define ENABLE_BRIDGE_A_GPIO 30
+#define ENABLE_BRIDGE_B_GPIO 63
+#define ENABLE_BRIDGE_C_GPIO 107
 
 // ---------------------
 // Main CPU Timer Related Functions

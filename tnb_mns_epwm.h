@@ -14,9 +14,9 @@
 #define EPWM_TIMER_TBPRD_BRIDGE     1024UL
 
 //initializes pins & pads for buck half bridge
-void setup_pin_config_buck(struct buck_configuration);
+void setup_pin_config_buck(const struct buck_configuration*);
 //intiializes pins & pads for bridge half bridges
-void setup_pin_config_bridge(struct bridge_configuration config);
+void setup_pin_config_bridge(const struct bridge_configuration* config);
 //helper function
 void initEPWMWithoutDB(uint32_t);
 //helper function

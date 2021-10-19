@@ -93,14 +93,14 @@ void main(void)
     // Initialize Half Bridges
     //
     //channel A
-    setup_pin_config_buck(cha_buck);
-    setup_pin_config_bridge(cha_bridge);
+    setup_pin_config_buck(&cha_buck);
+    setup_pin_config_bridge(&cha_bridge);
     //channel B
-    setup_pin_config_buck(chb_buck);
-    setup_pin_config_bridge(chb_bridge);
+    setup_pin_config_buck(&chb_buck);
+    setup_pin_config_bridge(&chb_bridge);
     //channel C
-    setup_pin_config_buck(chc_buck);
-    setup_pin_config_bridge(chc_bridge);
+    setup_pin_config_buck(&chc_buck);
+    setup_pin_config_bridge(&chc_bridge);
 
     //
     // Enable Half Bridges
@@ -364,9 +364,22 @@ void main(void)
             //
             // Enable / Disable Half Bridges
             //
-            GPIO_writePin(ENABLE_BUCK_A_GPIO,enable_bridge_a);
-            GPIO_writePin(ENABLE_BUCK_B_GPIO,enable_bridge_b);
-            GPIO_writePin(ENABLE_BUCK_C_GPIO,enable_bridge_c);
+            GPIO_writePin(ENABLE_BUCK_A_GPIO,enable_buck_a);
+            GPIO_writePin(ENABLE_BUCK_B_GPIO,enable_buck_b);
+            GPIO_writePin(ENABLE_BUCK_C_GPIO,enable_buck_c);
+            GPIO_writePin(ENABLE_BRIDGE_A_GPIO,enable_bridge_a);
+            GPIO_writePin(ENABLE_BRIDGE_B_GPIO,enable_bridge_b);
+            GPIO_writePin(ENABLE_BRIDGE_C_GPIO,enable_bridge_c);
+
+            //
+            // Set Duty Of Half Bridges
+            //
+            set_duty_buck(&cha_buck,0.75);
+            set_duty_buck(&chb_buck,0.75);
+            set_duty_buck(&chc_buck,0.75);
+            set_duty_bridge(&cha_bridge,0.75);
+            set_duty_bridge(&chb_bridge,0.75);
+            set_duty_bridge(&chc_bridge,0.75);
 
             //
             // Read State Of Half Bridges
