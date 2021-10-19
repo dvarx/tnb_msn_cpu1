@@ -53,6 +53,6 @@ void RUNNING_REGULAR_exit(uint8_t);
 extern fsm_flag fsm_req_flags_en_buck[NO_CHANNELS];
 extern fsm_flag fsm_req_flags_run_regular[NO_CHANNELS];
 extern fsm_flag fsm_req_flags_run_resonant[NO_CHANNELS];
-extern fsm_flag fsm_req_disable[NO_CHANNELS];
+extern fsm_flag fsm_req_flags_stop[NO_CHANNELS];
 
 #endif /* TNB_MNS_FSM_H_ */

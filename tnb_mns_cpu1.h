@@ -14,6 +14,8 @@
 #include "tnb_mns_cpu1.h"
 #include "stdint.h"
 
+#define NO_CHANNELS 3
+
 struct buck_configuration{
     uint32_t enable_gpio;
     uint32_t state_gpio;
@@ -45,7 +47,7 @@ struct system_dynamic_state{
     float vc;
 };
 
-enum driver_channel_state {READY,BUCK_ENABLED,INIT_REGULAR,RUN_REGULAR,INIT_RESONANT,RUN_RESONANT,FAULT};
+enum driver_channel_state {READY=0,BUCK_ENABLED=1,INIT_REGULAR=2,RUN_REGULAR=3,INIT_RESONANT=4,RUN_RESONANT=5,FAULT=6};
 
 struct driver_channel{
     uint8_t channel_no;
@@ -57,6 +59,10 @@ struct driver_channel{
 extern struct buck_configuration cha_buck;
 extern struct buck_configuration chb_buck;
 extern struct buck_configuration chc_buck;
+extern struct driver_channel channela;
+extern struct driver_channel channelb;
+extern struct driver_channel channelc;
+extern struct driver_channel* driver_channels[NO_CHANNELS];
 
 extern struct bridge_configuration cha_bridge;
 extern struct bridge_configuration chb_bridge;
@@ -65,7 +71,6 @@ extern struct bridge_configuration chc_bridge;
 // ---------------------
 // Main Program related globals
 // ---------------------
-#define NO_CHANNELS 3
 
 extern bool run_main_task;      //variable is set by CPU1 ISR
 extern struct system_dynamic_state system_dyn_state;

@@ -56,6 +56,7 @@
 #include "tnb_mns_epwm.h"
 #include "tnb_mns_adc.h"
 #include "stdbool.h"
+#include "tnb_mns_fsm.h"
 
 bool run_main_control_task=false;
 
@@ -353,7 +354,10 @@ void main(void)
             //check if there are any errors, if yes go into error state
             // ...
             //run the state machine of all channels (run at ~1/10th of main task frequency)
-            // ...
+            unsigned int channel_counter=0;
+            for(channel_counter=0; channel_counter<NO_CHANNELS; channel_counter++)
+                run_channel_fsm(driver_channels[channel_counter]);
+
             //regulate outputs of channels
             // ...
 
