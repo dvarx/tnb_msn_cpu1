@@ -45,6 +45,15 @@ struct system_dynamic_state{
     float vc;
 };
 
+enum driver_channel_state {READY,BUCK_ENABLED,INIT_REGULAR,RUN_REGULAR,INIT_RESONANT,RUN_RESONANT,FAULT};
+
+struct driver_channel{
+    uint8_t channel_no;
+    struct buck_configuration* buck_config;
+    struct bridge_configuration* bridge_config;
+    enum driver_channel_state channel_state;
+};
+
 extern struct buck_configuration cha_buck;
 extern struct buck_configuration chb_buck;
 extern struct buck_configuration chc_buck;
@@ -56,6 +65,8 @@ extern struct bridge_configuration chc_bridge;
 // ---------------------
 // Main Program related globals
 // ---------------------
+#define NO_CHANNELS 3
+
 extern bool run_main_task;      //variable is set by CPU1 ISR
 extern struct system_dynamic_state system_dyn_state;
 extern double duty_bridge_a;
