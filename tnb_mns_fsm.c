@@ -199,4 +199,7 @@ void TERMINATE_RESONANT_enter(uint8_t channelno){
 void TERMINATE_RESONANT_during(uint8_t channelno){
     fsm_aux_counter++;
 }
-void TERMINATE_RESONANT_exit(uint8_t channelno){return;}
+void TERMINATE_RESONANT_exit(uint8_t channelno){
+    //pull the enable resonant line low, closing the relay
+    GPIO_writePin(driver_channels[channelno]->enable_resonant_gpio,0);
+}
