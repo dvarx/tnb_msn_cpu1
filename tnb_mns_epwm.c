@@ -38,8 +38,8 @@ void setup_pin_config_buck(const struct buck_configuration* config){
     set_duty_buck(config,0.5);
 }
 
-//sets up the pinmux and config for a bridge stage
-void setup_pin_config_bridge(const struct bridge_configuration* config){
+//sets up the pinmux and epwm module config for a bridge stage. duty=50% , freq~48kHz
+void setup_pinmux_config_bridge(const struct bridge_configuration* config){
     //----- Bridge U
     //Bridge Enable
     GPIO_setDirectionMode(config->enable_gpio, GPIO_DIR_MODE_OUT);   //output
@@ -68,13 +68,13 @@ void setup_pin_config_bridge(const struct bridge_configuration* config){
                            EPWM_HSCLOCK_DIVIDER_1);
 }
 
-void set_duty_buck(const struct buck_configuration* config, float duty){
+void set_duty_buck(const struct buck_configuration* config, double duty){
     uint16_t duty_int=duty*EPWM_TIMER_TBPRD_BUCK;
     EPWM_setCounterCompareValue(config->epwmbase, EPWM_COUNTER_COMPARE_A, duty_int);
     EPWM_setCounterCompareValue(config->epwmbase, EPWM_COUNTER_COMPARE_B, EPWM_TIMER_TBPRD_BUCK-duty_int);
 }
 
-void set_duty_bridge(const struct bridge_configuration* config, float duty){
+void set_duty_bridge(const struct bridge_configuration* config, double duty){
     uint16_t duty_int=duty*EPWM_TIMER_TBPRD_BRIDGE;
     EPWM_setCounterCompareValue(config->epwmbase, EPWM_COUNTER_COMPARE_A, duty_int);
     EPWM_setCounterCompareValue(config->epwmbase, EPWM_COUNTER_COMPARE_B, EPWM_TIMER_TBPRD_BRIDGE-duty_int);
@@ -211,6 +211,8 @@ void set_freq_bridge(const struct bridge_configuration* config,const uint32_t fr
     const uint32_t f0_mhz=23841;
     unsigned int divider=freq_mhz/f0_mhz;     //additional factor 2 needed for correct frequency
     unsigned int counterlimit=(65536)/divider;
+    EPWM_setFallingEdgeDelayCount(config->epwmbase, 1);
+    EPWM_setRisingEdgeDelayCount(config->epwmbase, 1);
     EPWM_setTimeBasePeriod(config->epwmbase, counterlimit);
     EPWM_setCounterCompareValue(config->epwmbase, EPWM_COUNTER_COMPARE_A, counterlimit/2);
     EPWM_setCounterCompareValue(config->epwmbase, EPWM_COUNTER_COMPARE_B, counterlimit/2);

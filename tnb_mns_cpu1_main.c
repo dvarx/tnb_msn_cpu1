@@ -83,6 +83,12 @@ void main(void)
     Device_initGPIO();
 
     //
+    // Setup heartbeat GPIO
+    //
+    GPIO_setDirectionMode(HEARTBEAT_GPIO, GPIO_DIR_MODE_OUT);   //output
+    GPIO_setPadConfig(HEARTBEAT_GPIO,GPIO_PIN_TYPE_STD);        //push pull output
+
+    //
     // Initialize ADCs
     //
     //setup ADC clock, single-ended mode, enable ADCs
@@ -95,13 +101,13 @@ void main(void)
     //
     //channel A
     setup_pin_config_buck(&cha_buck);
-    setup_pin_config_bridge(&cha_bridge);
+    setup_pinmux_config_bridge(&cha_bridge);
     //channel B
     setup_pin_config_buck(&chb_buck);
-    setup_pin_config_bridge(&chb_bridge);
+    setup_pinmux_config_bridge(&chb_bridge);
     //channel C
     setup_pin_config_buck(&chc_buck);
-    setup_pin_config_bridge(&chc_bridge);
+    setup_pinmux_config_bridge(&chc_bridge);
 
     //
     // Enable Half Bridges
@@ -116,12 +122,11 @@ void main(void)
     //
     // Initialize Reed Switch Interface
     //
-    GPIO_setDirectionMode(ENABLE_RES_CAP_A_GPIO, GPIO_DIR_MODE_OUT);   //output
-    GPIO_setPadConfig(ENABLE_RES_CAP_A_GPIO,GPIO_PIN_TYPE_STD);        //push pull output
-    GPIO_setDirectionMode(ENABLE_RES_CAP_B_GPIO, GPIO_DIR_MODE_OUT);   //output
-    GPIO_setPadConfig(ENABLE_RES_CAP_B_GPIO,GPIO_PIN_TYPE_STD);        //push pull output
-    GPIO_setDirectionMode(ENABLE_RES_CAP_C_GPIO, GPIO_DIR_MODE_OUT);   //output
-    GPIO_setPadConfig(ENABLE_RES_CAP_C_GPIO,GPIO_PIN_TYPE_STD);        //push pull output
+    unsigned int n=0;
+    for(n=0; n<NO_CHANNELS; n++){
+        GPIO_setDirectionMode(driver_channels[n]->enable_resonant_gpio, GPIO_DIR_MODE_OUT);   //output
+        GPIO_setPadConfig(driver_channels[n]->enable_resonant_gpio,GPIO_PIN_TYPE_STD);        //push pull output
+    }
 
     //
     // Setup main control task interrupt
@@ -133,7 +138,7 @@ void main(void)
     // Register ISR for cupTimer0
     Interrupt_register(INT_TIMER0, &cpuTimer0ISR);
     // Initialize CPUTimer0
-    configCPUTimer(CPUTIMER0_BASE, 1000000);
+    configCPUTimer(CPUTIMER0_BASE, 1000);
     // Enable CPUTimer0 Interrupt within CPUTimer0 Module
     CPUTimer_enableInterrupt(CPUTIMER0_BASE);
     // Enable TIMER0 Interrupt on CPU coming from TIMER0
@@ -348,8 +353,19 @@ void main(void)
     SysCtl_setCMClk(SYSCTL_CMCLKOUT_DIV_1, SYSCTL_SOURCE_AUXPLL);
 #endif
 
+    //
+    // Initialize Outputs
+    //
+    for(n=0; n<NO_CHANNELS; n++){
+        READY_enter(n);
+        driver_channels[n]->channel_state=READY;
+    }
+
+    // Main Loop
     while(1){
         if(run_main_task){
+            //toggle heartbeat gpio
+            GPIO_togglePin(HEARTBEAT_GPIO);
 
             //check if there are any errors, if yes go into error state
             // ...
@@ -358,31 +374,15 @@ void main(void)
             for(channel_counter=0; channel_counter<NO_CHANNELS; channel_counter++)
                 run_channel_fsm(driver_channels[channel_counter]);
 
+/*
             //regulate outputs of channels
             // ...
 
-            /*
+
             //
             // Read ADCs sequentially, this updates the system_dyn_state structure
             //
             readAnalogInputs();
-
-            //
-            // Enable Reed Relay
-            //
-            GPIO_writePin(ENABLE_RES_CAP_A_GPIO,enable_res_cap_a);
-            GPIO_writePin(ENABLE_RES_CAP_B_GPIO,enable_res_cap_b);
-            GPIO_writePin(ENABLE_RES_CAP_C_GPIO,enable_res_cap_c);
-
-            //
-            // Enable / Disable Half Bridges
-            //
-            GPIO_writePin(ENABLE_BUCK_A_GPIO,enable_buck_a);
-            GPIO_writePin(ENABLE_BUCK_B_GPIO,enable_buck_b);
-            GPIO_writePin(ENABLE_BUCK_C_GPIO,enable_buck_c);
-            GPIO_writePin(ENABLE_BRIDGE_A_GPIO,enable_bridge_a);
-            GPIO_writePin(ENABLE_BRIDGE_B_GPIO,enable_bridge_b);
-            GPIO_writePin(ENABLE_BRIDGE_C_GPIO,enable_bridge_c);
 
             //
             // Set Duty Of Half Bridges
@@ -415,9 +415,9 @@ void main(void)
             uint32_t chc_buck_state=GPIO_readPin(chc_buck.state_gpio);
             uint32_t chc_bridge_state_u=GPIO_readPin(chc_bridge.state_v_gpio);
             uint32_t chc_bridge_state_v=GPIO_readPin(chc_bridge.state_u_gpio);
-
+*/
             run_main_task=false;
-            */
+
         }
     }
 }

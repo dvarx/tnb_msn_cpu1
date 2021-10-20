@@ -15,6 +15,7 @@
 #include "stdint.h"
 
 #define NO_CHANNELS 3
+#define HEARTBEAT_GPIO 17
 
 struct buck_configuration{
     uint32_t enable_gpio;
@@ -47,13 +48,14 @@ struct system_dynamic_state{
     float vc;
 };
 
-enum driver_channel_state {READY=0,BUCK_ENABLED=1,INIT_REGULAR=2,RUN_REGULAR=3,INIT_RESONANT=4,RUN_RESONANT=5,FAULT=6};
+enum driver_channel_state {READY=0,BUCK_ENABLED=1,INIT_REGULAR=2,RUN_REGULAR=3,INIT_RESONANT=4,RUN_RESONANT=5,FAULT=6,TERMINATE_RESONANT=7};
 
 struct driver_channel{
     uint8_t channel_no;
     struct buck_configuration* buck_config;
     struct bridge_configuration* bridge_config;
     enum driver_channel_state channel_state;
+    uint32_t enable_resonant_gpio;
 };
 
 extern struct buck_configuration cha_buck;
@@ -72,35 +74,11 @@ extern struct bridge_configuration chc_bridge;
 // Main Program related globals
 // ---------------------
 
-extern bool run_main_task;      //variable is set by CPU1 ISR
+extern bool run_main_task;                              //variable is set by CPU1 ISR
 extern struct system_dynamic_state system_dyn_state;
-extern double duty_bridge_a;
-extern double duty_bridge_b;
-extern double duty_bridge_c;
-extern double duty_buck_a;
-extern double duty_buck_b;
-extern double duty_buck_c;
-extern uint32_t enable_res_cap_a;     //variable control the resonant relay of channel a, if it is set to 1, res cap switched in
-extern uint32_t enable_res_cap_b;     //variable control the resonant relay of channel b, if it is set to 1, res cap switched in
-extern uint32_t enable_res_cap_c;     //variable control the resonant relay of channel c, if it is set to 1, res cap switched in
-extern uint32_t enable_buck_a;        //variable to enable buck stage of channel a
-extern uint32_t enable_buck_b;        //variable to enable buck stage of channel b
-extern uint32_t enable_buck_c;        //variable to enable buck stage of channel c
-extern uint32_t enable_bridge_a;      //variable to enable bridge state of channel a
-extern uint32_t enable_bridge_b;      //variable to enable bridge state of channel a
-extern uint32_t enable_bridge_c;      //variable to enable bridge state of channel a
-#define ENABLE_RES_CAP_A_GPIO 78
-#define ENABLE_RES_CAP_B_GPIO 80
-#define ENABLE_RES_CAP_C_GPIO 82
-#define ENABLE_BUCK_A_GPIO 40
-#define ENABLE_BUCK_B_GPIO 35
-#define ENABLE_BUCK_C_GPIO 95
-#define ENABLE_BRIDGE_A_GPIO 30
-#define ENABLE_BRIDGE_B_GPIO 63
-#define ENABLE_BRIDGE_C_GPIO 107
-extern uint32_t freq_cha_resonant_mhz;
-extern uint32_t freq_chb_resonant_mhz;
-extern uint32_t freq_chc_resonant_mhz;
+extern double des_duty_bridge[NO_CHANNELS];             //desired duties for bridges, set by COMM interface
+extern double des_duty_buck[NO_CHANNELS];               //desired duties for bucks, set by COMM interface
+extern uint32_t des_freq_resonant_mhz[NO_CHANNELS];     //desired frequencies for resonant bridges, set by COMM interface
 
 // ---------------------
 // Main CPU Timer Related Functions
