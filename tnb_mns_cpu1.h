@@ -16,6 +16,7 @@
 
 #define NO_CHANNELS 3
 #define HEARTBEAT_GPIO 17
+#define DEFAULT_RES_FREQ_MILLIHZ    10000000
 
 struct buck_configuration{
     uint32_t enable_gpio;

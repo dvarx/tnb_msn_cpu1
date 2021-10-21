@@ -200,6 +200,10 @@ void TERMINATE_RESONANT_during(uint8_t channelno){
     fsm_aux_counter++;
 }
 void TERMINATE_RESONANT_exit(uint8_t channelno){
-    //pull the enable resonant line low, closing the relay
+    //pull the enable resonator line down, this will close the relay and bypass the capacitorbank
     GPIO_writePin(driver_channels[channelno]->enable_resonant_gpio,0);
+    //reset the desired resonant frequency
+    des_freq_resonant_mhz[channelno]=DEFAULT_RES_FREQ_MILLIHZ;
+    //reset the desired buck duty
+    des_duty_buck[channelno]=0.5;
 }
