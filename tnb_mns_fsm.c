@@ -120,10 +120,6 @@ void READY_enter(uint8_t channelno){
     GPIO_writePin(driver_channels[channelno]->buck_config->enable_gpio,0);
     //disable bridge
     GPIO_writePin(driver_channels[channelno]->bridge_config->enable_gpio,0);
-    //reset desired duties and frequencies
-    des_freq_resonant_mhz[channelno]=DEFAULT_RES_FREQ_MILLIHZ;
-    des_duty_buck[channelno]=0.5;
-    des_duty_bridge[channelno]=0.5;
 }
 void READY_during(uint8_t channelno){return;}
 void READY_exit(uint8_t channelno){return;}
@@ -138,10 +134,7 @@ void BUCK_ENABLED_during(uint8_t channelno){
     //set the buck duty
     set_duty_buck(driver_channels[channelno]->buck_config,des_duty_buck[channelno]);
 }
-void BUCK_ENABLED_exit(uint8_t channelno){
-    //reset the desired buck duty
-    des_duty_buck[channelno]=0.5;
-}
+void BUCK_ENABLED_exit(uint8_t channelno){return;}
 //INIT_REGULAR_RUN state
 void INIT_REGULAR_RUN_enter(uint8_t channelno){
     //reset the init regular counter
@@ -171,10 +164,6 @@ void RUNNING_REGULAR_during(uint8_t channelno){
 void RUNNING_REGULAR_exit(uint8_t channelno){
     //disable bridge
     GPIO_writePin(driver_channels[channelno]->bridge_config->enable_gpio,0);
-    //reset desired bridge duty
-    des_duty_bridge[channelno]=0.5;
-    //reset the desired buck duty
-    des_duty_buck[channelno]=0.5;
 }
 //INIT_RESONANT RUN state
 void INIT_RESONANT_RUN_enter(uint8_t channelno){
