@@ -13,6 +13,7 @@
 #include "device.h"
 #include "tnb_mns_cpu1.h"
 #include "stdint.h"
+#include "comm_interface.h"
 
 #define NO_CHANNELS 3
 #define HEARTBEAT_GPIO 17
@@ -93,6 +94,7 @@ extern uint16_t cpuTimer0IntCount;
 //extern uint16_t cpuTimer2IntCount;
 
 __interrupt void cpuTimer0ISR(void);
+__interrupt void IPC_ISR0(void);
 void initCPUTimers(void);
 void configCPUTimer(uint32_t, uint32_t);
 

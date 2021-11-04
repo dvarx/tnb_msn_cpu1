@@ -58,63 +58,9 @@
 #include "stdbool.h"
 #include "tnb_mns_fsm.h"
 #include "ipc.h"
+#include "tnb_mns_cpu1.h"
 
 bool run_main_control_task=false;
-
-// IPC Defines
-#define IPC_CMD_READ_MEM   0x1001
-#define IPC_CMD_RESP       0x2001
-
-#define TEST_PASS          0x5555
-#define TEST_FAIL          0xAAAA
-
-//
-// IPC ISR for Flag 0.
-// CM core sends data without message queue using Flag 0
-//
-__interrupt void IPC_ISR0()
-{
-    int i;
-    uint32_t command, addr, data;
-    bool status = false;
-
-    //
-    // Read the command
-    //
-    IPC_readCommand(IPC_CPU1_L_CM_R, IPC_FLAG0, IPC_ADDR_CORRECTION_ENABLE,
-                    &command, &addr, &data);
-
-    if(command == IPC_CMD_READ_MEM)
-    {
-        status = true;
-
-        //
-        // Read and compare data
-        //
-        for(i=0; i<data; i++)
-        {
-            if(*((uint32_t *)addr + i) != i)
-                status = false;
-        }
-    }
-
-    //
-    // Send response to C28x core
-    //
-    if(status)
-    {
-        IPC_sendResponse(IPC_CPU1_L_CM_R, TEST_PASS);
-    }
-    else
-    {
-        IPC_sendResponse(IPC_CPU1_L_CM_R, TEST_FAIL);
-    }
-
-    //
-    // Acknowledge the flag
-    //
-    IPC_ackFlagRtoL(IPC_CPU1_L_CM_R, IPC_FLAG0);
-}
 
 void main(void)
 {
