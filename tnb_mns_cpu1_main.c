@@ -57,8 +57,64 @@
 #include "tnb_mns_adc.h"
 #include "stdbool.h"
 #include "tnb_mns_fsm.h"
+#include "ipc.h"
 
 bool run_main_control_task=false;
+
+// IPC Defines
+#define IPC_CMD_READ_MEM   0x1001
+#define IPC_CMD_RESP       0x2001
+
+#define TEST_PASS          0x5555
+#define TEST_FAIL          0xAAAA
+
+//
+// IPC ISR for Flag 0.
+// CM core sends data without message queue using Flag 0
+//
+__interrupt void IPC_ISR0()
+{
+    int i;
+    uint32_t command, addr, data;
+    bool status = false;
+
+    //
+    // Read the command
+    //
+    IPC_readCommand(IPC_CPU1_L_CM_R, IPC_FLAG0, IPC_ADDR_CORRECTION_ENABLE,
+                    &command, &addr, &data);
+
+    if(command == IPC_CMD_READ_MEM)
+    {
+        status = true;
+
+        //
+        // Read and compare data
+        //
+        for(i=0; i<data; i++)
+        {
+            if(*((uint32_t *)addr + i) != i)
+                status = false;
+        }
+    }
+
+    //
+    // Send response to C28x core
+    //
+    if(status)
+    {
+        IPC_sendResponse(IPC_CPU1_L_CM_R, TEST_PASS);
+    }
+    else
+    {
+        IPC_sendResponse(IPC_CPU1_L_CM_R, TEST_FAIL);
+    }
+
+    //
+    // Acknowledge the flag
+    //
+    IPC_ackFlagRtoL(IPC_CPU1_L_CM_R, IPC_FLAG0);
+}
 
 void main(void)
 {
@@ -129,12 +185,20 @@ void main(void)
     }
 
     //
-    // Setup main control task interrupt
+    // Setup main control task interrupt & ipc interrupt
     //
     // Initializes PIE and clears PIE registers. Disables CPU interrupts.
     Interrupt_initModule();
     // Initializes the PIE vector table with pointers to the shell Interrupt Service Routines (ISRs)
     Interrupt_initVectorTable();
+    //--------------- IPC interrupt ---------------
+    //clear any IPC flags
+    IPC_clearFlagLtoR(IPC_CPU1_L_CM_R, IPC_FLAG_ALL);
+    //register IPC interrupt from CM to CPU1 using IPC_INT0
+    IPC_registerInterrupt(IPC_CPU1_L_CM_R, IPC_INT0, IPC_ISR0);
+    //synchronize CM and CPU1 using IPC_FLAG31
+    IPC_sync(IPC_CPU1_L_CM_R, IPC_FLAG31);
+    //--------------- CPU1 interrupt ---------------
     // Register ISR for cupTimer0
     Interrupt_register(INT_TIMER0, &cpuTimer0ISR);
     // Initialize CPUTimer0
