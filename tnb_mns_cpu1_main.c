@@ -57,6 +57,8 @@
 #include "tnb_mns_adc.h"
 #include "stdbool.h"
 #include "tnb_mns_fsm.h"
+#include "fbctrl.h"
+#include "tnb_mns_cpu1.h"
 
 bool run_main_control_task=false;
 
@@ -367,27 +369,43 @@ void main(void)
             //toggle heartbeat gpio
             GPIO_togglePin(HEARTBEAT_GPIO);
 
-            //check if there are any errors, if yes go into error state
-            // ...
-            //run the state machine of all channels (run at ~1/10th of main task frequency)
+            //---------------------
+            // State Machine
+            //---------------------
             unsigned int channel_counter=0;
             for(channel_counter=0; channel_counter<NO_CHANNELS; channel_counter++)
                 run_channel_fsm(driver_channels[channel_counter]);
 
-/*
+
+            //---------------------
+            // Signal Acquisition & Filtering
+            //---------------------
+
+            // Read ADCs sequentially, this updates the system_dyn_state structure
+            readAnalogInputs();
+            // TODO: Filter the acquired analog signals in system_dyn_state
+
+            // TODO: Filter the input reference signals
+            unsigned int i=0;
+            for(i=0; i<NO_CHANNELS; i++){
+                update_first_order(des_duty_buck_filt+i,des_duty_buck[i]);
+            }
+
+
+            //---------------------
+            // Control Law Execution
+            //---------------------
             //regulate outputs of channels
             // ...
 
 
-            //
-            // Read ADCs sequentially, this updates the system_dyn_state structure
-            //
-            readAnalogInputs();
-
-            //
-            // Set Duty Of Half Bridges
-            //
-
+            //---------------------
+            // Output Actuation
+            //---------------------
+            //set output duties for buck
+            for(i=0; i<NO_CHANNELS; i++){
+                set_duty_buck(driver_channels[i]->buck_config,des_duty_buck_filt->y);
+            }
 //            set_duty_buck(&cha_buck,duty_buck_a);
 //            set_duty_buck(&chb_buck,duty_buck_b);
 //            set_duty_buck(&chc_buck,duty_buck_c);
@@ -395,15 +413,12 @@ void main(void)
 //            set_duty_bridge(&chb_bridge,duty_bridge_b);
 //            set_duty_bridge(&chc_bridge,duty_bridge_c);
 
+            //set frequency of resonant bridges
+            //set_freq_bridge(&cha_bridge,freq_cha_resonant_mhz);
 
-            //
-            // Set Frequency Of Resonant Bridge
-            //
-            set_freq_bridge(&cha_bridge,freq_cha_resonant_mhz);
-
-            //
-            // Read State Of Half Bridges
-            //
+            //---------------------
+            // Read State Of Bridges
+            //---------------------
             uint32_t cha_buck_state=GPIO_readPin(cha_buck.state_gpio);
             uint32_t cha_bridge_state_u=GPIO_readPin(cha_bridge.state_v_gpio);
             uint32_t cha_bridge_state_v=GPIO_readPin(cha_bridge.state_u_gpio);
@@ -415,7 +430,7 @@ void main(void)
             uint32_t chc_buck_state=GPIO_readPin(chc_buck.state_gpio);
             uint32_t chc_bridge_state_u=GPIO_readPin(chc_bridge.state_v_gpio);
             uint32_t chc_bridge_state_v=GPIO_readPin(chc_bridge.state_u_gpio);
-*/
+
             run_main_task=false;
 
         }

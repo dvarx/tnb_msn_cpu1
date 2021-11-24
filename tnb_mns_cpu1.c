@@ -8,6 +8,7 @@
 #include "tnb_mns_cpu1.h"
 #include "driverlib.h"
 #include "device.h"
+#include "fbctrl.h"
 
 // ------------------------------------------------------------------------------------
 // Pin & Pad Configuration Structures
@@ -33,11 +34,17 @@ struct driver_channel* driver_channels[NO_CHANNELS]={&channela,&channelb,&channe
 
 bool run_main_task=false;
 struct system_dynamic_state system_dyn_state;
+struct system_dynamic_state system_dyn_state_filtered;
 uint32_t enable_res_cap_a=0;     //variable control the resonant relay of channel a, if it is set to 1, res cap switched in
 uint32_t enable_res_cap_b=0;     //variable control the resonant relay of channel b, if it is set to 1, res cap switched in
 uint32_t enable_res_cap_c=0;     //variable control the resonant relay of channel c, if it is set to 1, res cap switched in
 double des_duty_bridge[NO_CHANNELS]={0.5,0.5,0.5};
 double des_duty_buck[NO_CHANNELS]={0.5,0.5,0.5};
+struct first_order des_duty_buck_filt[NO_CHANNELS]={
+                                 {1.0,1.0,1.0,1.0,1.0,1.0},
+                                 {1.0,1.0,1.0,1.0,1.0,1.0},
+                                 {1.0,1.0,1.0,1.0,1.0,1.0}
+};
 uint32_t des_freq_resonant_mhz[NO_CHANNELS]={DEFAULT_RES_FREQ_MILLIHZ,DEFAULT_RES_FREQ_MILLIHZ,DEFAULT_RES_FREQ_MILLIHZ};
 // ------------------------------------------------------------------------------------
 // Main CPU Timer Related Functions

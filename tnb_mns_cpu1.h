@@ -13,6 +13,7 @@
 #include "device.h"
 #include "tnb_mns_cpu1.h"
 #include "stdint.h"
+#include "fbctrl.h"
 
 #define NO_CHANNELS 3
 #define HEARTBEAT_GPIO 17
@@ -80,6 +81,7 @@ extern struct system_dynamic_state system_dyn_state;
 extern double des_duty_bridge[NO_CHANNELS];             //desired duties for bridges, set by COMM interface
 extern double des_duty_buck[NO_CHANNELS];               //desired duties for bucks, set by COMM interface
 extern uint32_t des_freq_resonant_mhz[NO_CHANNELS];     //desired frequencies for resonant bridges, set by COMM interface
+extern struct first_order des_duty_buck_filt[NO_CHANNELS];
 
 // ---------------------
 // Main CPU Timer Related Functions
