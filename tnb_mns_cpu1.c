@@ -18,7 +18,8 @@ struct buck_configuration cha_buck={40,41,8,GPIO_8_EPWM5A,9,GPIO_9_EPWM5B,EPWM5_
 struct bridge_configuration cha_bridge={30,22,23,12,GPIO_12_EPWM7A,13,GPIO_13_EPWM7B,EPWM7_BASE,false};
 struct driver_channel channela={0,&cha_buck,&cha_bridge,READY,82};
 
-struct buck_configuration chb_buck={35,60,14,GPIO_14_EPWM8A,15,GPIO_15_EPWM8B,EPWM8_BASE};
+
+struct buck_configuration chb_buck={35,60,15,GPIO_15_EPWM8B,14,GPIO_14_EPWM8A,EPWM8_BASE};
 struct bridge_configuration chb_bridge={63,61,65,6,GPIO_6_EPWM4A,7,GPIO_7_EPWM4B,EPWM4_BASE,false};
 struct driver_channel channelb={1,&chb_buck,&chb_bridge,READY,78};                                  // TODO : channel B should be 82
 
@@ -39,11 +40,12 @@ uint32_t enable_res_cap_a=0;     //variable control the resonant relay of channe
 uint32_t enable_res_cap_b=0;     //variable control the resonant relay of channel b, if it is set to 1, res cap switched in
 uint32_t enable_res_cap_c=0;     //variable control the resonant relay of channel c, if it is set to 1, res cap switched in
 double des_duty_bridge[NO_CHANNELS]={0.5,0.5,0.5};
-double des_duty_buck[NO_CHANNELS]={0.5,0.5,0.5};
+double des_duty_buck[NO_CHANNELS]={0,0,0};
+#define tau 300e-3
 struct first_order des_duty_buck_filt[NO_CHANNELS]={
-                                 {1.0,1.0,1.0,1.0,1.0,1.0},
-                                 {1.0,1.0,1.0,1.0,1.0,1.0},
-                                 {1.0,1.0,1.0,1.0,1.0,1.0}
+                                 {1.0/(1.0+2.0*tau/deltaT),1.0/(1.0+2.0*tau/deltaT),-(1.0-2.0*tau/deltaT)/(1.0+2.0*tau/deltaT),0,0,0},
+                                 {1.0/(1.0+2.0*tau/deltaT),1.0/(1.0+2.0*tau/deltaT),-(1.0-2.0*tau/deltaT)/(1.0+2.0*tau/deltaT),0,0,0},
+                                 {1.0/(1.0+2.0*tau/deltaT),1.0/(1.0+2.0*tau/deltaT),-(1.0-2.0*tau/deltaT)/(1.0+2.0*tau/deltaT),0,0,0}
 };
 uint32_t des_freq_resonant_mhz[NO_CHANNELS]={DEFAULT_RES_FREQ_MILLIHZ,DEFAULT_RES_FREQ_MILLIHZ,DEFAULT_RES_FREQ_MILLIHZ};
 // ------------------------------------------------------------------------------------

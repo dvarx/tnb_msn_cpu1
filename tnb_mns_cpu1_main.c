@@ -140,7 +140,7 @@ void main(void)
     // Register ISR for cupTimer0
     Interrupt_register(INT_TIMER0, &cpuTimer0ISR);
     // Initialize CPUTimer0
-    configCPUTimer(CPUTIMER0_BASE, 1000);
+    configCPUTimer(CPUTIMER0_BASE, 1e6*deltaT);
     // Enable CPUTimer0 Interrupt within CPUTimer0 Module
     CPUTimer_enableInterrupt(CPUTIMER0_BASE);
     // Enable TIMER0 Interrupt on CPU coming from TIMER0
@@ -383,8 +383,8 @@ void main(void)
 
             // Read ADCs sequentially, this updates the system_dyn_state structure
             readAnalogInputs();
-            // TODO: Filter the acquired analog signals in system_dyn_state
-
+            // TODO: Filter the acquired analog signals in system_dyn_state_filtered
+            // ---
             // TODO: Filter the input reference signals
             unsigned int i=0;
             for(i=0; i<NO_CHANNELS; i++){
@@ -404,14 +404,11 @@ void main(void)
             //---------------------
             //set output duties for buck
             for(i=0; i<NO_CHANNELS; i++){
-                set_duty_buck(driver_channels[i]->buck_config,des_duty_buck_filt->y);
+                set_duty_buck(driver_channels[i]->buck_config,(des_duty_buck_filt+i)->y);
             }
-//            set_duty_buck(&cha_buck,duty_buck_a);
-//            set_duty_buck(&chb_buck,duty_buck_b);
-//            set_duty_buck(&chc_buck,duty_buck_c);
-//            set_duty_bridge(&cha_bridge,duty_bridge_a);
-//            set_duty_bridge(&chb_bridge,duty_bridge_b);
-//            set_duty_bridge(&chc_bridge,duty_bridge_c);
+            for(i=0; i<NO_CHANNELS; i++){
+                set_duty_bridge(driver_channels[i]->bridge_config,des_duty_bridge[i]);
+            }
 
             //set frequency of resonant bridges
             //set_freq_bridge(&cha_bridge,freq_cha_resonant_mhz);

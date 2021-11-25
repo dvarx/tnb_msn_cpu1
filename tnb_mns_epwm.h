@@ -10,7 +10,7 @@
 
 #include "tnb_mns_cpu1.h"
 
-#define EPWM_TIMER_TBPRD_BUCK       1024UL
+#define EPWM_TIMER_TBPRD_BUCK       512UL
 #define EPWM_TIMER_TBPRD_BRIDGE     1024UL
 
 //initializes pins & pads for buck half bridge
