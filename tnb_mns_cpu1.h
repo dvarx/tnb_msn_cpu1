@@ -15,7 +15,7 @@
 #include "stdint.h"
 #include "fbctrl.h"
 
-#define NO_CHANNELS 3
+#define NO_CHANNELS 6
 #define HEARTBEAT_GPIO 17
 #define DEFAULT_RES_FREQ_MILLIHZ    10000000
 
