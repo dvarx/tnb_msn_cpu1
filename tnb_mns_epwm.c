@@ -9,6 +9,7 @@
 #include "driverlib.h"
 #include "device.h"
 #include "stdint.h"
+#include <stdbool.h>
 
 //sets up the pinmux and config for a buck stage
 void setup_pin_config_buck(const struct buck_configuration* config){
@@ -28,7 +29,7 @@ void setup_pin_config_buck(const struct buck_configuration* config){
     GPIO_setDirectionMode(config->bridge_l_pin,GPIO_DIR_MODE_OUT);     //output
     GPIO_setPinConfig(config->bridge_l_pinconfig);
     //PWM Setup
-    initEPWMWithoutDB(config->epwmbase);
+    initEPWMWithoutDB(config->epwmbase,true);
     setupEPWMActiveHighComplementary(config->epwmbase);
     //clock prescaling results in a PWM clock of around 50kHz
     EPWM_setClockPrescaler(config->epwmbase,
@@ -60,7 +61,7 @@ void setup_pinmux_config_bridge(const struct bridge_configuration* config){
     GPIO_setDirectionMode(config->bridge_l_pin,GPIO_DIR_MODE_OUT);     //output
     GPIO_setPinConfig(config->bridge_l_pinconfig);
     //PWM Setup to ~ 50kHz 50% duty
-    initEPWMWithoutDB(config->epwmbase);
+    initEPWMWithoutDB(config->epwmbase,false);
     setupEPWMActiveHighComplementary(config->epwmbase);
     //clock prescaling results in a PWM clock of around 50kHz
     EPWM_setClockPrescaler(config->epwmbase,
@@ -80,7 +81,7 @@ void set_duty_bridge(const struct bridge_configuration* config, double duty){
     EPWM_setCounterCompareValue(config->epwmbase, EPWM_COUNTER_COMPARE_B, EPWM_TIMER_TBPRD_BRIDGE-duty_int);
 }
 
-void initEPWMWithoutDB(uint32_t base)
+void initEPWMWithoutDB(uint32_t base,bool is_buck)
 {
     //
     // Set-up TBCLK
@@ -108,8 +109,14 @@ void initEPWMWithoutDB(uint32_t base)
     //
     // Set-up compare
     //
-    EPWM_setCounterCompareValue(base, EPWM_COUNTER_COMPARE_A, EPWM_TIMER_TBPRD_BUCK/2);
-    EPWM_setCounterCompareValue(base, EPWM_COUNTER_COMPARE_B, EPWM_TIMER_TBPRD_BUCK/2);
+    if(is_buck){
+        EPWM_setCounterCompareValue(base, EPWM_COUNTER_COMPARE_A, EPWM_TIMER_TBPRD_BUCK/2);
+        EPWM_setCounterCompareValue(base, EPWM_COUNTER_COMPARE_B, EPWM_TIMER_TBPRD_BUCK/2);
+    }
+    else{
+        EPWM_setCounterCompareValue(base, EPWM_COUNTER_COMPARE_A, EPWM_TIMER_TBPRD_BRIDGE/2);
+        EPWM_setCounterCompareValue(base, EPWM_COUNTER_COMPARE_B, EPWM_TIMER_TBPRD_BRIDGE/2);
+    }
 
     //
     // Set actions

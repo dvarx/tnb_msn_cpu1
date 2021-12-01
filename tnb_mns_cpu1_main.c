@@ -110,6 +110,15 @@ void main(void)
     //channel C
     setup_pin_config_buck(&chc_buck);
     setup_pinmux_config_bridge(&chc_bridge);
+    //channel D
+    setup_pin_config_buck(&chd_buck);
+    setup_pinmux_config_bridge(&chd_bridge);
+    //channel E
+    setup_pin_config_buck(&che_buck);
+    setup_pinmux_config_bridge(&che_bridge);
+    //channel F
+    setup_pin_config_buck(&chf_buck);
+    setup_pinmux_config_bridge(&chf_bridge);
 
     //
     // Enable Half Bridges
@@ -120,6 +129,12 @@ void main(void)
     set_enabled(&chb_bridge,false,true);
     set_enabled(&chc_buck,true,true);
     set_enabled(&chc_bridge,false,true);
+    set_enabled(&chd_buck,true,true);
+    set_enabled(&chd_bridge,false,true);
+    set_enabled(&che_buck,true,true);
+    set_enabled(&che_bridge,false,true);
+    set_enabled(&chf_buck,true,true);
+    set_enabled(&chf_bridge,false,true);
 
     //
     // Initialize Reed Switch Interface

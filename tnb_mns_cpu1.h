@@ -63,14 +63,23 @@ struct driver_channel{
 extern struct buck_configuration cha_buck;
 extern struct buck_configuration chb_buck;
 extern struct buck_configuration chc_buck;
+extern struct buck_configuration chd_buck;
+extern struct buck_configuration che_buck;
+extern struct buck_configuration chf_buck;
 extern struct driver_channel channela;
 extern struct driver_channel channelb;
 extern struct driver_channel channelc;
+extern struct driver_channel channeld;
+extern struct driver_channel channele;
+extern struct driver_channel channelf;
 extern struct driver_channel* driver_channels[NO_CHANNELS];
 
 extern struct bridge_configuration cha_bridge;
 extern struct bridge_configuration chb_bridge;
 extern struct bridge_configuration chc_bridge;
+extern struct bridge_configuration chd_bridge;
+extern struct bridge_configuration che_bridge;
+extern struct bridge_configuration chf_bridge;
 
 // ---------------------
 // Main Program related globals

@@ -9,6 +9,7 @@
 #define TNB_MNS_EPWM_H_
 
 #include "tnb_mns_cpu1.h"
+#include <stdint.h>
 
 #define EPWM_TIMER_TBPRD_BUCK       512UL
 #define EPWM_TIMER_TBPRD_BRIDGE     1024UL
@@ -18,7 +19,7 @@ void setup_pin_config_buck(const struct buck_configuration*);
 //intiializes pins & pads for bridge half bridges
 void setup_pinmux_config_bridge(const struct bridge_configuration* config);
 //helper function
-void initEPWMWithoutDB(uint32_t);
+void initEPWMWithoutDB(uint32_t,bool);
 //helper function
 void setupEPWMActiveHighComplementary(uint32_t);
 //set the duty cycle of a buck half bridge
