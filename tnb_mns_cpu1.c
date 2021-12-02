@@ -35,7 +35,7 @@ struct bridge_configuration chd_bridge={48,49,54,10,GPIO_10_EPWM6A,11,GPIO_11_EP
 struct driver_channel channeld={3,&chd_buck,&chd_bridge,READY,80}; // TODO : resonant enable pin
 
 // channel e
-struct buck_configuration che_buck={40,41,16,GPIO_16_EPWM9A,17,GPIO_17_EPWM9B,EPWM9_BASE};
+struct buck_configuration che_buck={125,45,16,GPIO_16_EPWM9A,17,GPIO_17_EPWM9B,EPWM9_BASE};
 struct bridge_configuration che_bridge={50,51,55,18,GPIO_18_EPWM10A,19,GPIO_19_EPWM10B,EPWM10_BASE,false};
 struct driver_channel channele={4,&che_buck,&che_bridge,READY,80}; // TODO : resonant enable pin
 
