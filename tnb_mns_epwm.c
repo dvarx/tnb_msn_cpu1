@@ -86,7 +86,10 @@ void initEPWMWithoutDB(uint32_t base,bool is_buck)
     //
     // Set-up TBCLK
     //
-    EPWM_setTimeBasePeriod(base, EPWM_TIMER_TBPRD_BUCK);
+    if(is_buck)
+        EPWM_setTimeBasePeriod(base, EPWM_TIMER_TBPRD_BUCK);
+    else
+        EPWM_setTimeBasePeriod(base, EPWM_TIMER_TBPRD_BRIDGE);
     EPWM_setPhaseShift(base, 0U);
     EPWM_setTimeBaseCounter(base, 0U);
     EPWM_setTimeBaseCounterMode(base, EPWM_COUNTER_MODE_UP_DOWN);
