@@ -421,8 +421,15 @@ void main(void)
             for(i=0; i<NO_CHANNELS; i++){
                 set_duty_buck(driver_channels[i]->buck_config,(des_duty_buck_filt+i)->y);
             }
+            //set output duties for bridge
             for(i=0; i<NO_CHANNELS; i++){
-                set_duty_bridge(driver_channels[i]->bridge_config,des_duty_bridge[i]);
+                if(driver_channels[i]->channel_state==RUN_REGULAR)
+                    set_duty_bridge(driver_channels[i]->bridge_config,des_duty_bridge[i]);
+            }
+            //set frequency for bridge
+            for(i=0; i<NO_CHANNELS; i++){
+                if(driver_channels[i]->channel_state==RUN_RESONANT)
+                    set_freq_bridge(driver_channels[i]->bridge_config,des_freq_resonant_mhz[i]);
             }
 
             //set frequency of resonant bridges

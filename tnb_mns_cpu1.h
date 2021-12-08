@@ -27,6 +27,7 @@ struct buck_configuration{
     uint32_t bridge_l_pin;
     uint32_t bridge_l_pinconfig;
     uint32_t epwmbase;
+    bool is_inverted;
 };
 
 struct bridge_configuration{

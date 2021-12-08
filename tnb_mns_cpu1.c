@@ -15,19 +15,19 @@
 // ------------------------------------------------------------------------------------
 
 // channel a
-struct buck_configuration cha_buck={40,41,8,GPIO_8_EPWM5A,9,GPIO_9_EPWM5B,EPWM5_BASE};
+struct buck_configuration cha_buck={40,41,8,GPIO_8_EPWM5A,9,GPIO_9_EPWM5B,EPWM5_BASE,true};
 struct bridge_configuration cha_bridge={30,22,23,12,GPIO_12_EPWM7A,13,GPIO_13_EPWM7B,EPWM7_BASE,false};
-struct driver_channel channela={0,&cha_buck,&cha_bridge,READY,82};
+struct driver_channel channela={0,&cha_buck,&cha_bridge,READY,80};
 
 // channel b
-struct buck_configuration chb_buck={35,60,15,GPIO_15_EPWM8B,14,GPIO_14_EPWM8A,EPWM8_BASE};
+struct buck_configuration chb_buck={35,60,15,GPIO_15_EPWM8B,14,GPIO_14_EPWM8A,EPWM8_BASE,true};
 struct bridge_configuration chb_bridge={63,61,65,6,GPIO_6_EPWM4A,7,GPIO_7_EPWM4B,EPWM4_BASE,false};
-struct driver_channel channelb={1,&chb_buck,&chb_bridge,READY,78};                                  // TODO : channel B should be 82
+struct driver_channel channelb={1,&chb_buck,&chb_bridge,READY,82};
 
 // channel c
-struct buck_configuration chc_buck={95,89,5,GPIO_5_EPWM3B,4,GPIO_4_EPWM3A,EPWM3_BASE};              // ! Buck H & L Pins seemingly exchanged on board
+struct buck_configuration chc_buck={95,89,4,GPIO_4_EPWM3A,5,GPIO_5_EPWM3B,EPWM3_BASE,true};
 struct bridge_configuration chc_bridge={107,133,93,0,GPIO_0_EPWM1A,1,GPIO_1_EPWM1B,EPWM1_BASE,false};
-struct driver_channel channelc={2,&chc_buck,&chc_bridge,READY,80};
+struct driver_channel channelc={2,&chc_buck,&chc_bridge,READY,78};
 
 // channel d
 struct buck_configuration chd_buck={32,33,2,GPIO_2_EPWM2A,3,GPIO_3_EPWM2B,EPWM2_BASE};
