@@ -108,7 +108,7 @@ void initADCSOCs(void)
 */
     //----------------------------------------------------------------
     // ADCB Configuration
-    //  ADCB measures: [iA(B0),vA(B2),iB(B4),vB(B5)]
+    //  ADCB measures: [iA(B0),vA(B2),iB(B4),vB(B5),iAres(B1)]
     //----------------------------------------------------------------
 
     #if(EX_ADC_RESOLUTION == 12)
@@ -120,6 +120,8 @@ void initADCSOCs(void)
                      ADC_CH_ADCIN4, 15);
         ADC_setupSOC(ADCB_BASE, ADC_SOC_NUMBER3, ADC_TRIGGER_SW_ONLY,
                      ADC_CH_ADCIN5, 15);
+        ADC_setupSOC(ADCB_BASE, ADC_SOC_NUMBER4, ADC_TRIGGER_SW_ONLY,
+                     ADC_CH_ADCIN1, 15);
     #elif(EX_ADC_RESOLUTION == 16)
         ADC_setupSOC(ADCA_BASE, ADC_SOC_NUMBER0, ADC_TRIGGER_SW_ONLY,
                      ADC_CH_ADCIN0, 64);
@@ -131,7 +133,7 @@ void initADCSOCs(void)
     // Set SOC3 to set the interrupt 1 flag. Enable the interrupt and make
     // sure its flag is cleared.
     //
-    ADC_setInterruptSource(ADCB_BASE, ADC_INT_NUMBER1, ADC_SOC_NUMBER3);
+    ADC_setInterruptSource(ADCB_BASE, ADC_INT_NUMBER1, ADC_SOC_NUMBER4);
     ADC_enableInterrupt(ADCB_BASE, ADC_INT_NUMBER1);
     ADC_clearInterruptStatus(ADCB_BASE, ADC_INT_NUMBER1);
 
@@ -190,10 +192,11 @@ void initADCSOCs(void)
 void readAnalogInputs(void){
     // ADC B Measurements -----------------------------------------------
     // Initiate SOCs of ADCB
-    ADC_forceMultipleSOC(ADCB_BASE, (ADC_FORCE_SOC0 | ADC_FORCE_SOC1 | ADC_FORCE_SOC2 | ADC_FORCE_SOC3));
+    ADC_forceMultipleSOC(ADCB_BASE, (ADC_FORCE_SOC0 | ADC_FORCE_SOC1 | ADC_FORCE_SOC2 | ADC_FORCE_SOC3| ADC_FORCE_SOC4));
     // Wait for ADCA to complete, then acknowledge flag
     while(ADC_getInterruptStatus(ADCB_BASE, ADC_INT_NUMBER1) == false){}
     system_dyn_state.ia = ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER0);
+    system_dyn_state.ia_res = ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER4);
     system_dyn_state.va = ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER1);
     system_dyn_state.ib = ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER2);
     system_dyn_state.vb = ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER3);

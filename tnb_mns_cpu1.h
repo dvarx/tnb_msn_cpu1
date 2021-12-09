@@ -46,6 +46,7 @@ struct system_dynamic_state{
     float ia;
     float ib;
     float ic;
+    float ia_res;
     float va;
     float vb;
     float vc;
