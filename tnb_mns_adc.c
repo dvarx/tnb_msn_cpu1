@@ -188,6 +188,7 @@ void initADCSOCs(void)
     ADC_clearInterruptStatus(ADCD_BASE, ADC_INT_NUMBER1);
 }
 
+const float conv_factor_current=15.0/2048.0;
 // This function reads the analog inputs and stores them in the system_dyn_state structure
 void readAnalogInputs(void){
     // ADC B Measurements -----------------------------------------------
@@ -195,10 +196,10 @@ void readAnalogInputs(void){
     ADC_forceMultipleSOC(ADCB_BASE, (ADC_FORCE_SOC0 | ADC_FORCE_SOC1 | ADC_FORCE_SOC2 | ADC_FORCE_SOC3| ADC_FORCE_SOC4));
     // Wait for ADCA to complete, then acknowledge flag
     while(ADC_getInterruptStatus(ADCB_BASE, ADC_INT_NUMBER1) == false){}
-    system_dyn_state.ia = ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER0);
+    system_dyn_state.ia = conv_factor_current*(float)((int16_t)ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER0)-(int16_t)2048);
     system_dyn_state.ia_res = ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER4);
     system_dyn_state.va = ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER1);
-    system_dyn_state.ib = ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER2);
+    system_dyn_state.ib = conv_factor_current*(float)((int16_t)ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER2)-(int16_t)2048);
     system_dyn_state.vb = ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER3);
     ADC_clearInterruptStatus(ADCB_BASE, ADC_INT_NUMBER1);
 
@@ -207,7 +208,7 @@ void readAnalogInputs(void){
     ADC_forceMultipleSOC(ADCD_BASE, (ADC_FORCE_SOC0 | ADC_FORCE_SOC1));
     // Wait for ADCD to complete, then acknowledge flag
     while(ADC_getInterruptStatus(ADCD_BASE, ADC_INT_NUMBER1) == false){}
-    system_dyn_state.ic = ADC_readResult(ADCDRESULT_BASE, ADC_SOC_NUMBER0);
+    system_dyn_state.ic = conv_factor_current*(float)((int16_t)ADC_readResult(ADCDRESULT_BASE, ADC_SOC_NUMBER0)-(int16_t)2048);
     system_dyn_state.vc = ADC_readResult(ADCDRESULT_BASE, ADC_SOC_NUMBER1);
     ADC_clearInterruptStatus(ADCD_BASE, ADC_INT_NUMBER1);
 }

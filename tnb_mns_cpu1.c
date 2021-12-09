@@ -9,6 +9,7 @@
 #include "driverlib.h"
 #include "device.h"
 #include "fbctrl.h"
+#include "tnb_mns_defs.h"
 
 // ------------------------------------------------------------------------------------
 // Pin & Pad Configuration Structures
@@ -25,7 +26,7 @@ struct bridge_configuration chb_bridge={63,61,65,6,GPIO_6_EPWM4A,7,GPIO_7_EPWM4B
 struct driver_channel channelb={1,&chb_buck,&chb_bridge,READY,82};
 
 // channel c
-struct buck_configuration chc_buck={95,89,4,GPIO_4_EPWM3A,5,GPIO_5_EPWM3B,EPWM3_BASE,true};
+struct buck_configuration chc_buck={95,89,4,GPIO_4_EPWM3A,5,GPIO_5_EPWM3B,EPWM3_BASE,false};
 struct bridge_configuration chc_bridge={107,133,93,0,GPIO_0_EPWM1A,1,GPIO_1_EPWM1B,EPWM1_BASE,false};
 struct driver_channel channelc={2,&chc_buck,&chc_bridge,READY,78};
 
@@ -57,15 +58,24 @@ uint32_t enable_res_cap_a=0;     //variable control the resonant relay of channe
 uint32_t enable_res_cap_b=0;     //variable control the resonant relay of channel b, if it is set to 1, res cap switched in
 uint32_t enable_res_cap_c=0;     //variable control the resonant relay of channel c, if it is set to 1, res cap switched in
 double des_duty_bridge[NO_CHANNELS]={0.5,0.5,0.5,0.5,0.5,0.5};
+double des_currents[NO_CHANNELS]={0.0,0.0,0.0,0.0,0.0,0.0};
 double des_duty_buck[NO_CHANNELS]={0,0,0,0,0,0};
-#define tau 300e-3
+
+struct pi_controller current_pi[NO_CHANNELS]={
+                                 {CTRL_KP,CTRL_KI,0.0,0.0,0.0,0.0},
+                                 {CTRL_KP,CTRL_KI,0.0,0.0,0.0,0.0},
+                                 {CTRL_KP,CTRL_KI,0.0,0.0,0.0,0.0},
+                                 {CTRL_KP,CTRL_KI,0.0,0.0,0.0,0.0},
+                                 {CTRL_KP,CTRL_KI,0.0,0.0,0.0,0.0},
+                                 {CTRL_KP,CTRL_KI,0.0,0.0,0.0,0.0}
+};
 struct first_order des_duty_buck_filt[NO_CHANNELS]={
-                                 {1.0/(1.0+2.0*tau/deltaT),1.0/(1.0+2.0*tau/deltaT),-(1.0-2.0*tau/deltaT)/(1.0+2.0*tau/deltaT),0,0,0},
-                                 {1.0/(1.0+2.0*tau/deltaT),1.0/(1.0+2.0*tau/deltaT),-(1.0-2.0*tau/deltaT)/(1.0+2.0*tau/deltaT),0,0,0},
-                                 {1.0/(1.0+2.0*tau/deltaT),1.0/(1.0+2.0*tau/deltaT),-(1.0-2.0*tau/deltaT)/(1.0+2.0*tau/deltaT),0,0,0},
-                                 {1.0/(1.0+2.0*tau/deltaT),1.0/(1.0+2.0*tau/deltaT),-(1.0-2.0*tau/deltaT)/(1.0+2.0*tau/deltaT),0,0,0},
-                                 {1.0/(1.0+2.0*tau/deltaT),1.0/(1.0+2.0*tau/deltaT),-(1.0-2.0*tau/deltaT)/(1.0+2.0*tau/deltaT),0,0,0},
-                                 {1.0/(1.0+2.0*tau/deltaT),1.0/(1.0+2.0*tau/deltaT),-(1.0-2.0*tau/deltaT)/(1.0+2.0*tau/deltaT),0,0,0}
+                                 {1.0/(1.0+2.0*TAU_BUCK_DUTY/deltaT),1.0/(1.0+2.0*TAU_BUCK_DUTY/deltaT),-(1.0-2.0*TAU_BUCK_DUTY/deltaT)/(1.0+2.0*TAU_BUCK_DUTY/deltaT),0,0,0},
+                                 {1.0/(1.0+2.0*TAU_BUCK_DUTY/deltaT),1.0/(1.0+2.0*TAU_BUCK_DUTY/deltaT),-(1.0-2.0*TAU_BUCK_DUTY/deltaT)/(1.0+2.0*TAU_BUCK_DUTY/deltaT),0,0,0},
+                                 {1.0/(1.0+2.0*TAU_BUCK_DUTY/deltaT),1.0/(1.0+2.0*TAU_BUCK_DUTY/deltaT),-(1.0-2.0*TAU_BUCK_DUTY/deltaT)/(1.0+2.0*TAU_BUCK_DUTY/deltaT),0,0,0},
+                                 {1.0/(1.0+2.0*TAU_BUCK_DUTY/deltaT),1.0/(1.0+2.0*TAU_BUCK_DUTY/deltaT),-(1.0-2.0*TAU_BUCK_DUTY/deltaT)/(1.0+2.0*TAU_BUCK_DUTY/deltaT),0,0,0},
+                                 {1.0/(1.0+2.0*TAU_BUCK_DUTY/deltaT),1.0/(1.0+2.0*TAU_BUCK_DUTY/deltaT),-(1.0-2.0*TAU_BUCK_DUTY/deltaT)/(1.0+2.0*TAU_BUCK_DUTY/deltaT),0,0,0},
+                                 {1.0/(1.0+2.0*TAU_BUCK_DUTY/deltaT),1.0/(1.0+2.0*TAU_BUCK_DUTY/deltaT),-(1.0-2.0*TAU_BUCK_DUTY/deltaT)/(1.0+2.0*TAU_BUCK_DUTY/deltaT),0,0,0}
 };
 uint32_t des_freq_resonant_mhz[NO_CHANNELS]={DEFAULT_RES_FREQ_MILLIHZ,DEFAULT_RES_FREQ_MILLIHZ,DEFAULT_RES_FREQ_MILLIHZ};
 // ------------------------------------------------------------------------------------

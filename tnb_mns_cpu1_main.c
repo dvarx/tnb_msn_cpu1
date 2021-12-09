@@ -59,6 +59,8 @@
 #include "tnb_mns_fsm.h"
 #include "fbctrl.h"
 #include "tnb_mns_cpu1.h"
+#include "tnb_mns_defs.h"
+#include <math.h>
 
 bool run_main_control_task=false;
 
@@ -378,6 +380,7 @@ void main(void)
         driver_channels[n]->channel_state=READY;
     }
 
+    uint32_t loop_counter=0;
     // Main Loop
     while(1){
         if(run_main_task){
@@ -410,6 +413,9 @@ void main(void)
             //---------------------
             // Control Law Execution
             //---------------------
+            //compute optional reference waveform
+            #define OMEGA 2*3.14159265358979323846*5
+            float ides=sin(OMEGA*loop_counter*deltaT);
             //regulate outputs of channels
             // ...
 
@@ -421,12 +427,29 @@ void main(void)
             for(i=0; i<NO_CHANNELS; i++){
                 set_duty_buck(driver_channels[i]->buck_config,(des_duty_buck_filt+i)->y);
             }
-            //set output duties for bridge
+            //set output duties for bridge [regular mode]
             for(i=0; i<NO_CHANNELS; i++){
-                if(driver_channels[i]->channel_state==RUN_REGULAR)
-                    set_duty_bridge(driver_channels[i]->bridge_config,des_duty_bridge[i]);
+                if(driver_channels[i]->channel_state==RUN_REGULAR){
+                    #ifdef DEBUG_CLOSED_LOOP
+                    des_currents[i]=ides;
+                    #endif
+                    //compute feed forward term
+                    float duty_ff=des_currents[i]*(RDC/VIN)/((des_duty_buck_filt+i)->y);
+                    //compute feedback term
+                    set_reference(current_pi+i,des_currents[i]);
+                    float duty_fb=update_pid(current_pi+i,system_dyn_state.ia);
+
+                    //convert normalized duty cycle, limit it and apply
+                    float duty_bridge=0.5*(1+(duty_ff+duty_fb));
+                    if(duty_bridge>0.9)
+                        duty_bridge=0.9;
+                    if(duty_bridge<0.1)
+                        duty_bridge=0.1;
+                    set_duty_bridge(driver_channels[i]->bridge_config,duty_bridge);
+                }
+                //set_duty_bridge(driver_channels[i]->bridge_config,des_duty_bridge[i]);
             }
-            //set frequency for bridge
+            //set frequency for bridge [resonant mode]
             for(i=0; i<NO_CHANNELS; i++){
                 if(driver_channels[i]->channel_state==RUN_RESONANT)
                     set_freq_bridge(driver_channels[i]->bridge_config,des_freq_resonant_mhz[i]);
@@ -451,7 +474,7 @@ void main(void)
             uint32_t chc_bridge_state_v=GPIO_readPin(chc_bridge.state_u_gpio);
 
             run_main_task=false;
-
+            loop_counter=loop_counter+1;
         }
     }
 }
