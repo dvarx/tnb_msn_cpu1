@@ -81,6 +81,7 @@ extern struct system_dynamic_state system_dyn_state;
 extern double des_duty_bridge[NO_CHANNELS];             //desired duties for bridges, set by COMM interface
 extern double des_duty_buck[NO_CHANNELS];               //desired duties for bucks, set by COMM interface
 extern uint32_t des_freq_resonant_mhz[NO_CHANNELS];     //desired frequencies for resonant bridges, set by COMM interface
+extern struct tnb_mns_msg ipc_tnb_mns_msg;
 
 // ---------------------
 // Main CPU Timer Related Functions

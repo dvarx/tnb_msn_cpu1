@@ -39,6 +39,7 @@ uint32_t enable_res_cap_c=0;     //variable control the resonant relay of channe
 double des_duty_bridge[NO_CHANNELS]={0.5,0.5,0.5};
 double des_duty_buck[NO_CHANNELS]={0.5,0.5,0.5};
 uint32_t des_freq_resonant_mhz[NO_CHANNELS]={DEFAULT_RES_FREQ_MILLIHZ,DEFAULT_RES_FREQ_MILLIHZ,DEFAULT_RES_FREQ_MILLIHZ};
+struct tnb_mns_msg ipc_tnb_mns_msg;
 // ------------------------------------------------------------------------------------
 // Main CPU Timer Related Functions
 // ------------------------------------------------------------------------------------
@@ -163,12 +164,8 @@ __interrupt void IPC_ISR0()
     IPC_readCommand(IPC_CPU1_L_CM_R, IPC_FLAG0, IPC_ADDR_CORRECTION_ENABLE,
                     &command, &addr, &data);
 
-    if(command == STOP_ALL){
-
-    }
-
-    if(command == BUCK_ENABLE_ALL){
-
+    if(command == IPC_MSG_NEW_MSG){
+        memcpy(&ipc_tnb_mns_msg,(struct tnb_mns_msg*)addr,sizeof(ipc_tnb_mns_msg));
     }
 
     if(command == IPC_CMD_READ_MEM)
@@ -204,7 +201,6 @@ __interrupt void IPC_ISR0()
 
     //
     // Acknowledge Interrupt Group
-    //
     //
     Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP11);
 }
