@@ -61,6 +61,8 @@
 #include "tnb_mns_cpu1.h"
 #include "tnb_mns_defs.h"
 #include <math.h>
+#include "ipc.h"
+#include "tnb_mns_cpu1.h"
 
 bool run_main_control_task=false;
 
@@ -154,6 +156,14 @@ void main(void)
     Interrupt_initModule();
     // Initializes the PIE vector table with pointers to the shell Interrupt Service Routines (ISRs)
     Interrupt_initVectorTable();
+    //--------------- IPC interrupt ---------------
+    //clear any IPC flags
+    IPC_clearFlagLtoR(IPC_CPU1_L_CM_R, IPC_FLAG_ALL);
+    //register IPC interrupt from CM to CPU1 using IPC_INT0
+    IPC_registerInterrupt(IPC_CPU1_L_CM_R, IPC_INT0, IPC_ISR0);
+    //synchronize CM and CPU1 using IPC_FLAG31
+    IPC_sync(IPC_CPU1_L_CM_R, IPC_FLAG31);
+    //--------------- CPU1 interrupt ---------------
     // Register ISR for cupTimer0
     Interrupt_register(INT_TIMER0, &cpuTimer0ISR);
     // Initialize CPUTimer0

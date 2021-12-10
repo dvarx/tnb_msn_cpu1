@@ -14,6 +14,7 @@
 #include "tnb_mns_cpu1.h"
 #include "stdint.h"
 #include "fbctrl.h"
+#include "comm_interface.h"
 
 #define NO_CHANNELS 6
 #define HEARTBEAT_GPIO 17
@@ -95,6 +96,7 @@ extern double des_currents[NO_CHANNELS];
 extern uint32_t des_freq_resonant_mhz[NO_CHANNELS];     //desired frequencies for resonant bridges, set by COMM interface
 extern struct first_order des_duty_buck_filt[NO_CHANNELS];
 extern struct pi_controller current_pi[NO_CHANNELS];
+extern struct tnb_mns_msg ipc_tnb_mns_msg;
 
 // ---------------------
 // Main CPU Timer Related Functions
@@ -108,6 +110,7 @@ extern uint16_t cpuTimer0IntCount;
 //extern uint16_t cpuTimer2IntCount;
 
 __interrupt void cpuTimer0ISR(void);
+__interrupt void IPC_ISR0(void);
 void initCPUTimers(void);
 void configCPUTimer(uint32_t, uint32_t);
 
