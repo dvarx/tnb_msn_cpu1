@@ -19,6 +19,7 @@
 #define NO_CHANNELS 6
 #define HEARTBEAT_GPIO 17
 #define DEFAULT_RES_FREQ_MILLIHZ    10000000
+#define COMMUNICATION_TIMEOUT_MS    500
 
 struct buck_configuration{
     uint32_t enable_gpio;
@@ -90,13 +91,14 @@ extern struct bridge_configuration chf_bridge;
 
 extern bool run_main_task;                              //variable is set by CPU1 ISR
 extern struct system_dynamic_state system_dyn_state;
-extern double des_duty_bridge[NO_CHANNELS];             //desired duties for bridges, set by COMM interface
-extern double des_duty_buck[NO_CHANNELS];               //desired duties for bucks, set by COMM interface
-extern double des_currents[NO_CHANNELS];
+extern float des_duty_bridge[NO_CHANNELS];             //desired duties for bridges, set by COMM interface
+extern float des_duty_buck[NO_CHANNELS];               //desired duties for bucks, set by COMM interface
+extern float des_currents[NO_CHANNELS];
 extern uint32_t des_freq_resonant_mhz[NO_CHANNELS];     //desired frequencies for resonant bridges, set by COMM interface
 extern struct first_order des_duty_buck_filt[NO_CHANNELS];
 extern struct pi_controller current_pi[NO_CHANNELS];
 extern struct tnb_mns_msg ipc_tnb_mns_msg;
+extern bool communication_active;                       //variable indicates whether there is a TCP connection active (true if a package was received in the last 200ms)
 
 // ---------------------
 // Main CPU Timer Related Functions
@@ -111,6 +113,7 @@ extern uint16_t cpuTimer0IntCount;
 
 __interrupt void cpuTimer0ISR(void);
 __interrupt void IPC_ISR0(void);
+__interrupt void cpuTimer1ISR(void);
 void initCPUTimers(void);
 void configCPUTimer(uint32_t, uint32_t);
 

@@ -10,6 +10,7 @@
 #include "device.h"
 #include "fbctrl.h"
 #include "tnb_mns_defs.h"
+#include "tnb_mns_fsm.h"
 
 // ------------------------------------------------------------------------------------
 // Pin & Pad Configuration Structures
@@ -57,9 +58,10 @@ struct system_dynamic_state system_dyn_state_filtered;
 uint32_t enable_res_cap_a=0;     //variable control the resonant relay of channel a, if it is set to 1, res cap switched in
 uint32_t enable_res_cap_b=0;     //variable control the resonant relay of channel b, if it is set to 1, res cap switched in
 uint32_t enable_res_cap_c=0;     //variable control the resonant relay of channel c, if it is set to 1, res cap switched in
-double des_duty_bridge[NO_CHANNELS]={0.5,0.5,0.5,0.5,0.5,0.5};
-double des_currents[NO_CHANNELS]={0.0,0.0,0.0,0.0,0.0,0.0};
-double des_duty_buck[NO_CHANNELS]={0,0,0,0,0,0};
+float des_duty_bridge[NO_CHANNELS]={0.5,0.5,0.5,0.5,0.5,0.5};
+float des_currents[NO_CHANNELS]={0.0,0.0,0.0,0.0,0.0,0.0};
+float des_duty_buck[NO_CHANNELS]={0,0,0,0,0,0};
+bool communication_active=false;
 
 struct pi_controller current_pi[NO_CHANNELS]={
                                  {CTRL_KP,CTRL_KI,0.0,0.0,0.0,0.0},
@@ -78,7 +80,7 @@ struct first_order des_duty_buck_filt[NO_CHANNELS]={
                                  {1.0/(1.0+2.0*TAU_BUCK_DUTY/deltaT),1.0/(1.0+2.0*TAU_BUCK_DUTY/deltaT),-(1.0-2.0*TAU_BUCK_DUTY/deltaT)/(1.0+2.0*TAU_BUCK_DUTY/deltaT),0,0,0}
 };
 uint32_t des_freq_resonant_mhz[NO_CHANNELS]={DEFAULT_RES_FREQ_MILLIHZ,DEFAULT_RES_FREQ_MILLIHZ,DEFAULT_RES_FREQ_MILLIHZ};
-struct tnb_mns_msg ipc_tnb_mns_msg;
+struct tnb_mns_msg_c2000 ipc_tnb_mns_msg_c2000;
 // ------------------------------------------------------------------------------------
 // Main CPU Timer Related Functions
 // ------------------------------------------------------------------------------------
@@ -204,7 +206,36 @@ __interrupt void IPC_ISR0()
                     &command, &addr, &data);
 
     if(command == IPC_MSG_NEW_MSG){
-        memcpy(&ipc_tnb_mns_msg,(struct tnb_mns_msg*)addr,sizeof(ipc_tnb_mns_msg));
+        //copy tnb mns message
+        memcpy(&ipc_tnb_mns_msg_c2000,(struct tnb_mns_msg*)addr,sizeof(ipc_tnb_mns_msg_c2000));
+
+        //check flags and copy their values in the flag arrays used by the FSM
+        unsigned short i=0;
+
+        for(i=0; i<NO_CHANNELS; i++){
+            //check the BUCK_EN byte
+            if(ipc_tnb_mns_msg_c2000.buck_flg_byte&(1<<i))
+                fsm_req_flags_en_buck[i]=true;
+            //check the STOP byte
+            if(ipc_tnb_mns_msg_c2000.stp_flg_byte&(1<<i))
+                fsm_req_flags_stop[i]=true;
+            //check the RUN_REGULAR byte
+            if(ipc_tnb_mns_msg_c2000.regen_flg_byte&(1<<i))
+                fsm_req_flags_run_regular[i]=true;
+            //check the RUN_RESONANT byte
+            if(ipc_tnb_mns_msg_c2000.resen_flg_byte&(1<<i))
+                fsm_req_flags_run_resonant[i]=true;
+        }
+        //check the currents and duties and translate them
+        for(i=0; i<NO_CHANNELS; i++){
+            //currents are sent in units of [mA]
+            des_currents[i]=(float)(ipc_tnb_mns_msg_c2000.desCurrents[i])*1000;
+            des_duty_buck[i]=(float)(ipc_tnb_mns_msg_c2000.desDuties[i])*(1.0/(float)(UINT16_MAX));
+        }
+        //set the communication_active variable
+        communication_active=true;
+        //reset the timer
+        CPUTimer_reloadTimerCounter(CPUTIMER1_BASE);
     }
 
     if(command == IPC_CMD_READ_MEM)
@@ -258,4 +289,14 @@ cpuTimer0ISR(void)
     // Acknowledge this interrupt to receive more interrupts from group 1
     //
     Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP1);
+}
+
+//
+// cpuTimer1ISR - Counter for CpuTimer1
+//
+__interrupt void cpuTimer1ISR(void){
+    communication_active=false;
+
+    //reset CPU Timer 1 (it counts downwards)
+    CPUTimer_reloadTimerCounter(CPUTIMER1_BASE);
 }

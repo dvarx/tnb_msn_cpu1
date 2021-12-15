@@ -163,7 +163,7 @@ void main(void)
     IPC_registerInterrupt(IPC_CPU1_L_CM_R, IPC_INT0, IPC_ISR0);
     //synchronize CM and CPU1 using IPC_FLAG31
     IPC_sync(IPC_CPU1_L_CM_R, IPC_FLAG31);
-    //--------------- CPU1 interrupt ---------------
+    //--------------- CPU1 Timer0 interrupt (main task) ---------------
     // Register ISR for cupTimer0
     Interrupt_register(INT_TIMER0, &cpuTimer0ISR);
     // Initialize CPUTimer0
@@ -174,6 +174,18 @@ void main(void)
     Interrupt_enable(INT_TIMER0);
     // Start CPUTimer0
     CPUTimer_startTimer(CPUTIMER0_BASE);
+    //--------------- CPU1 Timer1 interrupt (communication active) ---------------
+    // Register ISR for cupTimer1
+    Interrupt_register(INT_TIMER1, &cpuTimer1ISR);
+    // Initialize CPUTimer1
+    configCPUTimer(CPUTIMER1_BASE, 500000);
+    // Enable CPUTimer0 Interrupt within CPUTimer1 Module
+    CPUTimer_enableInterrupt(CPUTIMER1_BASE);
+    // Enable TIMER1 Interrupt on CPU coming from TIMER1
+    Interrupt_enable(INT_TIMER1);
+    // Start CPUTimer0
+    CPUTimer_startTimer(CPUTIMER1_BASE);
+
     // Enable Global Interrupt (INTM) and realtime interrupt (DBGM)
     EINT;
     ERTM;
