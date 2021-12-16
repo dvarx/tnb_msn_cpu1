@@ -227,10 +227,18 @@ __interrupt void IPC_ISR0()
                 fsm_req_flags_run_resonant[i]=true;
         }
         //check the currents and duties and translate them
+        //do not allow modifying these values when the system is not running, e.g.
+        //do not modify values when system in READY state
         for(i=0; i<NO_CHANNELS; i++){
-            //currents are sent in units of [mA]
-            des_currents[i]=(float)(ipc_tnb_mns_msg_c2000.desCurrents[i])*1000;
-            des_duty_buck[i]=(float)(ipc_tnb_mns_msg_c2000.desDuties[i])*(1.0/(float)(UINT16_MAX));
+            if(driver_channels[i]->channel_state!=READY&&driver_channels[i]->channel_state!=FAULT){
+                //currents are sent in units of [mA]
+                des_currents[i]=(float)(ipc_tnb_mns_msg_c2000.desCurrents[i])*1e-3;
+                des_duty_buck[i]=(float)(ipc_tnb_mns_msg_c2000.desDuties[i])*(1.0/(float)(UINT16_MAX));
+            }
+            else{
+                des_currents[i]=0.0;
+                des_duty_buck[i]=0.0;
+            }
         }
         //set the communication_active variable
         communication_active=true;

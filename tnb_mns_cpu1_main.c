@@ -436,8 +436,8 @@ void main(void)
             // Control Law Execution
             //---------------------
             //compute optional reference waveform
-            #define OMEGA 2*3.14159265358979323846*5
-            float ides=sin(OMEGA*loop_counter*deltaT);
+            //#define OMEGA 2*3.14159265358979323846*5
+            //float ides=sin(OMEGA*loop_counter*deltaT);
             //regulate outputs of channels
             // ...
 
@@ -452,9 +452,9 @@ void main(void)
             //set output duties for bridge [regular mode]
             for(i=0; i<NO_CHANNELS; i++){
                 if(driver_channels[i]->channel_state==RUN_REGULAR){
-                    #ifdef DEBUG_CLOSED_LOOP
-                    des_currents[i]=ides;
-                    #endif
+                    //#ifdef DEBUG_CLOSED_LOOP
+                    //des_currents[i]=ides;
+                    //#endif
                     //compute feed forward term
                     float duty_ff=des_currents[i]*(RDC/VIN)/((des_duty_buck_filt+i)->y);
                     //compute feedback term

@@ -120,6 +120,12 @@ void READY_enter(uint8_t channelno){
     GPIO_writePin(driver_channels[channelno]->buck_config->enable_gpio,0);
     //disable bridge
     GPIO_writePin(driver_channels[channelno]->bridge_config->enable_gpio,0);
+    //reset desBucks
+    unsigned int i=0;
+    for(i=0; i<NO_CHANNELS; i++){
+        des_duty_buck[i]=0;
+        des_currents[i]=0;
+    }
 }
 void READY_during(uint8_t channelno){return;}
 void READY_exit(uint8_t channelno){return;}
