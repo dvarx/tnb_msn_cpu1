@@ -240,6 +240,10 @@ __interrupt void IPC_ISR0()
                 des_duty_buck[i]=0.0;
             }
         }
+        //check frequencies and set them
+        for(i=0; i<NO_CHANNELS; i++){
+            des_freq_resonant_mhz[i]=1000*(uint32_t)(ipc_tnb_mns_msg_c2000.desFreqs[i]);
+        }
         //set the communication_active variable
         communication_active=true;
         //reset the timer

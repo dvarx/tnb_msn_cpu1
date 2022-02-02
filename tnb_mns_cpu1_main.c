@@ -89,10 +89,16 @@ void main(void)
     Device_initGPIO();
 
     //
-    // Setup heartbeat GPIO
-    //
+    // Setup heartbeat GPIO & input relay gpios
+    //heartbeat
     GPIO_setDirectionMode(HEARTBEAT_GPIO, GPIO_DIR_MODE_OUT);   //output
     GPIO_setPadConfig(HEARTBEAT_GPIO,GPIO_PIN_TYPE_STD);        //push pull output
+    //main input relay
+    GPIO_setDirectionMode(MAIN_RELAY_GPIO, GPIO_DIR_MODE_OUT);   //output
+    GPIO_setPadConfig(MAIN_RELAY_GPIO,GPIO_PIN_TYPE_STD);        //push pull output
+    //input relay to slave
+    GPIO_setDirectionMode(SLAVE_RELAY_GPIO, GPIO_DIR_MODE_OUT);   //output
+    GPIO_setPadConfig(SLAVE_RELAY_GPIO,GPIO_PIN_TYPE_STD);        //push pull output
 
     //
     // Initialize ADCs
@@ -413,8 +419,14 @@ void main(void)
             // State Machine
             //---------------------
             unsigned int channel_counter=0;
-            for(channel_counter=0; channel_counter<NO_CHANNELS; channel_counter++)
+            bool main_relay_active=false;
+            for(channel_counter=0; channel_counter<NO_CHANNELS; channel_counter++){
                 run_channel_fsm(driver_channels[channel_counter]);
+                //we enable the main relay when one channel is not in state READY anymore (e.g. when one channel requires power)
+                main_relay_active=main_relay_active||(driver_channels[channel_counter]->channel_state!=READY);
+            }
+            GPIO_writePin(MAIN_RELAY_GPIO,main_relay_active);
+
 
 
             //---------------------
