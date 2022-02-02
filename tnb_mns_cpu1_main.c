@@ -471,7 +471,7 @@ void main(void)
                     float duty_ff=des_currents[i]*(RDC/VIN)/((des_duty_buck_filt+i)->y);
                     //compute feedback term
                     set_reference(current_pi+i,des_currents[i]);
-                    float duty_fb=update_pid(current_pi+i,system_dyn_state.ia);
+                    float duty_fb=update_pid(current_pi+i,system_dyn_state.is[i]);
 
                     //convert normalized duty cycle, limit it and apply
                     float duty_bridge=0.5*(1+(duty_ff+duty_fb));
