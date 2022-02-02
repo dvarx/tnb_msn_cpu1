@@ -426,6 +426,7 @@ void main(void)
                 main_relay_active=main_relay_active||(driver_channels[channel_counter]->channel_state!=READY);
             }
             GPIO_writePin(MAIN_RELAY_GPIO,main_relay_active);
+            GPIO_writePin(SLAVE_RELAY_GPIO,main_relay_active);
 
 
 
