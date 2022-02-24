@@ -27,7 +27,7 @@ struct bridge_configuration chb_bridge={63,61,65,6,GPIO_6_EPWM4A,7,GPIO_7_EPWM4B
 struct driver_channel channelb={1,&chb_buck,&chb_bridge,READY,82};
 
 // channel c
-struct buck_configuration chc_buck={95,89,4,GPIO_4_EPWM3A,5,GPIO_5_EPWM3B,EPWM3_BASE,false};
+struct buck_configuration chc_buck={95,89,4,GPIO_4_EPWM3A,5,GPIO_5_EPWM3B,EPWM3_BASE,true};
 struct bridge_configuration chc_bridge={107,133,93,0,GPIO_0_EPWM1A,1,GPIO_1_EPWM1B,EPWM1_BASE,false};
 struct driver_channel channelc={2,&chc_buck,&chc_bridge,READY,78};
 

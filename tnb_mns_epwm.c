@@ -206,16 +206,16 @@ void set_enabled(void* config,bool is_buck,bool enable){
     if(is_buck){
         struct buck_configuration* config_=config;
         if(enable)
-            GPIO_writePin(config_->enable_gpio,1);
+            GPIO_writePin(config_->enable_gpio,DRIVER_ENABLE_POLARITY);
         else
-            GPIO_writePin(config_->enable_gpio,0);
+            GPIO_writePin(config_->enable_gpio,DRIVER_DISABLE_POLARITY);
     }
     else{
         struct bridge_configuration* config_=config;
         if(enable)
-            GPIO_writePin(config_->enable_gpio,1);
+            GPIO_writePin(config_->enable_gpio,DRIVER_ENABLE_POLARITY);
         else
-            GPIO_writePin(config_->enable_gpio,0);
+            GPIO_writePin(config_->enable_gpio,DRIVER_DISABLE_POLARITY);
 
     }
 }

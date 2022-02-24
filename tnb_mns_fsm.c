@@ -117,9 +117,9 @@ void run_channel_fsm(struct driver_channel* channel){
 // ---------------------------------
 void READY_enter(uint8_t channelno){
     //disable buck
-    GPIO_writePin(driver_channels[channelno]->buck_config->enable_gpio,0);
+    GPIO_writePin(driver_channels[channelno]->buck_config->enable_gpio,DRIVER_DISABLE_POLARITY);
     //disable bridge
-    GPIO_writePin(driver_channels[channelno]->bridge_config->enable_gpio,0);
+    GPIO_writePin(driver_channels[channelno]->bridge_config->enable_gpio,DRIVER_DISABLE_POLARITY);
     //reset desBucks
     unsigned int i=0;
     for(i=0; i<NO_CHANNELS; i++){
@@ -132,9 +132,9 @@ void READY_exit(uint8_t channelno){return;}
 //BUCK_ENABLED state
 void BUCK_ENABLED_enter(uint8_t channelno){
     //enable buck
-    GPIO_writePin(driver_channels[channelno]->buck_config->enable_gpio,1);
+    GPIO_writePin(driver_channels[channelno]->buck_config->enable_gpio,DRIVER_ENABLE_POLARITY);
     //disable bridge
-    GPIO_writePin(driver_channels[channelno]->bridge_config->enable_gpio,0);
+    GPIO_writePin(driver_channels[channelno]->bridge_config->enable_gpio,DRIVER_DISABLE_POLARITY);
     //reset the desired buck duty cycle to zero
     reset_first_order(des_duty_buck_filt+channelno);
 }
@@ -147,9 +147,9 @@ void INIT_REGULAR_RUN_enter(uint8_t channelno){
     //reset the init regular counter
     fsm_aux_counter=0;
     //enable buck
-    GPIO_writePin(driver_channels[channelno]->buck_config->enable_gpio,1);
+    GPIO_writePin(driver_channels[channelno]->buck_config->enable_gpio,DRIVER_ENABLE_POLARITY);
     //disable bridge
-    GPIO_writePin(driver_channels[channelno]->bridge_config->enable_gpio,0);
+    GPIO_writePin(driver_channels[channelno]->bridge_config->enable_gpio,DRIVER_DISABLE_POLARITY);
 }
 void INIT_REGULAR_RUN_during(uint8_t channelno){
     fsm_aux_counter++;
@@ -158,17 +158,17 @@ void INIT_REGULAR_RUN_exit(uint8_t channelno){return;}
 //RUNNING_REGULAR state
 void RUNNING_REGULAR_enter(uint8_t channelno){
     //enable buck
-    GPIO_writePin(driver_channels[channelno]->buck_config->enable_gpio,1);
+    GPIO_writePin(driver_channels[channelno]->buck_config->enable_gpio,DRIVER_ENABLE_POLARITY);
     //configure & enable bridge
     setup_pinmux_config_bridge(driver_channels[channelno]->bridge_config);
-    GPIO_writePin(driver_channels[channelno]->bridge_config->enable_gpio,1);
+    GPIO_writePin(driver_channels[channelno]->bridge_config->enable_gpio,DRIVER_ENABLE_POLARITY);
 }
 void RUNNING_REGULAR_during(uint8_t channelno){
     return;
 }
 void RUNNING_REGULAR_exit(uint8_t channelno){
     //disable bridge
-    GPIO_writePin(driver_channels[channelno]->bridge_config->enable_gpio,0);
+    GPIO_writePin(driver_channels[channelno]->bridge_config->enable_gpio,DRIVER_DISABLE_POLARITY);
 }
 //INIT_RESONANT RUN state
 void INIT_RESONANT_RUN_enter(uint8_t channelno){
@@ -183,20 +183,20 @@ void INIT_RESONANT_RUN_exit(uint8_t channelno){return;}
 void RUNNING_RESONANT_enter(uint8_t channelno){
     //configure & enable bridge
     setup_pinmux_config_bridge(driver_channels[channelno]->bridge_config);
-    GPIO_writePin(driver_channels[channelno]->bridge_config->enable_gpio,1);
+    GPIO_writePin(driver_channels[channelno]->bridge_config->enable_gpio,DRIVER_ENABLE_POLARITY);
 }
 void RUNNING_RESONANT_during(uint8_t channelno){
 }
 void RUNNING_RESONANT_exit(uint8_t channelno){
     //disable bridge
-    GPIO_writePin(driver_channels[channelno]->bridge_config->enable_gpio,0);
+    GPIO_writePin(driver_channels[channelno]->bridge_config->enable_gpio,DRIVER_DISABLE_POLARITY);
 }
 //TERMINATE_RESONANT state
 void TERMINATE_RESONANT_enter(uint8_t channelno){
     //reset counter
     fsm_aux_counter=0;
     //disable bridge so that energy can flow from resonant cap/inductor to DC link
-    GPIO_writePin(driver_channels[channelno]->bridge_config->enable_gpio,0);
+    GPIO_writePin(driver_channels[channelno]->bridge_config->enable_gpio,DRIVER_DISABLE_POLARITY);
 }
 void TERMINATE_RESONANT_during(uint8_t channelno){
     fsm_aux_counter++;
