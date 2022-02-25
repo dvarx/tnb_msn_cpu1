@@ -179,8 +179,8 @@ void setupEPWMActiveHighComplementary(uint32_t base)
     //
     // Set the RED and FED values
     //
-    EPWM_setFallingEdgeDelayCount(base, 13);
-    EPWM_setRisingEdgeDelayCount(base, 13);
+    EPWM_setFallingEdgeDelayCount(base, 40);
+    EPWM_setRisingEdgeDelayCount(base, 40);
 
     //
     // Invert only the Falling Edge delayed output (AHC)
