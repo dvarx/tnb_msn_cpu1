@@ -179,6 +179,7 @@ void setupEPWMActiveHighComplementary(uint32_t base)
     //
     // Set the RED and FED values
     //
+    // TODO : The constant value of 40 here sets the interlock of the buck stage to around 400ns, might need to adjust / optimize this at some point
     EPWM_setFallingEdgeDelayCount(base, 40);
     EPWM_setRisingEdgeDelayCount(base, 40);
 
