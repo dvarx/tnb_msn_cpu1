@@ -17,7 +17,7 @@ struct pi_controller{
     float r;
     float errint;
     float errnm1;
-    float y;
+    float u;
 };
 
 /*
@@ -34,26 +34,19 @@ struct first_order{
 
 /*
  * ctrl: pointer to the pi_controller structure
- * ref: reference value that the pi controller should track
+ * r: r[n] the current reference input
+ * y: y[n] the current output measurement
  */
-inline void set_reference(struct pi_controller* ctrlr,float refr){
-    //ctrlr->r=refr;
-    return;
-}
-
-/*
- * ctrl: pointer to the pi_controller structure
- * x: next input to pi controller
- */
-inline float update_pid(struct pi_controller* ctrlr,float x){
-    float e=ctrlr->r-x;
+inline float update_pid(struct pi_controller* ctrlr,float r,float y){
+    //compute the current error
+    float e=r-y;
     //update the error integral using trapezoidal rule
     ctrlr->errint+=(deltaT*0.5)*(e+ctrlr->errnm1);
-    //store the current error
+    //store the current error for later use
     ctrlr->errnm1=e;
     //update the output
-    ctrlr->y=ctrlr->kp*(e)+ctrlr->ki*ctrlr->errint;
-    return ctrlr->y;
+    ctrlr->u=ctrlr->kp*(e)+ctrlr->ki*ctrlr->errint;
+    return ctrlr->u;
 }
 
 inline float update_first_order(struct first_order* fir,float x){
@@ -75,5 +68,9 @@ inline void reset_first_order(struct first_order* fir){
     fir->y=0;
 }
 
+inline void reset_pid(struct pi_controller* ctrlr){
+    ctrlr->errint=0;
+    ctrlr->errnm1=0;
+}
 
 #endif /* FBCTRL_H_ */

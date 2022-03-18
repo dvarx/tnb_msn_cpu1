@@ -17,12 +17,12 @@
 // ------------------------------------------------------------------------------------
 
 // channel a
-struct buck_configuration cha_buck={40,41,8,GPIO_8_EPWM5A,9,GPIO_9_EPWM5B,EPWM5_BASE,true};
+struct buck_configuration cha_buck={40,41,8,GPIO_8_EPWM5A,9,GPIO_9_EPWM5B,EPWM5_BASE,false};
 struct bridge_configuration cha_bridge={30,22,23,12,GPIO_12_EPWM7A,13,GPIO_13_EPWM7B,EPWM7_BASE,false};
 struct driver_channel channela={0,&cha_buck,&cha_bridge,READY,87};
 
 // channel b
-struct buck_configuration chb_buck={35,60,15,GPIO_15_EPWM8B,14,GPIO_14_EPWM8A,EPWM8_BASE,true};
+struct buck_configuration chb_buck={35,60,15,GPIO_15_EPWM8B,14,GPIO_14_EPWM8A,EPWM8_BASE,false};
 struct bridge_configuration chb_bridge={63,61,65,6,GPIO_6_EPWM4A,7,GPIO_7_EPWM4B,EPWM4_BASE,false};
 struct driver_channel channelb={1,&chb_buck,&chb_bridge,READY,85};
 
@@ -230,7 +230,7 @@ __interrupt void IPC_ISR0()
         //do not allow modifying these values when the system is not running, e.g.
         //do not modify values when system in READY state
         for(i=0; i<NO_CHANNELS; i++){
-            if(driver_channels[i]->channel_state!=READY&&driver_channels[i]->channel_state!=FAULT){
+            if(driver_channels[i]->channel_state==RUN_REGULAR||driver_channels[i]->channel_state==BUCK_ENABLED||driver_channels[i]->channel_state==RUN_RESONANT){
                 //currents are sent in units of [mA]
                 des_currents[i]=(float)(ipc_tnb_mns_msg_c2000.desCurrents[i])*1e-3;
                 des_duty_buck[i]=(float)(ipc_tnb_mns_msg_c2000.desDuties[i])*(1.0/(float)(UINT16_MAX));

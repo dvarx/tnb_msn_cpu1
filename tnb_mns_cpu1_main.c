@@ -456,7 +456,7 @@ void main(void)
 
 
             //---------------------
-            // Output Actuation
+            // Control Law Execution & Output Actuation
             //---------------------
             //set output duties for buck
             for(i=0; i<NO_CHANNELS; i++){
@@ -468,11 +468,14 @@ void main(void)
                     //#ifdef DEBUG_CLOSED_LOOP
                     //des_currents[i]=ides;
                     //#endif
-                    //compute feed forward term
-                    float duty_ff=des_currents[i]*(RDC/VIN)/((des_duty_buck_filt+i)->y);
-                    //compute feedback term
-                    set_reference(current_pi+i,des_currents[i]);
-                    float duty_fb=update_pid(current_pi+i,system_dyn_state.is[i]);
+                    //compute feed forward actuation term
+                    float act_voltage_ff=des_currents[i]*RDC;
+                    float duty_ff=act_voltage_ff/(VIN*(des_duty_buck_filt+i)->y);
+                    //compute feedback actuation term
+                    //float act_voltage_fb=update_pid(current_pi+i,des_currents[i],system_dyn_state.is[i]);
+                    //float duty_fb=act_voltage_fb/(VIN*(des_duty_buck_filt+i)->y);
+                    float duty_fb=0.0;
+                    // TODO-PID : Sanity / Limit Checks on PID go here
 
                     //convert normalized duty cycle, limit it and apply
                     float duty_bridge=0.5*(1+(duty_ff+duty_fb));
@@ -489,9 +492,6 @@ void main(void)
                 if(driver_channels[i]->channel_state==RUN_RESONANT)
                     set_freq_bridge(driver_channels[i]->bridge_config,des_freq_resonant_mhz[i]);
             }
-
-            //set frequency of resonant bridges
-            //set_freq_bridge(&cha_bridge,freq_cha_resonant_mhz);
 
             //---------------------
             // Read State Of Bridges

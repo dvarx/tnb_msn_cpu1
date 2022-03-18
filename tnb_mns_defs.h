@@ -12,7 +12,7 @@
 
 //constants related to output inductor current PI controller
 #define RDC 3.3
-#define VIN 40
+#define VIN 96
 #define CTRL_KP 0.0
 #define CTRL_KI 0.0
 
