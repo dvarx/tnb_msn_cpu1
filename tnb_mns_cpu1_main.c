@@ -55,7 +55,7 @@
 #include "tnb_mns_cpu1.h"
 #include "tnb_mns_epwm.h"
 #include "tnb_mns_adc.h"
-#include "stdbool.h"
+#include <stdbool.h>
 #include "tnb_mns_fsm.h"
 #include "fbctrl.h"
 #include "tnb_mns_cpu1.h"
@@ -65,6 +65,7 @@
 #include "tnb_mns_cpu1.h"
 
 bool run_main_control_task=false;
+bool enable_waveform_debugging=false;
 
 void main(void)
 {
@@ -451,6 +452,12 @@ void main(void)
             //compute optional reference waveform
             //#define OMEGA 2*3.14159265358979323846*5
             //float ides=sin(OMEGA*loop_counter*deltaT);
+            const unsigned int periodn=500e-3/deltaT;
+            float ides=0.0;
+            if(loop_counter%periodn<periodn/2)
+                ides=1.0;
+            else
+                ides=-1.0;
             //regulate outputs of channels
             // ...
 
@@ -465,16 +472,22 @@ void main(void)
             //set output duties for bridge [regular mode]
             for(i=0; i<NO_CHANNELS; i++){
                 if(driver_channels[i]->channel_state==RUN_REGULAR){
-                    //#ifdef DEBUG_CLOSED_LOOP
-                    //des_currents[i]=ides;
-                    //#endif
-                    //compute feed forward actuation term
-                    float act_voltage_ff=des_currents[i]*RDC;
-                    float duty_ff=act_voltage_ff/(VIN*(des_duty_buck_filt+i)->y);
-                    //compute feedback actuation term
-                    //float act_voltage_fb=update_pid(current_pi+i,des_currents[i],system_dyn_state.is[i]);
-                    //float duty_fb=act_voltage_fb/(VIN*(des_duty_buck_filt+i)->y);
-                    float duty_fb=0.0;
+                    #ifdef TUNE_CLOSED_LOOP
+                    if(enable_waveform_debugging)
+                        des_currents[i]=ides;
+                    else
+                        ides=0.0;
+                    #endif
+                    //execute the PID control low
+                    float voltage_dclink=VIN*(des_duty_buck_filt+i)->y;
+                    //compute feed forward actuation term (limits [-1,1] for this duty) - feed-forward term currently not used
+                    //float act_voltage_ff=des_currents[i]*RDC;
+                    float act_voltage_ff=0.0;
+                    float duty_ff=act_voltage_ff/voltage_dclink;
+                    //compute feedback actuation term (limits [-1,1] for this duty)
+                    bool output_saturated=fabsf((current_pi+i)->u)>=0.9*voltage_dclink;
+                    float act_voltage_fb=update_pid(current_pi+i,des_currents[i],system_dyn_state.is[i],output_saturated);
+                    float duty_fb=act_voltage_fb/(voltage_dclink);
                     // TODO-PID : Sanity / Limit Checks on PID go here
 
                     //convert normalized duty cycle, limit it and apply

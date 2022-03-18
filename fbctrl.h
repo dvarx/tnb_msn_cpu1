@@ -8,6 +8,8 @@
 #ifndef FBCTRL_H_
 #define FBCTRL_H_
 
+#include <stdbool.h>
+
 //controller time interval
 #define deltaT 100e-6
 
@@ -37,11 +39,12 @@ struct first_order{
  * r: r[n] the current reference input
  * y: y[n] the current output measurement
  */
-inline float update_pid(struct pi_controller* ctrlr,float r,float y){
+inline float update_pid(struct pi_controller* ctrlr,float r,float y,bool output_saturated){
     //compute the current error
     float e=r-y;
-    //update the error integral using trapezoidal rule
-    ctrlr->errint+=(deltaT*0.5)*(e+ctrlr->errnm1);
+    //update the error integral using trapezoidal rule, but only if the output is not saturated (anti-windup measure)
+    if(!output_saturated)
+        ctrlr->errint+=(deltaT*0.5)*(e+ctrlr->errnm1);
     //store the current error for later use
     ctrlr->errnm1=e;
     //update the output
