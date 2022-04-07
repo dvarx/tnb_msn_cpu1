@@ -218,9 +218,9 @@ void readAnalogInputs(void){
     system_dyn_state.is[3] = conv_adc_meas_to_current_a(ADC_readResult(ADCARESULT_BASE, ADC_SOC_NUMBER0));
     system_dyn_state.vs[3] = ADC_readResult(ADCARESULT_BASE, ADC_SOC_NUMBER1);
     system_dyn_state.is[4] = conv_adc_meas_to_current_a(ADC_readResult(ADCARESULT_BASE, ADC_SOC_NUMBER2));
-    system_dyn_state.is_res[3] = ADC_readResult(ADCARESULT_BASE, ADC_SOC_NUMBER3);    // TODO : conv factor
-    system_dyn_state.is_res[5] = ADC_readResult(ADCARESULT_BASE, ADC_SOC_NUMBER4);    // TODO : conv factor
-    system_dyn_state.is_res[4] = ADC_readResult(ADCARESULT_BASE, ADC_SOC_NUMBER5);    // TODO : conv factor
+    system_dyn_state.is_res[3] = conv_adc_meas_to_current_a(ADC_readResult(ADCARESULT_BASE, ADC_SOC_NUMBER3));    // TODO : conv factor
+    system_dyn_state.is_res[5] = conv_adc_meas_to_current_a(ADC_readResult(ADCARESULT_BASE, ADC_SOC_NUMBER4));    // TODO : conv factor
+    system_dyn_state.is_res[4] = conv_adc_meas_to_current_a(ADC_readResult(ADCARESULT_BASE, ADC_SOC_NUMBER5));    // TODO : conv factor
     ADC_clearInterruptStatus(ADCA_BASE, ADC_INT_NUMBER1);
 
     // ADC B Measurements -----------------------------------------------
@@ -228,7 +228,7 @@ void readAnalogInputs(void){
     // Wait for ADCB to complete, then acknowledge flag
     while(ADC_getInterruptStatus(ADCB_BASE, ADC_INT_NUMBER1) == false){}
     system_dyn_state.is[0] = conv_adc_meas_to_current_a(ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER0));
-    system_dyn_state.is_res[0] = ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER4);    // TODO : conv factor
+    system_dyn_state.is_res[0] = conv_adc_meas_to_current_a(ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER4));    // TODO : conv factor
     system_dyn_state.vs[0] = ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER1);
     system_dyn_state.is[1] = conv_adc_meas_to_current_a(ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER2));
     system_dyn_state.vs[1] = ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER3);
@@ -249,7 +249,7 @@ void readAnalogInputs(void){
     while(ADC_getInterruptStatus(ADCD_BASE, ADC_INT_NUMBER1) == false){}
     system_dyn_state.is[2] = conv_adc_meas_to_current_a(ADC_readResult(ADCDRESULT_BASE, ADC_SOC_NUMBER0));
     system_dyn_state.vs[2] = ADC_readResult(ADCDRESULT_BASE, ADC_SOC_NUMBER1);
-    system_dyn_state.is_res[2] = ADC_readResult(ADCDRESULT_BASE, ADC_SOC_NUMBER2);  // TODO : conv factor
-    system_dyn_state.is_res[1]= ADC_readResult(ADCDRESULT_BASE, ADC_SOC_NUMBER3);   // TODO : conv factor
+    system_dyn_state.is_res[2] = conv_adc_meas_to_current_a(ADC_readResult(ADCDRESULT_BASE, ADC_SOC_NUMBER2));  // TODO : conv factor
+    system_dyn_state.is_res[1]= conv_adc_meas_to_current_a(ADC_readResult(ADCDRESULT_BASE, ADC_SOC_NUMBER3));   // TODO : conv factor
     ADC_clearInterruptStatus(ADCD_BASE, ADC_INT_NUMBER1);
 }

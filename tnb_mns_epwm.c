@@ -84,8 +84,15 @@ void set_duty_buck(const struct buck_configuration* config, double duty){
 
 void set_duty_bridge(const struct bridge_configuration* config, double duty){
     uint16_t duty_int=duty*EPWM_TIMER_TBPRD_BRIDGE;
-    EPWM_setCounterCompareValue(config->epwmbase, EPWM_COUNTER_COMPARE_A, duty_int);
-    EPWM_setCounterCompareValue(config->epwmbase, EPWM_COUNTER_COMPARE_B, EPWM_TIMER_TBPRD_BRIDGE-duty_int);
+    //set the duty based on whether the channel has an inverted duty logic or not
+    if(config->is_inverted){
+        EPWM_setCounterCompareValue(config->epwmbase, EPWM_COUNTER_COMPARE_A, EPWM_TIMER_TBPRD_BRIDGE-duty_int);
+        EPWM_setCounterCompareValue(config->epwmbase, EPWM_COUNTER_COMPARE_B, duty_int);
+    }
+    else{
+        EPWM_setCounterCompareValue(config->epwmbase, EPWM_COUNTER_COMPARE_A, duty_int);
+        EPWM_setCounterCompareValue(config->epwmbase, EPWM_COUNTER_COMPARE_B, EPWM_TIMER_TBPRD_BRIDGE-duty_int);
+    }
 }
 
 void initEPWMWithoutDB(uint32_t base,bool is_buck)

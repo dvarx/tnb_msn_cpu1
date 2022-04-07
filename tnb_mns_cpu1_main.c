@@ -473,20 +473,31 @@ void main(void)
             for(i=0; i<NO_CHANNELS; i++){
                 if(driver_channels[i]->channel_state==RUN_REGULAR){
                     #ifdef TUNE_CLOSED_LOOP
-                    if(enable_waveform_debugging)
-                        des_currents[i]=ides;
-                    else
-                        ides=0.0;
+                        if(enable_waveform_debugging)
+                            des_currents[i]=ides;
+                        else
+                            ides=0.0;
                     #endif
-                    //execute the PID control low
+                    //execute the PI control low
                     float voltage_dclink=VIN*(des_duty_buck_filt+i)->y;
                     //compute feed forward actuation term (limits [-1,1] for this duty) - feed-forward term currently not used
-                    //float act_voltage_ff=des_currents[i]*RDC;
-                    float act_voltage_ff=0.0;
+                    #ifdef FEED_FORWARD_ONLY
+                        float act_voltage_ff=des_currents[i]*RDC;
+                        float act_voltage_fb=0.0;
+                    #endif
+                    #ifdef TUNE_CLOSED_LOOP
+                        float act_voltage_ff=0.0;
+                        //compute feedback actuation term (limits [-1,1] for this duty)
+                        bool output_saturated=fabsf((current_pi+i)->u)>=0.9*voltage_dclink;
+                        float act_voltage_fb=update_pid(current_pi+i,des_currents[i],system_dyn_state.is[i],output_saturated);
+                    #endif
+                    #ifdef CLOSED_LOOP
+                        float act_voltage_ff=0.0;
+                        //compute feedback actuation term (limits [-1,1] for this duty)
+                        bool output_saturated=fabsf((current_pi+i)->u)>=0.9*voltage_dclink;
+                        float act_voltage_fb=update_pid(current_pi+i,des_currents[i],system_dyn_state.is[i],output_saturated);
+                    #endif
                     float duty_ff=act_voltage_ff/voltage_dclink;
-                    //compute feedback actuation term (limits [-1,1] for this duty)
-                    bool output_saturated=fabsf((current_pi+i)->u)>=0.9*voltage_dclink;
-                    float act_voltage_fb=update_pid(current_pi+i,des_currents[i],system_dyn_state.is[i],output_saturated);
                     float duty_fb=act_voltage_fb/(voltage_dclink);
                     // TODO-PID : Sanity / Limit Checks on PID go here
 
