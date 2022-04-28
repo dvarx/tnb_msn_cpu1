@@ -15,6 +15,12 @@
 //#define TUNE_CLOSED_LOOP
 
 /*
+ * This setting is used when one wants to apply a feedforward sinusoidal voltage in the channels
+ */
+//#define FEED_FORWARD_SINUSOID
+
+
+/*
  * if this define is made, the system will only use a feedforward term in RUN_REGULAR mode.
  * this can be useful for initial testing of the actuation / current sensor since it avoids
  * unstable closed loop operation in case of an erronous feedback loop

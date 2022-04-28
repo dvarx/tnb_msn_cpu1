@@ -63,9 +63,22 @@
 #include <math.h>
 #include "ipc.h"
 #include "tnb_mns_cpu1.h"
-
 bool run_main_control_task=false;
 bool enable_waveform_debugging=false;
+float des_amplitude_0=1.0;
+float des_offset_0=0.0;
+float des_amplitude_1=1.0;
+float des_offset_1=0.0;
+//sinusoidal ripple parameters
+float time=0;
+const float dt=1.0/(float)MAIN_LOOP_FREQUENCY;
+unsigned int ripple_1_freq=25;
+unsigned int ripple_2_freq=40;
+float ripple_duty_1=0;
+float ripple_duty_2=0;
+
+float f0=5;
+float f1=2;
 
 void main(void)
 {
@@ -416,6 +429,7 @@ void main(void)
             //toggle heartbeat gpio
             GPIO_togglePin(HEARTBEAT_GPIO);
 
+
             //---------------------
             // State Machine
             //---------------------
@@ -450,14 +464,25 @@ void main(void)
             // Control Law Execution
             //---------------------
             //compute optional reference waveform
-            //#define OMEGA 2*3.14159265358979323846*5
-            //float ides=sin(OMEGA*loop_counter*deltaT);
+            #define PI 3.14159265358979323846
+            #ifdef FEED_FORWARD_SINUSOID
+            if(enable_waveform_debugging){
+                des_currents[0]=des_offset_0+des_amplitude_0*sin(2*PI*f0*loop_counter*deltaT);
+                des_currents[1]=des_offset_1+des_amplitude_1*sin(2*PI*f1*loop_counter*deltaT);
+            }
+            else{
+                des_currents[0]=0.0;
+                des_currents[1]=1.0;
+            }
+
+            #endif
+            #ifdef TUNE_CLOSED_LOOP
             const unsigned int periodn=500e-3/deltaT;
-            float ides=0.0;
             if(loop_counter%periodn<periodn/2)
                 ides=1.0;
             else
                 ides=-1.0;
+            #endif
             //regulate outputs of channels
             // ...
 
@@ -497,12 +522,21 @@ void main(void)
                         bool output_saturated=fabsf((current_pi+i)->u)>=0.9*voltage_dclink;
                         float act_voltage_fb=update_pid(current_pi+i,des_currents[i],system_dyn_state.is[i],output_saturated);
                     #endif
+                    #ifdef FEED_FORWARD_SINUSOID
+                        float act_voltage_ff=des_currents[i]*RDC;
+                        float act_voltage_fb=0.0;
+                    #endif
                     float duty_ff=act_voltage_ff/voltage_dclink;
                     float duty_fb=act_voltage_fb/(voltage_dclink);
                     // TODO-PID : Sanity / Limit Checks on PID go here
 
                     //convert normalized duty cycle, limit it and apply
                     float duty_bridge=0.5*(1+(duty_ff+duty_fb));
+                    if(i==0)
+                        duty_bridge+=0.5*(sin(2*M_PI*ripple_1_freq*time))*ripple_duty_1;
+                    if(i==1)
+                        duty_bridge+=0.5*(sin(2*M_PI*ripple_2_freq*time))*ripple_duty_2;
+
                     if(duty_bridge>0.9)
                         duty_bridge=0.9;
                     if(duty_bridge<0.1)
@@ -520,6 +554,7 @@ void main(void)
             //---------------------
             // Read State Of Bridges
             //---------------------
+            /*
             uint32_t cha_buck_state=GPIO_readPin(cha_buck.state_gpio);
             uint32_t cha_bridge_state_u=GPIO_readPin(cha_bridge.state_v_gpio);
             uint32_t cha_bridge_state_v=GPIO_readPin(cha_bridge.state_u_gpio);
@@ -531,9 +566,11 @@ void main(void)
             uint32_t chc_buck_state=GPIO_readPin(chc_buck.state_gpio);
             uint32_t chc_bridge_state_u=GPIO_readPin(chc_bridge.state_v_gpio);
             uint32_t chc_bridge_state_v=GPIO_readPin(chc_bridge.state_u_gpio);
+            */
 
             run_main_task=false;
             loop_counter=loop_counter+1;
+            time+=dt;
         }
     }
 }

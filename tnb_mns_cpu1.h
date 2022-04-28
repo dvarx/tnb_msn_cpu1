@@ -17,12 +17,13 @@
 #include "comm_interface.h"
 
 #define NO_CHANNELS 6
-#define HEARTBEAT_GPIO 17
+#define HEARTBEAT_GPIO 59
 #define MAIN_RELAY_GPIO 92
 #define SLAVE_RELAY_GPIO 62
 #define DEFAULT_RES_FREQ_MILLIHZ    10000000
-#define MINIMUM_RES_FREQ_MILLIHZ    1700000
+#define MINIMUM_RES_FREQ_MILLIHZ    1600000
 #define COMMUNICATION_TIMEOUT_MS    500
+#define MAIN_LOOP_FREQUENCY 10000
 //define the pin polarity of the voltage needed to enable the ate driver
 #define DRIVER_ENABLE_POLARITY 0
 #define DRIVER_DISABLE_POLARITY 1
