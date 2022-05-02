@@ -14,6 +14,8 @@
 #define EPWM_TIMER_TBPRD_BUCK       512UL
 #define EPWM_TIMER_TBPRD_BRIDGE     1024UL
 
+//sets up phase relations between channel 1, 2 and 3
+void setup_phase_control(struct driver_channel**,float,float);
 //initializes pins & pads for buck half bridge
 void setup_pin_config_buck(const struct buck_configuration*);
 //intiializes pins & pads for bridge half bridges

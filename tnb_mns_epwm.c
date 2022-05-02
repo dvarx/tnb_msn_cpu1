@@ -9,6 +9,7 @@
 #include "driverlib.h"
 #include "device.h"
 #include "stdint.h"
+#include "tnb_mns_cpu1.h"
 #include <stdbool.h>
 
 //sets up the pinmux and config for a buck stage
@@ -93,6 +94,34 @@ void set_duty_bridge(const struct bridge_configuration* config, double duty){
         EPWM_setCounterCompareValue(config->epwmbase, EPWM_COUNTER_COMPARE_A, duty_int);
         EPWM_setCounterCompareValue(config->epwmbase, EPWM_COUNTER_COMPARE_B, EPWM_TIMER_TBPRD_BRIDGE-duty_int);
     }
+}
+
+void setup_phase_control(struct driver_channel** channels,float phase1_in, float phase2_in){
+    // TODO : Implement phase shift load and synchronization
+    uint16_t phase1=2*EPWM_TIMER_TBPRD_BRIDGE*phase1_in;
+    uint16_t phase2=2*EPWM_TIMER_TBPRD_BRIDGE*phase2_in;
+
+    // -- Channel 0 Setup
+    //enable sync output of EPWM of channel 0, sync output will be generated when timer reaches zero
+    EPWM_enableSyncOutPulseSource(channels[0]->bridge_config->epwmbase,EPWM_SYNCOUTEN_ZEROEN);
+    //channel 0 does not do a phase shift load
+    EPWM_disablePhaseShiftLoad(channels[0]->bridge_config->epwmbase);
+    //set phase shift register to zero
+    EPWM_setPhaseShift(channels[0]->bridge_config->epwmbase, 0);
+    // -- Channel 1 Setup
+    //set the sync input source to EPWM7 (the EPWM generator of channel bridge 0)
+    EPWM_setSyncInPulseSource(channels[1]->bridge_config->epwmbase,EPWM_SYNC_IN_PULSE_SRC_SYNCOUT_EPWM7);
+    //enable phase shift load for channel 1
+    EPWM_enablePhaseShiftLoad(channels[1]->bridge_config->epwmbase);
+    //set phase shift register
+    EPWM_setPhaseShift(channels[1]->bridge_config->epwmbase, phase1);
+    // -- Channel 2 Setup
+    //set the sync input source to EPWM7 (the EPWM generator of channel bridge 0)
+    EPWM_setSyncInPulseSource(channels[2]->bridge_config->epwmbase,EPWM_SYNC_IN_PULSE_SRC_SYNCOUT_EPWM7);
+    //enable phase shift load for channel 1
+    EPWM_enablePhaseShiftLoad(channels[2]->bridge_config->epwmbase);
+    //set phase shift register
+    EPWM_setPhaseShift(channels[2]->bridge_config->epwmbase, phase2);
 }
 
 void initEPWMWithoutDB(uint32_t base,bool is_buck)
@@ -230,12 +259,37 @@ void set_enabled(void* config,bool is_buck,bool enable){
 
 //set pwm frequency of bridge
 void set_freq_bridge(const struct bridge_configuration* config,const uint32_t freq_mhz){
-    //adjust the ePWM clock prescaler
-    EPWM_setClockPrescaler(config->epwmbase, EPWM_CLOCK_DIVIDER_32, EPWM_HSCLOCK_DIVIDER_1);
+    /* General Formulas & Relationships (see also OneNote notes)
+     *
+     * Tpwm=1/fpwm
+     * fEPWM=100MH(frequency going into the EPWM modules, can be divided down by clock dividers of EPWM module)
+     *
+     * For symmetrical EPWM (e.g. count up and down)
+     * -----------------
+     * countermax=TimeBasePeriod=Tpwm*fEPWM/(2*CLOCK_DIVIDER_1*CLOCK_DIVIDER_2)
+     *
+     * The maximum period for a set of clock dividers is given as
+     * maxperiod=2*CLOCK_DIVIDER_1*CLOCK_DIVIDER_2*2^16/fepwm
+     *
+     * For non-symmetrical EPWM (e.g. dount up or count down)
+     * -----------------
+     * countermax=TimeBasePeriod=Tpwm*fEPWM/(CLOCK_DIVIDER_1*CLOCK_DIVIDER_2)
+     */
 
-    const uint32_t f0_mhz=23841;
-    unsigned int divider=freq_mhz/f0_mhz;     //additional factor 2 needed for correct frequency
-    unsigned int counterlimit=(65536)/divider;
+    //the ePWM clock coming in is 100MHz
+    /*
+     * choosing the prescalers like this results in:
+     *
+     * fpwm_max=250kHz
+     * fpwm_min=7.62Hz
+     * TimeBasePeriod(3kHz)=1666
+     * TimeBasePeriod(1kHz)=5000
+     * TimeBasePeriod(100Hz)=50000
+     */
+    EPWM_setClockPrescaler(config->epwmbase, EPWM_CLOCK_DIVIDER_1, EPWM_HSCLOCK_DIVIDER_1);
+
+    unsigned int counterlimit=10000000/(2*2*1000*freq_mhz);
+
     EPWM_setFallingEdgeDelayCount(config->epwmbase, 1);
     EPWM_setRisingEdgeDelayCount(config->epwmbase, 1);
     EPWM_setTimeBasePeriod(config->epwmbase, counterlimit);

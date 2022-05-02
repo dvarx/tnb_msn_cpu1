@@ -131,6 +131,10 @@ void main(void)
     setup_pin_config_buck(&chf_buck);
     setup_pinmux_config_bridge(&chf_bridge);
 
+    // TODO : phase control implementation
+    //test phase control
+    setup_phase_control(driver_channels,1.0/3.0,2.0/3.0);
+
     //
     // Enable Half Bridges
     //
