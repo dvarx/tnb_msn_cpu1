@@ -67,6 +67,21 @@ void setup_pinmux_config_bridge(const struct bridge_configuration* config){
     EPWM_setClockPrescaler(config->epwmbase,
                            EPWM_CLOCK_DIVIDER_1,
                            EPWM_HSCLOCK_DIVIDER_1);
+    #ifdef EPWM_FREQUENCY_3051Hz
+    EPWM_setClockPrescaler(config->epwmbase,
+                           EPWM_CLOCK_DIVIDER_2,
+                           EPWM_HSCLOCK_DIVIDER_8);
+    #endif
+    #ifdef EPWM_FREQUENCY_1520Hz
+    EPWM_setClockPrescaler(config->epwmbase,
+                           EPWM_CLOCK_DIVIDER_4,
+                           EPWM_HSCLOCK_DIVIDER_8);
+    #endif
+    #ifdef EPWM_FREQUENCY_1017Hz
+    EPWM_setClockPrescaler(config->epwmbase,
+                           EPWM_CLOCK_DIVIDER_8,
+                       EPWM_HSCLOCK_DIVIDER_6);
+    #endif
 }
 
 void set_duty_buck(const struct buck_configuration* config, double duty){
@@ -257,6 +272,7 @@ void set_freq_bridge(const struct bridge_configuration* config,const uint32_t fr
      * TimeBasePeriod(1kHz)=5000
      * TimeBasePeriod(100Hz)=50000
      */
+
     EPWM_setClockPrescaler(config->epwmbase, EPWM_CLOCK_DIVIDER_1, EPWM_HSCLOCK_DIVIDER_1);
 
     unsigned int counterlimit=10000000/(2*2*1000*freq_mhz);

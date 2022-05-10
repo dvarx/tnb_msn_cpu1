@@ -14,6 +14,10 @@
 #define EPWM_TIMER_TBPRD_BUCK       512UL
 #define EPWM_TIMER_TBPRD_BRIDGE     1024UL
 
+//#define EPWM_FREQUENCY_3051Hz
+//#define EPWM_FREQUENCY_1520Hz
+#define EPWM_FREQUENCY_1017Hz
+
 //initializes pins & pads for buck half bridge
 void setup_pin_config_buck(const struct buck_configuration*);
 //intiializes pins & pads for bridge half bridges
