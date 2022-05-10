@@ -230,12 +230,37 @@ void set_enabled(void* config,bool is_buck,bool enable){
 
 //set pwm frequency of bridge
 void set_freq_bridge(const struct bridge_configuration* config,const uint32_t freq_mhz){
-    //adjust the ePWM clock prescaler
-    EPWM_setClockPrescaler(config->epwmbase, EPWM_CLOCK_DIVIDER_32, EPWM_HSCLOCK_DIVIDER_1);
+    /* General Formulas & Relationships (see also OneNote notes)
+     *
+     * Tpwm=1/fpwm
+     * fEPWM=100MH(frequency going into the EPWM modules, can be divided down by clock dividers of EPWM module)
+     *
+     * For symmetrical EPWM (e.g. count up and down)
+     * -----------------
+     * countermax=TimeBasePeriod=Tpwm*fEPWM/(2*CLOCK_DIVIDER_1*CLOCK_DIVIDER_2)
+     *
+     * The maximum period for a set of clock dividers is given as
+     * maxperiod=2*CLOCK_DIVIDER_1*CLOCK_DIVIDER_2*2^16/fepwm
+     *
+     * For non-symmetrical EPWM (e.g. dount up or count down)
+     * -----------------
+     * countermax=TimeBasePeriod=Tpwm*fEPWM/(CLOCK_DIVIDER_1*CLOCK_DIVIDER_2)
+     */
 
-    const uint32_t f0_mhz=23841;
-    unsigned int divider=freq_mhz/f0_mhz;     //additional factor 2 needed for correct frequency
-    unsigned int counterlimit=(65536)/divider;
+    //the ePWM clock coming in is 100MHz
+    /*
+     * choosing the prescalers like this results in:
+     *
+     * fpwm_max=250kHz
+     * fpwm_min=7.62Hz
+     * TimeBasePeriod(3kHz)=1666
+     * TimeBasePeriod(1kHz)=5000
+     * TimeBasePeriod(100Hz)=50000
+     */
+    EPWM_setClockPrescaler(config->epwmbase, EPWM_CLOCK_DIVIDER_1, EPWM_HSCLOCK_DIVIDER_1);
+
+    unsigned int counterlimit=10000000/(2*2*1000*freq_mhz);
+
     EPWM_setFallingEdgeDelayCount(config->epwmbase, 1);
     EPWM_setRisingEdgeDelayCount(config->epwmbase, 1);
     EPWM_setTimeBasePeriod(config->epwmbase, counterlimit);
