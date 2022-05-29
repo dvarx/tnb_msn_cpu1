@@ -12,6 +12,9 @@
 
 struct channel_fsm coil_fsm_states[NO_CHANNELS];
 
+//number of control cycles system remains in TERMINATE_REGULAR state
+const unsigned int TERMINATE_REGULAR_TIMEVAL=(unsigned int)(0.5/deltaT);
+
 // ---------------------------------
 // FSM flags used to trigger FSM transitions
 // ---------------------------------
@@ -35,6 +38,12 @@ void run_channel_fsm(struct driver_channel* channel){
             RUNNING_RESONANT_exit(n);
             TERMINATE_RESONANT_enter(n);
             channel->channel_state=TERMINATE_RESONANT;
+        }
+        //if channel in regular mode we need to go to TERMINATE_REGULAR
+        if(channel->channel_state==RUN_REGULAR){
+            RUNNING_REGULAR_exit(n);
+            TERMINATE_REGULAR_enter(n);
+            channel->channel_state=TERMINATE_REGULAR;
         }
         //otherwise call the exit function of the currently active state and go to READY
         else{
@@ -103,6 +112,15 @@ void run_channel_fsm(struct driver_channel* channel){
                 channel->channel_state=READY;
             }
             break;
+    case TERMINATE_REGULAR:
+            if(fsm_aux_counter<TERMINATE_REGULAR_TIMEVAL)
+                TERMINATE_REGULAR_during(n);
+            else{
+                TERMINATE_REGULAR_exit(n);
+                READY_enter(n);
+                channel->channel_state=READY;
+            }
+            break;
     }
 
     //reset the fsm request flags
@@ -164,12 +182,26 @@ void RUNNING_REGULAR_enter(uint8_t channelno){
     GPIO_writePin(driver_channels[channelno]->bridge_config->enable_gpio,DRIVER_ENABLE_POLARITY);
     //reset PID controller of the channel for regular mode here
     reset_pid(current_pi+channelno);
+    return;
 }
 void RUNNING_REGULAR_during(uint8_t channelno){
     return;
 }
 void RUNNING_REGULAR_exit(uint8_t channelno){
-    //disable bridge
+    //set the duty to 50% in order to generate 0V across the coil so the current can die down
+    //we then enter the TERMINATE_REGULAR mode wait a bit and finally disable the driver stage
+    set_duty_bridge(driver_channels[channelno]->bridge_config,0.5);
+}
+//TERMINATE_REGULAR state
+void TERMINATE_REGULAR_enter(uint8_t channelno){
+    //reset counter
+    fsm_aux_counter=0;
+}
+void TERMINATE_REGULAR_during(uint8_t channelno){
+    fsm_aux_counter++;
+}
+void TERMINATE_REGULAR_exit(uint8_t channelno){
+    //disable bridge before exiting the TERMINATE_REGULAR state
     GPIO_writePin(driver_channels[channelno]->bridge_config->enable_gpio,DRIVER_DISABLE_POLARITY);
 }
 //INIT_RESONANT RUN state

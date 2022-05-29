@@ -11,6 +11,9 @@
 #include <stdint.h>
 #include "tnb_mns_cpu1.h"
 #include <stdbool.h>
+#include "fbctrl.h"
+
+extern const unsigned int TERMINATE_REGULAR_TIMEVAL;
 
 typedef void (*fsm_function)(uint8_t);
 typedef bool fsm_flag;
@@ -58,6 +61,10 @@ void RUNNING_RESONANT_exit(uint8_t);
 void TERMINATE_RESONANT_enter(uint8_t);
 void TERMINATE_RESONANT_during(uint8_t);
 void TERMINATE_RESONANT_exit(uint8_t);
+//TERMINATE_REGULAR state
+void TERMINATE_REGULAR_enter(uint8_t);
+void TERMINATE_REGULAR_during(uint8_t);
+void TERMINATE_REGULAR_exit(uint8_t);
 
 // ---------------------------------
 // FSM flags used to trigger FSM transitions
