@@ -82,7 +82,16 @@ struct first_order des_duty_buck_filt[NO_CHANNELS]={
                                  {1.0/(1.0+2.0*TAU_BUCK_DUTY/deltaT),1.0/(1.0+2.0*TAU_BUCK_DUTY/deltaT),-(1.0-2.0*TAU_BUCK_DUTY/deltaT)/(1.0+2.0*TAU_BUCK_DUTY/deltaT),0,0,0}
 };
 uint32_t des_freq_resonant_mhz[NO_CHANNELS]={DEFAULT_RES_FREQ_MILLIHZ,DEFAULT_RES_FREQ_MILLIHZ,DEFAULT_RES_FREQ_MILLIHZ};
+
+// ------------------------------------------------------------------------------------
+// IPC related variables
+// ------------------------------------------------------------------------------------
+//ensure that the variable tnb_mns_msg_system_state is allocated in the
+#pragma DATA_SECTION(tnb_mns_msg_system_state, "MSGRAM_CPU_TO_CM")
+struct tnb_mns_msg_sysstate tnb_mns_msg_system_state;
 struct tnb_mns_msg_c2000 ipc_tnb_mns_msg_c2000;
+const unsigned int system_state_update_interval=10e-3/deltaT;
+
 // ------------------------------------------------------------------------------------
 // Main CPU Timer Related Functions
 // ------------------------------------------------------------------------------------

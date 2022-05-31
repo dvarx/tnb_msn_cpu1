@@ -445,10 +445,27 @@ void main(void)
                 update_first_order(des_duty_buck_filt+i,des_duty_buck[i]);
             }
 
+            //---------------------
+            // Inform Comm Interface & Send Data To Master
+            //---------------------
+            if(loop_counter%system_state_update_interval==0){
+                //update the system state structure that is sent to the TCP interface
+                for(i=0; i<NO_CHANNELS; i++){
+                    tnb_mns_msg_system_state.states[i]=driver_channels[i]->channel_state;
+                    tnb_mns_msg_system_state.currents[i]=(int16_t)(1e3*system_dyn_state.is[i]);
+                    tnb_mns_msg_system_state.currents_res[i]=(int16_t)(1e3*system_dyn_state.is_res[i]);
+                    tnb_mns_msg_system_state.duties[i]=(uint16_t)((des_duty_buck_filt[i].y)*0xFFFF);
+                    tnb_mns_msg_system_state.freqs[i]=(uint32_t)(des_freq_resonant_mhz[i]);
+                }
+                IPC_sendCommand(IPC_CPU1_L_CM_R, IPC_FLAG1, IPC_ADDR_CORRECTION_ENABLE,
+                                IPC_MSG_NEW_MSG, (uint32_t)&tnb_mns_msg_system_state, sizeof(tnb_mns_msg_system_state));
+            }
+
 
             //---------------------
             // Control Law Execution
             //---------------------
+
             //compute optional reference waveform
             //#define OMEGA 2*3.14159265358979323846*5
             //float ides=sin(OMEGA*loop_counter*deltaT);
@@ -465,6 +482,7 @@ void main(void)
             //---------------------
             // Control Law Execution & Output Actuation
             //---------------------
+
             //set output duties for buck
             for(i=0; i<NO_CHANNELS; i++){
                 set_duty_buck(driver_channels[i]->buck_config,(des_duty_buck_filt+i)->y);
@@ -499,7 +517,6 @@ void main(void)
                     #endif
                     float duty_ff=act_voltage_ff/voltage_dclink;
                     float duty_fb=act_voltage_fb/(voltage_dclink);
-                    // TODO-PID : Sanity / Limit Checks on PID go here
 
                     //convert normalized duty cycle, limit it and apply
                     float duty_bridge=0.5*(1+(duty_ff+duty_fb));
@@ -520,6 +537,7 @@ void main(void)
             //---------------------
             // Read State Of Bridges
             //---------------------
+
             uint32_t cha_buck_state=GPIO_readPin(cha_buck.state_gpio);
             uint32_t cha_bridge_state_u=GPIO_readPin(cha_bridge.state_v_gpio);
             uint32_t cha_bridge_state_v=GPIO_readPin(cha_bridge.state_u_gpio);

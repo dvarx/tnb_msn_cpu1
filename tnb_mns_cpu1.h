@@ -101,6 +101,14 @@ extern uint32_t des_freq_resonant_mhz[NO_CHANNELS];     //desired frequencies fo
 extern struct first_order des_duty_buck_filt[NO_CHANNELS];
 extern struct pi_controller current_pi[NO_CHANNELS];
 extern struct tnb_mns_msg ipc_tnb_mns_msg;
+extern struct tnb_mns_msg_sysstate tnb_mns_msg_system_state;    //contains information about the system state that is sent via TCP
+
+// ---------------------
+// TCP Comm Related Variables
+// ---------------------
+
+//defines the time interval at which system state updates are sent to the TCP interface
+extern const unsigned int system_state_update_interval;
 extern bool communication_active;                       //variable indicates whether there is a TCP connection active (true if a package was received in the last 200ms)
 
 // ---------------------

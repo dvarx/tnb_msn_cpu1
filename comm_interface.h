@@ -40,6 +40,13 @@ struct tnb_mns_msg_c2000{
     uint16_t  resen_flg_byte;
 };
 
+struct tnb_mns_msg_sysstate{
+    uint16_t states[NO_CHANNELS];
+    int16_t currents[NO_CHANNELS];
+    uint16_t duties[NO_CHANNELS];
+    uint32_t freqs[NO_CHANNELS];
+    int16_t currents_res[NO_CHANNELS];
+};
 
 extern const unsigned int OFFSET_DES_DUTIES;
 extern const unsigned int OFFSET_STP_FLG_BYTE;
