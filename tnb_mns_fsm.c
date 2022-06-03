@@ -32,26 +32,6 @@ fsm_function fsm_exit_functions[]={READY_exit,BUCK_ENABLED_exit,INIT_REGULAR_RUN
 
 void run_channel_fsm(struct driver_channel* channel){
     uint8_t n=channel->channel_no;
-    if(fsm_req_flags_stop[n]){
-        //if channel in resonant mode we need to go to TERMINATE_RESONANT
-        if(channel->channel_state==RUN_RESONANT){
-            RUNNING_RESONANT_exit(n);
-            TERMINATE_RESONANT_enter(n);
-            channel->channel_state=TERMINATE_RESONANT;
-        }
-        //if channel in regular mode we need to go to TERMINATE_REGULAR
-        if(channel->channel_state==RUN_REGULAR){
-            RUNNING_REGULAR_exit(n);
-            TERMINATE_REGULAR_enter(n);
-            channel->channel_state=TERMINATE_REGULAR;
-        }
-        //otherwise call the exit function of the currently active state and go to READY
-        else{
-            fsm_exit_functions[channel->channel_state](n);
-            READY_enter(n);
-            channel->channel_state=READY;
-        }
-    }
     switch(channel->channel_state){
     case READY:
             if(fsm_req_flags_en_buck[channel->channel_no]){
@@ -64,21 +44,33 @@ void run_channel_fsm(struct driver_channel* channel){
             }
             break;
     case BUCK_ENABLED:
-            if(fsm_req_flags_run_regular[channel->channel_no]){
+            if(fsm_req_flags_stop[n]){
+                //STOP BUCK_ENABLED
                 BUCK_ENABLED_exit(n);
-                INIT_REGULAR_RUN_enter(n);
-                channel->channel_state=INIT_REGULAR;
-            }
-            else if(fsm_req_flags_run_resonant[channel->channel_no]){
-                BUCK_ENABLED_exit(n);
-                INIT_RESONANT_RUN_enter(n);
-                channel->channel_state=INIT_RESONANT;
+                READY_enter(n);
+                channel->channel_state=READY;
+                break;
             }
             else{
-                BUCK_ENABLED_during(n);
+                if(fsm_req_flags_run_regular[channel->channel_no]){
+                    BUCK_ENABLED_exit(n);
+                    INIT_REGULAR_RUN_enter(n);
+                    channel->channel_state=INIT_REGULAR;
+                }
+                else if(fsm_req_flags_run_resonant[channel->channel_no]){
+                    BUCK_ENABLED_exit(n);
+                    INIT_RESONANT_RUN_enter(n);
+                    channel->channel_state=INIT_RESONANT;
+                }
+                else{
+                    BUCK_ENABLED_during(n);
+                }
+                break;
             }
-            break;
     case INIT_REGULAR:
+            /*
+             * right now we do no react to a stop flag here, instead we enter the RUN_REGULAR state and then stop.
+             */
             if(fsm_aux_counter<10)
                 INIT_REGULAR_RUN_during(n);
             else{
@@ -88,9 +80,21 @@ void run_channel_fsm(struct driver_channel* channel){
             }
             break;
     case RUN_REGULAR:
-            RUNNING_REGULAR_during(n);
-            break;
+            if(fsm_req_flags_stop[n]){
+                //STOP RUN_REGULAR
+                RUNNING_REGULAR_exit(n);
+                TERMINATE_REGULAR_enter(n);
+                channel->channel_state=TERMINATE_REGULAR;
+                break;
+            }
+            else{
+                RUNNING_REGULAR_during(n);
+                break;
+            }
     case INIT_RESONANT:
+        /*
+         * right now we do no react to a stop flag here, instead we enter the RUN_RESONANT state and then stop.
+         */
             if(fsm_aux_counter<100)
                 INIT_RESONANT_RUN_during(n);
             else{
@@ -100,10 +104,20 @@ void run_channel_fsm(struct driver_channel* channel){
             }
             break;
     case RUN_RESONANT:
+        if(fsm_req_flags_stop[n]){
+            //STOP RUN_RESONANT
+            RUNNING_RESONANT_exit(n);
+            TERMINATE_RESONANT_enter(n);
+            channel->channel_state=TERMINATE_RESONANT;
+            break;
+        }
+        else{
             RUNNING_RESONANT_during(n);
             break;
+        }
     case FAULT: break;
     case TERMINATE_RESONANT:
+            //we do not need to react to a stop flag here since it is already in the process of stopping
             if(fsm_aux_counter<1000)
                 TERMINATE_RESONANT_during(n);
             else{
@@ -113,6 +127,7 @@ void run_channel_fsm(struct driver_channel* channel){
             }
             break;
     case TERMINATE_REGULAR:
+            //we do not need to react to a stop flag here since it is already in the process of stopping
             if(fsm_aux_counter<TERMINATE_REGULAR_TIMEVAL)
                 TERMINATE_REGULAR_during(n);
             else{

@@ -419,6 +419,7 @@ void main(void)
             //---------------------
             // State Machine
             //---------------------
+            //Main Relay Opening Logic
             unsigned int channel_counter=0;
             bool main_relay_active=false;
             for(channel_counter=0; channel_counter<NO_CHANNELS; channel_counter++){
@@ -428,6 +429,12 @@ void main(void)
             }
             GPIO_writePin(MAIN_RELAY_GPIO,main_relay_active);
             GPIO_writePin(SLAVE_RELAY_GPIO,main_relay_active);
+            //Communication Active Logic (If no communication, issue a STOP command
+            if(!communication_active){
+                for(channel_counter=0; channel_counter<NO_CHANNELS; channel_counter++){
+                    fsm_req_flags_stop[channel_counter]=1;
+                }
+            }
 
 
 
