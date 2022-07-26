@@ -466,10 +466,6 @@ void main(void)
             //---------------------
             // Control Law Execution
             //---------------------
-            //compute optional reference waveform
-            #ifdef SINUSODIAL_CURRENTS
-                float vdes=vdes_amplitude*sin(2*M_PI*sin_freq*loop_counter*deltaT);
-            #endif
 
             //---------------------
             // Control Law Execution & Output Actuation
@@ -507,9 +503,10 @@ void main(void)
                         float act_voltage_fb=update_pid(current_pi+i,des_currents[i],system_dyn_state.is[i],output_saturated);
                     #endif
                     #ifdef SINUSODIAL_CURRENTS
+                        float vdes=vdes_amplitude[i]*sin(2*M_PI*sin_freq[i]*loop_counter*deltaT);
                         float act_voltage_ff=0;
                         //check that the amplitude of the sinusoidal voltage oscillation is not set too high
-                        if(vdes_amplitude>0.8*voltage_dclink)
+                        if(vdes_amplitude[i]>0.8*voltage_dclink)
                             act_voltage_ff=0;
                         else
                             act_voltage_ff=vdes;

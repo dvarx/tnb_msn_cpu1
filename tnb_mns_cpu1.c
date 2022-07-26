@@ -327,6 +327,6 @@ __interrupt void cpuTimer1ISR(void){
 // Variables related to specific compilation modes (e.g. sinusoidal localization experiments etc.)
 // ---------------------
 #ifdef SINUSODIAL_CURRENTS
-float sin_freq=20;
-float vdes_amplitude=5;
+float sin_freq[NO_CHANNELS]={20,20,20,20,20,20};
+float vdes_amplitude[NO_CHANNELS]={5,5,5,5,5,5};
 #endif

@@ -127,8 +127,8 @@ void configCPUTimer(uint32_t, uint32_t);
 // Variables related to specific compilation modes (e.g. sinusoidal localization experiments etc.)
 // ---------------------
 #ifdef SINUSODIAL_CURRENTS
-extern float sin_freq;
-extern float vdes_amplitude;
+extern float sin_freq[NO_CHANNELS];
+extern float vdes_amplitude[NO_CHANNELS];
 #endif
 
 #endif /* TNB_MNS_CPU1_H_ */
