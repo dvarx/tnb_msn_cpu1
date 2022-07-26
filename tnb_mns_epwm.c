@@ -33,7 +33,7 @@ void setup_pin_config_buck(const struct buck_configuration* config){
     setupEPWMActiveHighComplementary(config->epwmbase);
     //clock prescaling results in a PWM clock of around 50kHz
     EPWM_setClockPrescaler(config->epwmbase,
-                           EPWM_CLOCK_DIVIDER_1,
+                           EPWM_CLOCK_DIVIDER_2,
                            EPWM_HSCLOCK_DIVIDER_1);
     //PWM Setup to ~ 50kHz 50% duty
     set_duty_buck(config,0.5);
@@ -187,8 +187,8 @@ void setupEPWMActiveHighComplementary(uint32_t base)
     // Set the RED and FED values
     //
     // TODO : The constant value of 40 here sets the interlock of the buck stage to around 400ns, might need to adjust / optimize this at some point
-    EPWM_setFallingEdgeDelayCount(base, 40);
-    EPWM_setRisingEdgeDelayCount(base, 40);
+    EPWM_setFallingEdgeDelayCount(base, 60);
+    EPWM_setRisingEdgeDelayCount(base, 60);
 
     //
     // Invert only the Falling Edge delayed output (AHC)

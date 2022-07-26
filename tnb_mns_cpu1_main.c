@@ -100,6 +100,14 @@ void main(void)
     //input relay to slave
     GPIO_setDirectionMode(SLAVE_RELAY_GPIO, GPIO_DIR_MODE_OUT);   //output
     GPIO_setPadConfig(SLAVE_RELAY_GPIO,GPIO_PIN_TYPE_STD);        //push pull output
+    //LED 1 for debugging
+    GPIO_setDirectionMode(LED_1_GPIO, GPIO_DIR_MODE_OUT);
+    GPIO_setPadConfig(LED_1_GPIO,GPIO_PIN_TYPE_STD);
+    GPIO_writePin(LED_1_GPIO,1);
+    //LED 2 for debugging
+    GPIO_setDirectionMode(LED_2_GPIO, GPIO_DIR_MODE_OUT);
+    GPIO_setPadConfig(LED_2_GPIO,GPIO_PIN_TYPE_STD);
+    GPIO_writePin(LED_2_GPIO,1);
 
     //
     // Initialize ADCs
@@ -425,10 +433,12 @@ void main(void)
             for(channel_counter=0; channel_counter<NO_CHANNELS; channel_counter++){
                 run_channel_fsm(driver_channels[channel_counter]);
                 //we enable the main relay when one channel is not in state READY anymore (e.g. when one channel requires power)
-                main_relay_active=main_relay_active||(driver_channels[channel_counter]->channel_state!=READY);
+                if(driver_channels[channel_counter]->channel_state!=READY)
+                    main_relay_active=true;
             }
             GPIO_writePin(MAIN_RELAY_GPIO,main_relay_active);
             GPIO_writePin(SLAVE_RELAY_GPIO,main_relay_active);
+            GPIO_writePin(LED_1_GPIO,!main_relay_active);
             //Communication Active Logic (If no communication, issue a STOP command
             if(!communication_active){
                 for(channel_counter=0; channel_counter<NO_CHANNELS; channel_counter++){

@@ -22,6 +22,8 @@
 #define SLAVE_RELAY_GPIO 62
 #define DEFAULT_RES_FREQ_MILLIHZ    10000000
 #define MINIMUM_RES_FREQ_MILLIHZ    1700000
+#define LED_1_GPIO 31
+#define LED_2_GPIO 34
 #define COMMUNICATION_TIMEOUT_MS    500
 //define the pin polarity of the voltage needed to enable the ate driver
 #define DRIVER_ENABLE_POLARITY 0
