@@ -10,6 +10,7 @@
 
 #include <stdint.h>
 #include "driverlib.h"
+#include "tnb_mns_defs.h"
 #include "device.h"
 #include "tnb_mns_cpu1.h"
 #include "stdint.h"
@@ -20,6 +21,8 @@
 #define HEARTBEAT_GPIO 17
 #define MAIN_RELAY_GPIO 92
 #define SLAVE_RELAY_GPIO 62
+#define LED_1_GPIO 31
+#define LED_2_GPIO 34
 #define DEFAULT_RES_FREQ_MILLIHZ    10000000
 #define MINIMUM_RES_FREQ_MILLIHZ    1700000
 #define COMMUNICATION_TIMEOUT_MS    500
@@ -120,5 +123,12 @@ __interrupt void cpuTimer1ISR(void);
 void initCPUTimers(void);
 void configCPUTimer(uint32_t, uint32_t);
 
+// ---------------------
+// Variables related to specific compilation modes (e.g. sinusoidal localization experiments etc.)
+// ---------------------
+#ifdef SINUSODIAL_CURRENTS
+extern float sin_freq;
+extern float vdes_amplitude;
+#endif
 
 #endif /* TNB_MNS_CPU1_H_ */

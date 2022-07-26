@@ -100,6 +100,14 @@ void main(void)
     //input relay to slave
     GPIO_setDirectionMode(SLAVE_RELAY_GPIO, GPIO_DIR_MODE_OUT);   //output
     GPIO_setPadConfig(SLAVE_RELAY_GPIO,GPIO_PIN_TYPE_STD);        //push pull output
+    //LED 1 for debugging
+    GPIO_setDirectionMode(LED_1_GPIO, GPIO_DIR_MODE_OUT);
+    GPIO_setPadConfig(LED_1_GPIO,GPIO_PIN_TYPE_STD);
+    GPIO_writePin(LED_1_GPIO,1);
+    //LED 2 for debugging
+    GPIO_setDirectionMode(LED_2_GPIO, GPIO_DIR_MODE_OUT);
+    GPIO_setPadConfig(LED_2_GPIO,GPIO_PIN_TYPE_STD);
+    GPIO_writePin(LED_2_GPIO,1);
 
     //
     // Initialize ADCs
@@ -425,10 +433,12 @@ void main(void)
             for(channel_counter=0; channel_counter<NO_CHANNELS; channel_counter++){
                 run_channel_fsm(driver_channels[channel_counter]);
                 //we enable the main relay when one channel is not in state READY anymore (e.g. when one channel requires power)
-                main_relay_active=main_relay_active||(driver_channels[channel_counter]->channel_state!=READY);
+                if(driver_channels[channel_counter]->channel_state!=READY)
+                    main_relay_active=true;
             }
             GPIO_writePin(MAIN_RELAY_GPIO,main_relay_active);
             GPIO_writePin(SLAVE_RELAY_GPIO,main_relay_active);
+            GPIO_writePin(LED_1_GPIO,!main_relay_active);
             //Communication Active Logic (If no communication, issue a STOP command
             if(!communication_active){
                 for(channel_counter=0; channel_counter<NO_CHANNELS; channel_counter++){
@@ -457,17 +467,9 @@ void main(void)
             // Control Law Execution
             //---------------------
             //compute optional reference waveform
-            //#define OMEGA 2*3.14159265358979323846*5
-            //float ides=sin(OMEGA*loop_counter*deltaT);
-            const unsigned int periodn=500e-3/deltaT;
-            float ides=0.0;
-            if(loop_counter%periodn<periodn/2)
-                ides=1.0;
-            else
-                ides=-1.0;
-            //regulate outputs of channels
-            // ...
-
+            #ifdef SINUSODIAL_CURRENTS
+                float vdes=vdes_amplitude*sin(2*M_PI*sin_freq*loop_counter*deltaT);
+            #endif
 
             //---------------------
             // Control Law Execution & Output Actuation
@@ -503,6 +505,15 @@ void main(void)
                         //compute feedback actuation term (limits [-1,1] for this duty)
                         bool output_saturated=fabsf((current_pi+i)->u)>=0.9*voltage_dclink;
                         float act_voltage_fb=update_pid(current_pi+i,des_currents[i],system_dyn_state.is[i],output_saturated);
+                    #endif
+                    #ifdef SINUSODIAL_CURRENTS
+                        float act_voltage_ff=0;
+                        //check that the amplitude of the sinusoidal voltage oscillation is not set too high
+                        if(vdes_amplitude>0.8*voltage_dclink)
+                            act_voltage_ff=0;
+                        else
+                            act_voltage_ff=vdes;
+                        float act_voltage_fb=0;
                     #endif
                     float duty_ff=act_voltage_ff/voltage_dclink;
                     float duty_fb=act_voltage_fb/(voltage_dclink);

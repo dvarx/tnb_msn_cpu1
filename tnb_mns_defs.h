@@ -22,9 +22,14 @@
 //#define FEED_FORWARD_ONLY
 
 /*
+ * this is used to apply sinusoidally varying duty cycles to the bridges
+ */
+#define SINUSODIAL_CURRENTS
+
+/*
  * Use this configuration if the closed-loop tuning has been done
  */
-#define CLOSED_LOOP
+//#define CLOSED_LOOP
 
 
 //constants related to output inductor current PI controller

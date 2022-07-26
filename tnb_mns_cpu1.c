@@ -322,3 +322,11 @@ __interrupt void cpuTimer1ISR(void){
     //reset CPU Timer 1 (it counts downwards)
     CPUTimer_reloadTimerCounter(CPUTIMER1_BASE);
 }
+
+// ---------------------
+// Variables related to specific compilation modes (e.g. sinusoidal localization experiments etc.)
+// ---------------------
+#ifdef SINUSODIAL_CURRENTS
+float sin_freq=20;
+float vdes_amplitude=5;
+#endif
