@@ -503,7 +503,7 @@ void main(void)
                         float act_voltage_fb=update_pid(current_pi+i,des_currents[i],system_dyn_state.is[i],output_saturated);
                     #endif
                     #ifdef SINUSODIAL_CURRENTS
-                        float vdes=vdes_amplitude[i]*sin(2*M_PI*sin_freq[i]*loop_counter*deltaT);
+                        float vdes=vdes_amplitude[i]*sin(2*M_PI*sin_freq[i]*loop_counter*deltaT)+vdes_sup_dc[i];
                         float act_voltage_ff=0;
                         //check that the amplitude of the sinusoidal voltage oscillation is not set too high
                         if(vdes_amplitude[i]>0.8*voltage_dclink)

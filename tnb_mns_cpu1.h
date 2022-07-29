@@ -129,6 +129,7 @@ void configCPUTimer(uint32_t, uint32_t);
 #ifdef SINUSODIAL_CURRENTS
 extern float sin_freq[NO_CHANNELS];
 extern float vdes_amplitude[NO_CHANNELS];
+extern float vdes_sup_dc[NO_CHANNELS];
 #endif
 
 #endif /* TNB_MNS_CPU1_H_ */

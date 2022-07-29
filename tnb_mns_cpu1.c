@@ -328,5 +328,6 @@ __interrupt void cpuTimer1ISR(void){
 // ---------------------
 #ifdef SINUSODIAL_CURRENTS
 float sin_freq[NO_CHANNELS]={20,20,20,20,20,20};
-float vdes_amplitude[NO_CHANNELS]={5,5,5,5,5,5};
+float vdes_amplitude[NO_CHANNELS]={0,0,0,0,0,0};
+float vdes_sup_dc[NO_CHANNELS]={0,0,0,0,0,0};
 #endif
