@@ -91,6 +91,13 @@ uint16_t cpuTimer0IntCount;
 uint16_t cpuTimer1IntCount;
 uint16_t cpuTimer2IntCount;
 
+//debugging sent currents
+#define DEBUG_N 150
+float debug_buf_0[DEBUG_N]={0};
+float debug_buf_1[DEBUG_N]={0};
+float debug_buf_2[DEBUG_N]={0};
+unsigned int debug_counter=0;
+
 //
 // initCPUTimers - This function initializes all three CPU timers
 // to a known state.
@@ -236,12 +243,19 @@ __interrupt void IPC_ISR0()
                 //currents are sent in units of [mA]
                 des_currents[i]=(float)(ipc_tnb_mns_msg_c2000.desCurrents[i])*1e-3;
                 des_duty_buck[i]=(float)(ipc_tnb_mns_msg_c2000.desDuties[i])*(1.0/(float)(UINT16_MAX));
+                if(i==0)
+                    debug_buf_0[debug_counter]=des_currents[i];
+                else if(i==1)
+                    debug_buf_1[debug_counter]=des_currents[i];
+                else if(i==2)
+                    debug_buf_2[debug_counter]=des_currents[i];
             }
             else{
                 des_currents[i]=0.0;
                 des_duty_buck[i]=0.0;
             }
         }
+        debug_counter=(debug_counter+1)%DEBUG_N;
         //check frequencies and set them
         //changing the resonant frequency is only allowed in the RUN_RESONANT state
         for(i=0; i<NO_CHANNELS; i++){
