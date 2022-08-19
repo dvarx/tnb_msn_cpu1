@@ -250,19 +250,19 @@ void set_freq_bridge(const struct bridge_configuration* config,const uint32_t fr
     //the ePWM clock coming in is 100MHz
     /*
      * choosing the prescalers like this results in:
-     *
+     *False
      * fpwm_max=250kHz
-     * fpwm_min=7.62Hz
+     * fpwm_min=7.62HzFalse
      * TimeBasePeriod(3kHz)=1666
      * TimeBasePeriod(1kHz)=5000
      * TimeBasePeriod(100Hz)=50000
      */
-    EPWM_setClockPrescaler(config->epwmbase, EPWM_CLOCK_DIVIDER_1, EPWM_HSCLOCK_DIVIDER_1);
+    EPWM_setClockPrescaler(config->epwmbase, EPWM_CLOCK_DIVIDER_16, EPWM_HSCLOCK_DIVIDER_1);
 
-    unsigned int counterlimit=10000000/(2*2*1000*freq_mhz);
+    unsigned int counterlimit=(((100000000)/(16*2*(freq_mhz/1000))));
 
-    EPWM_setFallingEdgeDelayCount(config->epwmbase, 1);
-    EPWM_setRisingEdgeDelayCount(config->epwmbase, 1);
+    EPWM_setFallingEdgeDelayCount(config->epwmbase, 128);
+    EPWM_setRisingEdgeDelayCount(config->epwmbase, 128);
     EPWM_setTimeBasePeriod(config->epwmbase, counterlimit);
     EPWM_setCounterCompareValue(config->epwmbase, EPWM_COUNTER_COMPARE_A, counterlimit/2);
     EPWM_setCounterCompareValue(config->epwmbase, EPWM_COUNTER_COMPARE_B, counterlimit/2);
