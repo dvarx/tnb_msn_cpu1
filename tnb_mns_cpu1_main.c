@@ -66,6 +66,7 @@
 
 bool run_main_control_task=false;
 bool enable_waveform_debugging=false;
+bool errflag=false;
 
 void main(void)
 {
@@ -503,11 +504,15 @@ void main(void)
                         float act_voltage_fb=update_pid(current_pi+i,des_currents[i],system_dyn_state.is[i],output_saturated);
                     #endif
                     #ifdef SINUSODIAL_CURRENTS
-                        float vdes=vdes_amplitude[i]*sin(2*M_PI*sin_freq[i]*loop_counter*deltaT)+vdes_sup_dc[i];
+                        float currentTime=loop_counter*deltaT;
+                        float vdes=vdes_amplitude[i]*sin(2*M_PI*sin_freq[i]*currentTime)
+                                +amp_vback[i]*sin(2*M_PI*freq_vback[i]*currentTime+phase_vback[i])+offset_vback[i];
                         float act_voltage_ff=0;
                         //check that the amplitude of the sinusoidal voltage oscillation is not set too high
-                        if(vdes_amplitude[i]>0.8*voltage_dclink)
+                        if(vdes_amplitude[i]>0.8*voltage_dclink){
+                            errflag=true;
                             act_voltage_ff=0;
+                        }
                         else
                             act_voltage_ff=vdes;
                         float act_voltage_fb=0;
