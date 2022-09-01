@@ -9,6 +9,7 @@
 #define FBCTRL_H_
 
 #include <stdbool.h>
+#include "fir_coeffs.h"
 
 //controller time interval
 #define deltaT 100e-6
@@ -22,6 +23,14 @@ struct pi_controller{
     float u;
 };
 
+struct fir_filter{
+    unsigned int order;
+    unsigned int bufptr;
+    const float* coeffs;
+    float xsbuf[N_CURRENTLOWPASS];
+    float out;
+};
+
 /*
  * First order IIR filter
  */
@@ -33,6 +42,18 @@ struct first_order{
     float y_nm1;
     float y;
 };
+
+inline float update_fir(struct fir_filter* filt, float x){
+    unsigned int i;
+    //update the element in the buffer
+    filt->xsbuf[filt->bufptr]=x;
+    float out=0;
+    for(i=0; i<(filt->order); i++)
+        out+=filt->coeffs[i]*filt->xsbuf[(filt->order+filt->bufptr-i)%filt->order];
+    filt->out=out;
+    filt->bufptr+=1;
+    return out;
+}
 
 /*
  * ctrl: pointer to the pi_controller structure

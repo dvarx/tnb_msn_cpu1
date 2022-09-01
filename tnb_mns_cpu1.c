@@ -82,6 +82,14 @@ struct first_order des_duty_buck_filt[NO_CHANNELS]={
                                  {1.0/(1.0+2.0*TAU_BUCK_DUTY/deltaT),1.0/(1.0+2.0*TAU_BUCK_DUTY/deltaT),-(1.0-2.0*TAU_BUCK_DUTY/deltaT)/(1.0+2.0*TAU_BUCK_DUTY/deltaT),0,0,0},
                                  {1.0/(1.0+2.0*TAU_BUCK_DUTY/deltaT),1.0/(1.0+2.0*TAU_BUCK_DUTY/deltaT),-(1.0-2.0*TAU_BUCK_DUTY/deltaT)/(1.0+2.0*TAU_BUCK_DUTY/deltaT),0,0,0}
 };
+struct fir_filter current_fir_lowpass[NO_CHANNELS]={
+                                                    {N_CURRENTLOWPASS,0,b_currentlowpass,{0},0},
+                                                    {N_CURRENTLOWPASS,0,b_currentlowpass,{0},0},
+                                                    {N_CURRENTLOWPASS,0,b_currentlowpass,{0},0},
+                                                    {N_CURRENTLOWPASS,0,b_currentlowpass,{0},0},
+                                                    {N_CURRENTLOWPASS,0,b_currentlowpass,{0},0},
+                                                    {N_CURRENTLOWPASS,0,b_currentlowpass,{0},0}
+};
 uint32_t des_freq_resonant_mhz[NO_CHANNELS]={DEFAULT_RES_FREQ_MILLIHZ,DEFAULT_RES_FREQ_MILLIHZ,DEFAULT_RES_FREQ_MILLIHZ};
 struct tnb_mns_msg_c2000 ipc_tnb_mns_msg_c2000;
 // ------------------------------------------------------------------------------------

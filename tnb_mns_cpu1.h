@@ -18,7 +18,7 @@
 #include "comm_interface.h"
 
 #define NO_CHANNELS 6
-#define HEARTBEAT_GPIO 17
+#define HEARTBEAT_GPIO 70
 #define MAIN_RELAY_GPIO 92
 #define SLAVE_RELAY_GPIO 62
 #define LED_1_GPIO 31
@@ -105,6 +105,7 @@ extern float des_currents[NO_CHANNELS];
 extern uint32_t des_freq_resonant_mhz[NO_CHANNELS];     //desired frequencies for resonant bridges, set by COMM interface
 extern struct first_order des_duty_buck_filt[NO_CHANNELS];
 extern struct pi_controller current_pi[NO_CHANNELS];
+extern struct fir_filter current_fir_lowpass[NO_CHANNELS];
 extern struct tnb_mns_msg ipc_tnb_mns_msg;
 extern bool communication_active;                       //variable indicates whether there is a TCP connection active (true if a package was received in the last 200ms)
 

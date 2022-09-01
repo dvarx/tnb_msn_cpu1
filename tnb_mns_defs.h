@@ -35,8 +35,8 @@
 //constants related to output inductor current PI controller
 #define RDC 3.3
 #define VIN 80
-#define CTRL_KP 40.0
-#define CTRL_KI 2000.0
+#define CTRL_KP 0.5
+#define CTRL_KI 32.0
 
 //buck duty first order time constants (ms)
 #define TAU_BUCK_DUTY 300e-3
