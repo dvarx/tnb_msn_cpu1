@@ -11,8 +11,14 @@
 #include <stdbool.h>
 #include "fir_coeffs.h"
 
-//controller time interval
+//controller time interval (main task interval / adc sampling frequency)
 #define deltaT 100e-6
+//this variable defines the ratio between control frequency fc and sampling frequency / main task frequency fs
+#define F_CONTROL_MOD 10
+//time interval (in seconds) at which the discrete controller is run
+#define DELTAT_C deltaT*F_CONTROL_MOD
+//discrete controller time interval
+#define deltaT_c deltaT*f_control_mod
 
 struct pi_controller{
     float kp;
@@ -51,12 +57,12 @@ inline float update_fir(struct fir_filter* filt, float x){
     for(i=0; i<(filt->order); i++)
         out+=filt->coeffs[i]*filt->xsbuf[(filt->order+filt->bufptr-i)%filt->order];
     filt->out=out;
-    filt->bufptr+=1;
+    filt->bufptr=(filt->bufptr+1)%filt->order;
     return out;
 }
 
 /*
- * ctrl: pointer to the pi_controller structure
+ * ctrl: pointer to Falsethe pi_controller structure
  * r: r[n] the current reference input
  * y: y[n] the current output measurement
  */
@@ -65,7 +71,7 @@ inline float update_pid(struct pi_controller* ctrlr,float r,float y,bool output_
     float e=r-y;
     //update the error integral using trapezoidal rule, but only if the output is not saturated (anti-windup measure)
     if(!output_saturated)
-        ctrlr->errint+=(deltaT*0.5)*(e+ctrlr->errnm1);
+        ctrlr->errint+=(DELTAT_C*0.5)*(e+ctrlr->errnm1);
     //store the current error for later use
     ctrlr->errnm1=e;
     //update the output

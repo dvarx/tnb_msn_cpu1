@@ -67,8 +67,6 @@
 bool run_main_control_task=false;
 bool enable_waveform_debugging=false;
 bool errflag=false;
-//this variable defines the ratio between control frequency fc and sampling frequency / main task frequency fs
-const unsigned int f_control_mod=10;
 
 void main(void)
 {
@@ -470,7 +468,7 @@ void main(void)
             //---------------------
 
 
-            if(loop_counter%f_control_mod==0){
+            if(loop_counter%F_CONTROL_MOD==0){
                 //FIR filter application on current signal (lowpass with 80dB attenutation at 50Hz)
                 for(i=0; i<NO_CHANNELS; i++){
                     update_fir(current_fir_lowpass+i,system_dyn_state.is[i]);
@@ -495,7 +493,8 @@ void main(void)
                             float act_voltage_ff=des_currents[i]*RDC;
                             float act_voltage_fb=0.0;
                         #endif
-                        #ifdef TUNE_CLOSED_LOOP
+                        #ifdef TUNE_CLOSED_LOOP                for(i=0; i<NO_CHANNELS; i++){
+
                             float act_voltage_ff=0.0;
                             //compute feedback actuation term (limits [-1,1] for this duty)
                             bool output_saturated=fabsf((current_pi+i)->u)>=0.9*voltage_dclink;
