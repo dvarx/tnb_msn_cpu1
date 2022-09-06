@@ -11,6 +11,7 @@
 #include "fbctrl.h"
 #include "tnb_mns_defs.h"
 #include "tnb_mns_fsm.h"
+#include "tnb_mns_epwm.h"
 #include <math.h>
 
 // ------------------------------------------------------------------------------------
@@ -64,6 +65,7 @@ uint32_t enable_res_cap_c=0;     //variable control the resonant relay of channe
 float des_duty_bridge[NO_CHANNELS]={0.5,0.5,0.5,0.5,0.5,0.5};
 float des_currents[NO_CHANNELS]={0.0,0.0,0.0,0.0,0.0,0.0};
 float des_duty_buck[NO_CHANNELS]={0,0,0,0,0,0};
+float duties_fb[NO_CHANNELS]={0};
 bool communication_active=false;
 
 struct pi_controller current_pi[NO_CHANNELS]={
@@ -96,9 +98,9 @@ struct tnb_mns_msg_c2000 ipc_tnb_mns_msg_c2000;
 // Main CPU Timer Related Functions
 // ------------------------------------------------------------------------------------
 
-uint16_t cpuTimer0IntCount;
-uint16_t cpuTimer1IntCount;
-uint16_t cpuTimer2IntCount;
+uint32_t cpuTimer0IntCount;
+uint32_t cpuTimer1IntCount;
+uint32_t cpuTimer2IntCount;
 
 //
 // initCPUTimers - This function initializes all three CPU timers
@@ -315,6 +317,26 @@ cpuTimer0ISR(void)
     cpuTimer0IntCount++;
 
     run_main_task=true;
+
+    //run 10kHz task
+    float currentTime=cpuTimer0IntCount*deltaT;
+    unsigned int i=0;
+    float act_voltage_ff=0;
+    for(i=0; i<NO_CHANNELS; i++){
+        if(driver_channels[i]->channel_state==RUN_REGULAR){
+            //compute feedforward voltage
+            act_voltage_ff=vdes_amplitude[i]*sin(2*M_PI*sin_freq[i]*currentTime);
+            //compute normalized duty cycle and apply it
+            float voltage_dclink=VIN*(des_duty_buck_filt+i)->y;
+            float duty_ff=act_voltage_ff/voltage_dclink;
+            float duty_bridge=0.5*(1+(duty_ff+duties_fb[i]));
+            if(duty_bridge>0.9)
+                duty_bridge=0.9;
+            if(duty_bridge<0.1)
+                duty_bridge=0.1;
+            set_duty_bridge(driver_channels[i]->bridge_config,duty_bridge);
+        }
+    }
 
     //
     // Acknowledge this interrupt to receive more interrupts from group 1

@@ -105,6 +105,7 @@ extern float des_currents[NO_CHANNELS];
 extern uint32_t des_freq_resonant_mhz[NO_CHANNELS];     //desired frequencies for resonant bridges, set by COMM interface
 extern struct first_order des_duty_buck_filt[NO_CHANNELS];
 extern struct pi_controller current_pi[NO_CHANNELS];
+extern float duties_fb[NO_CHANNELS];                    //holds the duty cycles that should be applied coming from the PI current controllers
 extern struct fir_filter current_fir_lowpass[NO_CHANNELS];
 extern struct tnb_mns_msg ipc_tnb_mns_msg;
 extern bool communication_active;                       //variable indicates whether there is a TCP connection active (true if a package was received in the last 200ms)
@@ -116,7 +117,7 @@ extern bool communication_active;                       //variable indicates whe
 //
 // Globals
 //
-extern uint16_t cpuTimer0IntCount;
+extern uint32_t cpuTimer0IntCount;
 //extern uint16_t cpuTimer1IntCount;
 //extern uint16_t cpuTimer2IntCount;
 

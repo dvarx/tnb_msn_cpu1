@@ -12,13 +12,9 @@
 #include "fir_coeffs.h"
 
 //controller time interval (main task interval / adc sampling frequency)
-#define deltaT 1e-3
+#define deltaT 100e-6
 //this variable defines the ratio between control frequency fc and sampling frequency / main task frequency fs
 #define F_CONTROL_MOD 10
-//time interval (in seconds) at which the discrete controller is run
-#define DELTAT_C deltaT*F_CONTROL_MOD
-//discrete controller time interval
-#define deltaT_c deltaT*f_control_mod
 
 struct pi_controller{
     float kp;

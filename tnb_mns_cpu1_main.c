@@ -423,7 +423,8 @@ void main(void)
     float act_voltage_ff=0;
     // Main Loop
     while(1){
-        if(run_main_task){
+        //the main task is run at 1/10th of the CPU1 interrupt e.g. 1kHz
+        if(cpuTimer0IntCount%F_CONTROL_MOD==0){
             //toggle heartbeat gpio
             GPIO_togglePin(HEARTBEAT_GPIO);
 
@@ -501,25 +502,12 @@ void main(void)
                         float act_voltage_fb=update_pid(current_pi+i,des_currents[i],system_dyn_state.is[i],output_saturated);
                     #endif
                     #ifdef SINUSODIAL_CURRENTS
-                        //compute feedforward voltage
-                        float currentTime=loop_counter*deltaT;
-                        act_voltage_ff=vdes_amplitude[i]*sin(2*M_PI*sin_freq[i]*currentTime)
-                                +amp_vback[i]*sin(2*M_PI*freq_vback[i]*currentTime+phase_vback[i])+offset_vback[i];
                         //compute feedback voltage
                         bool output_saturated=fabsf((current_pi+i)->u)>=0.9*voltage_dclink;
                         act_voltage_fb=update_pid(current_pi+i,des_currents[i],current_fir_lowpass[i].out,output_saturated);
                     #endif
-                    float duty_ff=act_voltage_ff/voltage_dclink;
-                    float duty_fb=act_voltage_fb/voltage_dclink;
-                    //convert normalized duty cycle, limit it and apply
-                    float duty_bridge=0.5*(1+(duty_ff+duty_fb));
-                    if(duty_bridge>0.9)
-                        duty_bridge=0.9;
-                    if(duty_bridge<0.1)
-                        duty_bridge=0.1;
-                    set_duty_bridge(driver_channels[i]->bridge_config,duty_bridge);
+                    duties_fb[i]=act_voltage_fb/voltage_dclink;
                 }
-                //set_duty_bridge(driver_channels[i]->bridge_config,des_duty_bridge[i]);
             }
             //set frequency for bridge [resonant mode]
             for(i=0; i<NO_CHANNELS; i++){
