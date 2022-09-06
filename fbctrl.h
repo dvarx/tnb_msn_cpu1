@@ -12,7 +12,7 @@
 #include "fir_coeffs.h"
 
 //controller time interval (main task interval / adc sampling frequency)
-#define deltaT 100e-6
+#define deltaT 1e-3
 //this variable defines the ratio between control frequency fc and sampling frequency / main task frequency fs
 #define F_CONTROL_MOD 10
 //time interval (in seconds) at which the discrete controller is run

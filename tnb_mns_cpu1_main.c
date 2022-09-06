@@ -471,10 +471,8 @@ void main(void)
 
 
             //FIR filter application on current signal (lowpass with 80dB attenutation at 50Hz) [run at fc]
-            if(loop_counter%F_CONTROL_MOD==0){
-                for(i=0; i<NO_CHANNELS; i++){
-                    update_fir(current_fir_lowpass+i,system_dyn_state.is[i]);
-                }
+            for(i=0; i<NO_CHANNELS; i++){
+                update_fir(current_fir_lowpass+i,system_dyn_state.is[i]);
             }
             //set output duties for buck
             for(i=0; i<NO_CHANNELS; i++){
@@ -496,13 +494,6 @@ void main(void)
                         float act_voltage_ff=des_currents[i]*RDC;
                         float act_voltage_fb=0.0;
                     #endif
-                    #ifdef TUNE_CLOSED_LOOP                for(i=0; i<NO_CHANNELS; i++){
-
-                        float act_voltage_ff=0.0;
-                        //compute feedback actuation term (limits [-1,1] for this duty)
-                        bool output_saturated=fabsf((current_pi+i)->u)>=0.9*voltage_dclink;
-                        float act_voltage_fb=update_pid(current_pi+i,des_currents[i],system_dyn_state.is[i],output_saturated);
-                    #endif
                     #ifdef CLOSED_LOOP
                         float act_voltage_ff=0.0;
                         //compute feedback actuation term (limits [-1,1] for this duty)
@@ -514,11 +505,9 @@ void main(void)
                         float currentTime=loop_counter*deltaT;
                         act_voltage_ff=vdes_amplitude[i]*sin(2*M_PI*sin_freq[i]*currentTime)
                                 +amp_vback[i]*sin(2*M_PI*freq_vback[i]*currentTime+phase_vback[i])+offset_vback[i];
-                        //compute feedback voltage [run at fc]
-                        if(loop_counter%F_CONTROL_MOD==0){
-                            bool output_saturated=fabsf((current_pi+i)->u)>=0.9*voltage_dclink;
-                            act_voltage_fb=update_pid(current_pi+i,des_currents[i],current_fir_lowpass[i].out,output_saturated);
-                        }
+                        //compute feedback voltage
+                        bool output_saturated=fabsf((current_pi+i)->u)>=0.9*voltage_dclink;
+                        act_voltage_fb=update_pid(current_pi+i,des_currents[i],current_fir_lowpass[i].out,output_saturated);
                     #endif
                     float duty_ff=act_voltage_ff/voltage_dclink;
                     float duty_fb=act_voltage_fb/voltage_dclink;
