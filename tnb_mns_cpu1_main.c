@@ -419,6 +419,8 @@ void main(void)
     }
 
     uint32_t loop_counter=0;
+    float act_voltage_fb=0;
+    float act_voltage_ff=0;
     // Main Loop
     while(1){
         if(run_main_task){
@@ -468,70 +470,72 @@ void main(void)
             //---------------------
 
 
+            //FIR filter application on current signal (lowpass with 80dB attenutation at 50Hz) [run at fc]
             if(loop_counter%F_CONTROL_MOD==0){
-                //FIR filter application on current signal (lowpass with 80dB attenutation at 50Hz)
                 for(i=0; i<NO_CHANNELS; i++){
                     update_fir(current_fir_lowpass+i,system_dyn_state.is[i]);
                 }
-                //set output duties for buck
-                for(i=0; i<NO_CHANNELS; i++){
-                    set_duty_buck(driver_channels[i]->buck_config,(des_duty_buck_filt+i)->y);
-                }
-                //set output duties for bridge [regular mode]
-                for(i=0; i<NO_CHANNELS; i++){
-                    if(driver_channels[i]->channel_state==RUN_REGULAR){
-                        #ifdef TUNE_CLOSED_LOOP
-                            if(enable_waveform_debugging)
-                                des_currents[i]=ides;
-                            else
-                                ides=0.0;
-                        #endif
-                        //execute the PI control low
-                        float voltage_dclink=VIN*(des_duty_buck_filt+i)->y;
-                        //compute feed forward actuation term (limits [-1,1] for this duty) - feed-forward term currently not used
-                        #ifdef FEED_FORWARD_ONLY
-                            float act_voltage_ff=des_currents[i]*RDC;
-                            float act_voltage_fb=0.0;
-                        #endif
-                        #ifdef TUNE_CLOSED_LOOP                for(i=0; i<NO_CHANNELS; i++){
+            }
+            //set output duties for buck
+            for(i=0; i<NO_CHANNELS; i++){
+                set_duty_buck(driver_channels[i]->buck_config,(des_duty_buck_filt+i)->y);
+            }
+            //set output duties for bridge [regular mode]
+            for(i=0; i<NO_CHANNELS; i++){
+                if(driver_channels[i]->channel_state==RUN_REGULAR){
+                    #ifdef TUNE_CLOSED_LOOP
+                        if(enable_waveform_debugging)
+                            des_currents[i]=ides;
+                        else
+                            ides=0.0;
+                    #endif
+                    //execute the PI control low
+                    float voltage_dclink=VIN*(des_duty_buck_filt+i)->y;
+                    //compute feed forward actuation term (limits [-1,1] for this duty) - feed-forward term currently not used
+                    #ifdef FEED_FORWARD_ONLY
+                        float act_voltage_ff=des_currents[i]*RDC;
+                        float act_voltage_fb=0.0;
+                    #endif
+                    #ifdef TUNE_CLOSED_LOOP                for(i=0; i<NO_CHANNELS; i++){
 
-                            float act_voltage_ff=0.0;
-                            //compute feedback actuation term (limits [-1,1] for this duty)
+                        float act_voltage_ff=0.0;
+                        //compute feedback actuation term (limits [-1,1] for this duty)
+                        bool output_saturated=fabsf((current_pi+i)->u)>=0.9*voltage_dclink;
+                        float act_voltage_fb=update_pid(current_pi+i,des_currents[i],system_dyn_state.is[i],output_saturated);
+                    #endif
+                    #ifdef CLOSED_LOOP
+                        float act_voltage_ff=0.0;
+                        //compute feedback actuation term (limits [-1,1] for this duty)
+                        bool output_saturated=fabsf((current_pi+i)->u)>=0.9*voltage_dclink;
+                        float act_voltage_fb=update_pid(current_pi+i,des_currents[i],system_dyn_state.is[i],output_saturated);
+                    #endif
+                    #ifdef SINUSODIAL_CURRENTS
+                        //compute feedforward voltage
+                        float currentTime=loop_counter*deltaT;
+                        act_voltage_ff=vdes_amplitude[i]*sin(2*M_PI*sin_freq[i]*currentTime)
+                                +amp_vback[i]*sin(2*M_PI*freq_vback[i]*currentTime+phase_vback[i])+offset_vback[i];
+                        //compute feedback voltage [run at fc]
+                        if(loop_counter%F_CONTROL_MOD==0){
                             bool output_saturated=fabsf((current_pi+i)->u)>=0.9*voltage_dclink;
-                            float act_voltage_fb=update_pid(current_pi+i,des_currents[i],system_dyn_state.is[i],output_saturated);
-                        #endif
-                        #ifdef CLOSED_LOOP
-                            float act_voltage_ff=0.0;
-                            //compute feedback actuation term (limits [-1,1] for this duty)
-                            bool output_saturated=fabsf((current_pi+i)->u)>=0.9*voltage_dclink;
-                            float act_voltage_fb=update_pid(current_pi+i,des_currents[i],system_dyn_state.is[i],output_saturated);
-                        #endif
-                        #ifdef SINUSODIAL_CURRENTS
-                            //compute feedforward voltage
-                            float currentTime=loop_counter*deltaT;
-                            float act_voltage_ff=vdes_amplitude[i]*sin(2*M_PI*sin_freq[i]*currentTime)
-                                    +amp_vback[i]*sin(2*M_PI*freq_vback[i]*currentTime+phase_vback[i])+offset_vback[i];
-                            //compute feedback voltage
-                            bool output_saturated=fabsf((current_pi+i)->u)>=0.9*voltage_dclink;
-                            float act_voltage_fb=update_pid(current_pi+i,des_currents[i],current_fir_lowpass[i].out,output_saturated);
-                        #endif
-                        float duty_ff=act_voltage_ff/voltage_dclink;
-                        float duty_fb=act_voltage_fb/voltage_dclink;
-                        //convert normalized duty cycle, limit it and apply
-                        float duty_bridge=0.5*(1+(duty_ff+duty_fb));
-                        if(duty_bridge>0.9)
-                            duty_bridge=0.9;
-                        if(duty_bridge<0.1)
-                            duty_bridge=0.1;
-                        set_duty_bridge(driver_channels[i]->bridge_config,duty_bridge);
-                    }
-                    //set_duty_bridge(driver_channels[i]->bridge_config,des_duty_bridge[i]);
+                            act_voltage_fb=update_pid(current_pi+i,des_currents[i],current_fir_lowpass[i].out,output_saturated);
+                        }
+                    #endif
+                    float duty_ff=act_voltage_ff/voltage_dclink;
+                    float duty_fb=act_voltage_fb/voltage_dclink;
+                    //convert normalized duty cycle, limit it and apply
+                    float duty_bridge=0.5*(1+(duty_ff+duty_fb));
+                    if(duty_bridge>0.9)
+                        duty_bridge=0.9;
+                    if(duty_bridge<0.1)
+                        duty_bridge=0.1;
+                    set_duty_bridge(driver_channels[i]->bridge_config,duty_bridge);
                 }
-                //set frequency for bridge [resonant mode]
-                for(i=0; i<NO_CHANNELS; i++){
-                    if(driver_channels[i]->channel_state==RUN_RESONANT)
-                        set_freq_bridge(driver_channels[i]->bridge_config,des_freq_resonant_mhz[i]);
-                }
+                //set_duty_bridge(driver_channels[i]->bridge_config,des_duty_bridge[i]);
+            }
+            //set frequency for bridge [resonant mode]
+            for(i=0; i<NO_CHANNELS; i++){
+                if(driver_channels[i]->channel_state==RUN_RESONANT)
+                    set_freq_bridge(driver_channels[i]->bridge_config,des_freq_resonant_mhz[i]);
             }
 
             //---------------------
