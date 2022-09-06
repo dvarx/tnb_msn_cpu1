@@ -71,7 +71,7 @@ inline float update_pid(struct pi_controller* ctrlr,float r,float y,bool output_
     float e=r-y;
     //update the error integral using trapezoidal rule, but only if the output is not saturated (anti-windup measure)
     if(!output_saturated)
-        ctrlr->errint+=(DELTAT_C*0.5)*(e+ctrlr->errnm1);
+        ctrlr->errint+=(deltaT*0.5)*(e+ctrlr->errnm1);
     //store the current error for later use
     ctrlr->errnm1=e;
     //update the output
