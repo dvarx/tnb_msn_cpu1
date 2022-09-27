@@ -83,6 +83,13 @@ struct first_order des_duty_buck_filt[NO_CHANNELS]={
 };
 uint32_t des_freq_resonant_mhz[NO_CHANNELS]={DEFAULT_RES_FREQ_MILLIHZ,DEFAULT_RES_FREQ_MILLIHZ,DEFAULT_RES_FREQ_MILLIHZ};
 struct tnb_mns_msg_c2000 ipc_tnb_mns_msg_c2000;
+
+// ---------------------
+// Ripple Localization related variables
+// ---------------------
+float ripplefreqs[NO_CHANNELS]={48,52,56,50,50,50};
+float irippleamps[NO_CHANNELS]={0.8,0.8,0.8,0.8,0.8,0.8};
+
 // ------------------------------------------------------------------------------------
 // Main CPU Timer Related Functions
 // ------------------------------------------------------------------------------------

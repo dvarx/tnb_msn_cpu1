@@ -106,6 +106,12 @@ extern struct tnb_mns_msg ipc_tnb_mns_msg;
 extern bool communication_active;                       //variable indicates whether there is a TCP connection active (true if a package was received in the last 200ms)
 
 // ---------------------
+// Ripple Localization related variables
+// ---------------------
+extern float irippleamps[NO_CHANNELS];
+extern float ripplefreqs[NO_CHANNELS];
+
+// ---------------------
 // Main CPU Timer Related Functions
 // ---------------------
 
