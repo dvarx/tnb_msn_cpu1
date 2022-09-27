@@ -101,6 +101,7 @@ extern float des_duty_buck[NO_CHANNELS];               //desired duties for buck
 extern float des_currents[NO_CHANNELS];
 extern uint32_t des_freq_resonant_mhz[NO_CHANNELS];     //desired frequencies for resonant bridges, set by COMM interface
 extern struct first_order des_duty_buck_filt[NO_CHANNELS];
+extern struct first_order des_current_filt[NO_CHANNELS];
 extern struct pi_controller current_pi[NO_CHANNELS];
 extern struct tnb_mns_msg ipc_tnb_mns_msg;
 extern bool communication_active;                       //variable indicates whether there is a TCP connection active (true if a package was received in the last 200ms)

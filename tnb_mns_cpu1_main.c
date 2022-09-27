@@ -460,6 +460,7 @@ void main(void)
             unsigned int i=0;
             for(i=0; i<NO_CHANNELS; i++){
                 update_first_order(des_duty_buck_filt+i,des_duty_buck[i]);
+                update_first_order(des_current_filt+i,des_currents[i]);
             }
 
 
@@ -512,7 +513,7 @@ void main(void)
                         float act_voltage_ff=0.0;
                         //compute feedback actuation term (limits [-1,1] for this duty)
                         bool output_saturated=fabsf((current_pi+i)->u)>=0.9*voltage_dclink;
-                        float des_current=des_currents[i]+irippleamps[i]*sin(2*M_PI*ripplefreqs[i]*loop_counter*deltaT);
+                        float des_current=(des_current_filt+i)->y+irippleamps[i]*sin(2*M_PI*ripplefreqs[i]*loop_counter*deltaT);
                         float act_voltage_fb=update_pid(current_pi+i,des_current,system_dyn_state.is[i],output_saturated);
                     #endif
                     float duty_ff=act_voltage_ff/voltage_dclink;
