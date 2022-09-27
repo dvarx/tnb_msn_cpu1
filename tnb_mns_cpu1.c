@@ -360,7 +360,7 @@ __interrupt void cpuTimer1ISR(void){
 #ifdef SINUSODIAL_CURRENTS
 //ripple definitions
 float sin_freq[NO_CHANNELS]={48,52,56,20,20,20};
-float vdes_amplitude[NO_CHANNELS]={40,40,40,0,0,0};
+float vdes_amplitude[NO_CHANNELS]={30,30,30,0,0,0};
 //background field definitions
 float freq_vback[NO_CHANNELS]={0.2,0.2,0.2,0,0,0};
 float amp_vback[NO_CHANNELS]={0,0,0,0,0,0};
