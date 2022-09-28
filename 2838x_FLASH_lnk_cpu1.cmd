@@ -74,7 +74,7 @@ SECTIONS
 
 #if defined(__TI_EABI__)
    .init_array      : > FLASH1, ALIGN(8)
-   .bss             : > RAMLS5
+   .bss             : >> RAMLS4 | RAMLS5 | RAMLS6
    .bss:output      : > RAMLS3
    .bss:cio         : > RAMLS5
    .data            : > RAMLS5

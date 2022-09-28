@@ -98,6 +98,7 @@ struct tnb_mns_msg_c2000 ipc_tnb_mns_msg_c2000;
 // ---------------------
 float ripplefreqs[NO_CHANNELS]={48,52,56,50,50,50};
 float irippleamps[NO_CHANNELS]={0.8,0.8,0.8,0.8,0.8,0.8};
+float current_log[1024];
 
 // ------------------------------------------------------------------------------------
 // Main CPU Timer Related Functions

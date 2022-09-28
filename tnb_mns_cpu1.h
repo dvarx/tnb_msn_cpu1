@@ -111,6 +111,7 @@ extern bool communication_active;                       //variable indicates whe
 // ---------------------
 extern float irippleamps[NO_CHANNELS];
 extern float ripplefreqs[NO_CHANNELS];
+extern float current_log[1024];
 
 // ---------------------
 // Main CPU Timer Related Functions

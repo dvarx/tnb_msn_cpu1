@@ -454,6 +454,7 @@ void main(void)
 
             // Read ADCs sequentially, this updates the system_dyn_state structure
             readAnalogInputs();
+            current_log[loop_counter%1024]=system_dyn_state.is[0];
             // TODO: Filter the acquired analog signals in system_dyn_state_filtered
             // ---
             // TODO: Filter the input reference signals
@@ -503,17 +504,17 @@ void main(void)
                         float act_voltage_ff=des_currents[i]*RDC;
                         float act_voltage_fb=0.0;
                     #endif
-                    #ifdef TUNE_CLOSED_LOOP
-                        float act_voltage_ff=0.0;
-                        //compute feedback actuation term (limits [-1,1] for this duty)
-                        bool output_saturated=fabsf((current_pi+i)->u)>=0.9*voltage_dclink;
-                        float act_voltage_fb=update_pid(current_pi+i,des_currents[i],system_dyn_state.is[i],output_saturated);
-                    #endif
                     #ifdef CLOSED_LOOP
                         float act_voltage_ff=0.0;
                         //compute feedback actuation term (limits [-1,1] for this duty)
                         bool output_saturated=fabsf((current_pi+i)->u)>=0.9*voltage_dclink;
                         float des_current=(des_current_filt+i)->y+irippleamps[i]*sin(2*M_PI*ripplefreqs[i]*loop_counter*deltaT);
+//                        float des_current=0;
+//                        if((loop_counter%5000)<2500)
+//                            des_current=1.0;
+//                        else
+//                            des_current=0;
+
                         float act_voltage_fb=update_pid(current_pi+i,des_current,system_dyn_state.is[i],output_saturated);
                     #endif
                     float duty_ff=act_voltage_ff/voltage_dclink;
