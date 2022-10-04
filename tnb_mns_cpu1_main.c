@@ -498,7 +498,7 @@ void main(void)
                             ides=0.0;
                     #endif
                     //execute the PI control low
-                    float voltage_dclink=VIN*(des_duty_buck_filt+i)->y;
+                    float voltage_dclink=VIN;
                     //compute feed forward actuation term (limits [-1,1] for this duty) - feed-forward term currently not used
                     #ifdef FEED_FORWARD_ONLY
                         float act_voltage_ff=des_currents[i]*RDC;
