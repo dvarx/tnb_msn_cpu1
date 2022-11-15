@@ -67,7 +67,8 @@
 bool run_main_control_task=false;
 bool enable_waveform_debugging=false;
 
-void main(void{
+void main(void)
+{
 
     //
     // Initialize device clock and peripherals
@@ -421,7 +422,7 @@ void main(void{
     while(1){
         if(run_main_task){
             //toggle heartbeat gpio
-            GPIO_togglePin(HEARTBEAT_GPIO);
+            GPIO_writePin(HEARTBEAT_GPIO,0);
 
             //---------------------
             // State Machine
@@ -453,13 +454,12 @@ void main(void{
 
             // Read ADCs sequentially, this updates the system_dyn_state structure
             readAnalogInputs();
-            current_log[loop_counter%1024]=system_dyn_state.is[0];
             // TODO: Filter the acquired analog signals in system_dyn_state_filtered
             // ---
             // TODO: Filter the input reference signals
             unsigned int i=0;
             for(i=0; i<NO_CHANNELS; i++){
-                update_first_order(des_duty_buck_filt+i,des_duty_buck[i]);
+                //update_first_order(des_duty_buck_filt+i,des_duty_buck[i]); //don't need this without buck stage
                 update_first_order(des_current_filt+i,des_currents[i]);
             }
 
@@ -470,12 +470,12 @@ void main(void{
             //compute optional reference waveform
             //#define OMEGA 2*3.14159265358979323846*5
             //float ides=sin(OMEGA*loop_counter*deltaT);
-            const unsigned int periodn=500e-3/deltaT;
-            float ides=0.0;
-            if(loop_counter%periodn<periodn/2)
-                ides=1.0;
-            else
-                ides=-1.0;
+//            const unsigned int periodn=500e-3/deltaT;
+//            float ides=0.0;
+//            if(loop_counter%periodn<periodn/2)
+//                ides=1.0;
+//            else
+//                ides=-1.0;
             //regulate outputs of channels
             // ...
 
@@ -508,6 +508,8 @@ void main(void{
                         //compute feedback actuation term (limits [-1,1] for this duty)
                         bool output_saturated=fabsf((current_pi+i)->u)>=0.95*voltage_dclink;
                         float des_current=(des_current_filt+i)->y+irippleamps[i]*sin(2*M_PI*ripplefreqs[i]*loop_counter*deltaT);
+                        if(i==0)
+                            current_log[loop_counter%1024]=des_current;
 //                        float des_current=0;
 //                        if((loop_counter%5000)<2500)
 //                            des_current=1.0;
@@ -553,6 +555,7 @@ void main(void{
 
             run_main_task=false;
             loop_counter=loop_counter+1;
+            GPIO_writePin(HEARTBEAT_GPIO,1);
         }
     }
 }

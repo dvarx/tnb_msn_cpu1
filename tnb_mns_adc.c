@@ -215,12 +215,12 @@ void readAnalogInputs(void){
     ADC_forceMultipleSOC(ADCA_BASE, (ADC_FORCE_SOC0 | ADC_FORCE_SOC1 | ADC_FORCE_SOC2 | ADC_FORCE_SOC3| ADC_FORCE_SOC4 | ADC_FORCE_SOC5));
     // Wait for ADCA to complete, then acknowledge flag
     while(ADC_getInterruptStatus(ADCA_BASE, ADC_INT_NUMBER1) == false){}
-    system_dyn_state.is[3] = conv_adc_meas_to_current_a(ADC_readResult(ADCARESULT_BASE, ADC_SOC_NUMBER0));
-    system_dyn_state.vs[3] = ADC_readResult(ADCARESULT_BASE, ADC_SOC_NUMBER1);
-    system_dyn_state.is[4] = conv_adc_meas_to_current_a(ADC_readResult(ADCARESULT_BASE, ADC_SOC_NUMBER2));
-    system_dyn_state.is_res[3] = conv_adc_meas_to_current_a(ADC_readResult(ADCARESULT_BASE, ADC_SOC_NUMBER3));    // TODO : conv factor
-    system_dyn_state.is_res[5] = conv_adc_meas_to_current_a(ADC_readResult(ADCARESULT_BASE, ADC_SOC_NUMBER4));    // TODO : conv factor
-    system_dyn_state.is_res[4] = conv_adc_meas_to_current_a(ADC_readResult(ADCARESULT_BASE, ADC_SOC_NUMBER5));    // TODO : conv factor
+//    system_dyn_state.is[3] = conv_adc_meas_to_current_a(ADC_readResult(ADCARESULT_BASE, ADC_SOC_NUMBER0));
+//    system_dyn_state.vs[3] = ADC_readResult(ADCARESULT_BASE, ADC_SOC_NUMBER1);
+//    system_dyn_state.is[4] = conv_adc_meas_to_current_a(ADC_readResult(ADCARESULT_BASE, ADC_SOC_NUMBER2));
+//    system_dyn_state.is_res[3] = conv_adc_meas_to_current_a(ADC_readResult(ADCARESULT_BASE, ADC_SOC_NUMBER3));    // TODO : conv factor
+//    system_dyn_state.is_res[5] = conv_adc_meas_to_current_a(ADC_readResult(ADCARESULT_BASE, ADC_SOC_NUMBER4));    // TODO : conv factor
+//    system_dyn_state.is_res[4] = conv_adc_meas_to_current_a(ADC_readResult(ADCARESULT_BASE, ADC_SOC_NUMBER5));    // TODO : conv factor
     ADC_clearInterruptStatus(ADCA_BASE, ADC_INT_NUMBER1);
 
     // ADC B Measurements -----------------------------------------------
@@ -238,9 +238,9 @@ void readAnalogInputs(void){
     ADC_forceMultipleSOC(ADCC_BASE, (ADC_FORCE_SOC1 | ADC_FORCE_SOC2 | ADC_FORCE_SOC3));
     // Wait for ADCC to complete, then acknowledge flag
     while(ADC_getInterruptStatus(ADCC_BASE, ADC_INT_NUMBER1) == false){}
-    system_dyn_state.vs[4] = ADC_readResult(ADCCRESULT_BASE, ADC_SOC_NUMBER1);
-    system_dyn_state.is[5] = conv_adc_meas_to_current_a(ADC_readResult(ADCCRESULT_BASE, ADC_SOC_NUMBER2));
-    system_dyn_state.vs[5] = ADC_readResult(ADCCRESULT_BASE, ADC_SOC_NUMBER3);
+//    system_dyn_state.vs[4] = ADC_readResult(ADCCRESULT_BASE, ADC_SOC_NUMBER1);
+//    system_dyn_state.is[5] = conv_adc_meas_to_current_a(ADC_readResult(ADCCRESULT_BASE, ADC_SOC_NUMBER2));
+//    system_dyn_state.vs[5] = ADC_readResult(ADCCRESULT_BASE, ADC_SOC_NUMBER3);
     ADC_clearInterruptStatus(ADCC_BASE, ADC_INT_NUMBER1);
 
     // ADC D Measurements -----------------------------------------------
