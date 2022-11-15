@@ -36,17 +36,17 @@ struct buck_configuration chd_buck={32,33,2,GPIO_2_EPWM2A,3,GPIO_3_EPWM2B,EPWM2_
 //struct bridge_configuration chd_bridge={48,49,54,10,GPIO_10_EPWM6A,11,GPIO_11_EPWM6B,EPWM6_BASE,false};
 struct bridge_configuration chd_bridge={48,49,54,11,GPIO_11_EPWM6B,10,GPIO_10_EPWM6A,EPWM6_BASE,false,true};
 
-struct driver_channel channeld={3,&chd_buck,&chd_bridge,READY,80}; // TODO : resonant enable pin
+struct driver_channel channeld={3,&chd_buck,&chd_bridge,READY,71}; // TODO : resonant enable pin
 
 // channel e
 struct buck_configuration che_buck={125,45,16,GPIO_16_EPWM9A,17,GPIO_17_EPWM9B,EPWM9_BASE,true};
 struct bridge_configuration che_bridge={50,51,55,18,GPIO_18_EPWM10A,19,GPIO_19_EPWM10B,EPWM10_BASE,false,true};
-struct driver_channel channele={4,&che_buck,&che_bridge,READY,80}; // TODO : resonant enable pin
+struct driver_channel channele={4,&che_buck,&che_bridge,READY,73}; // TODO : resonant enable pin
 
 // channel f
 struct buck_configuration chf_buck={96,98,24,GPIO_24_EPWM13A,25,GPIO_25_EPWM13B,EPWM13_BASE,true};
 struct bridge_configuration chf_bridge={52,53,56,26,GPIO_26_EPWM14A,27,GPIO_27_EPWM14B,EPWM14_BASE,false,true};
-struct driver_channel channelf={5,&chf_buck,&chf_bridge,READY,80}; // TODO : resonant enable pin
+struct driver_channel channelf={5,&chf_buck,&chf_bridge,READY,126}; // TODO : resonant enable pin
 
 struct driver_channel* driver_channels[NO_CHANNELS]={&channela,&channelb,&channelc,&channeld,&channele,&channelf};
 
@@ -96,8 +96,10 @@ struct tnb_mns_msg_c2000 ipc_tnb_mns_msg_c2000;
 // ---------------------
 // Ripple Localization related variables
 // ---------------------
-float ripplefreqs[NO_CHANNELS]={48,52,56,50,50,50};
-float irippleamps[NO_CHANNELS]={0.8,0.8,0.8,0.8,0.8,0.8};
+//float ripplefreqs[NO_CHANNELS]={48,52,56,50,50,50};
+float ripplefreqs[NO_CHANNELS]={92,98,104,50,50,50};
+//float irippleamps[NO_CHANNELS]={0.8,0.8,0.8,0.4,0.4,0.4};
+float irippleamps[NO_CHANNELS]={0.4,0.4,0.4,0.4,0.4,0.4};
 float current_log[1024];
 
 // ------------------------------------------------------------------------------------

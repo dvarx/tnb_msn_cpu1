@@ -67,8 +67,7 @@
 bool run_main_control_task=false;
 bool enable_waveform_debugging=false;
 
-void main(void)
-{
+void main(void{
 
     //
     // Initialize device clock and peripherals
@@ -507,7 +506,7 @@ void main(void)
                     #ifdef CLOSED_LOOP
                         float act_voltage_ff=0.0;
                         //compute feedback actuation term (limits [-1,1] for this duty)
-                        bool output_saturated=fabsf((current_pi+i)->u)>=0.9*voltage_dclink;
+                        bool output_saturated=fabsf((current_pi+i)->u)>=0.95*voltage_dclink;
                         float des_current=(des_current_filt+i)->y+irippleamps[i]*sin(2*M_PI*ripplefreqs[i]*loop_counter*deltaT);
 //                        float des_current=0;
 //                        if((loop_counter%5000)<2500)
