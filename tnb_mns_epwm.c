@@ -29,8 +29,8 @@ void setup_pin_config_buck(const struct buck_configuration* config){
     GPIO_setDirectionMode(config->bridge_l_pin,GPIO_DIR_MODE_OUT);     //output
     GPIO_setPinConfig(config->bridge_l_pinconfig);
     //PWM Setup
-    initEPWMWithoutDB(config->epwmbase,true);
-    setupEPWMActiveHighComplementary(config->epwmbase);
+    init_epwm(config->epwmbase,true);
+    setup_epwm_deadband(config->epwmbase);
     //clock prescaling results in a PWM clock of around 50kHz
     EPWM_setClockPrescaler(config->epwmbase,
                            EPWM_CLOCK_DIVIDER_2,
@@ -61,8 +61,8 @@ void setup_pinmux_config_bridge(const struct bridge_configuration* config){
     GPIO_setDirectionMode(config->bridge_l_pin,GPIO_DIR_MODE_OUT);     //output
     GPIO_setPinConfig(config->bridge_l_pinconfig);
     //PWM Setup to ~ 50kHz 50% duty
-    initEPWMWithoutDB(config->epwmbase,false);
-    setupEPWMActiveHighComplementary(config->epwmbase);
+    init_epwm(config->epwmbase,false);
+    setup_epwm_deadband(config->epwmbase);
     //clock prescaling results in a PWM clock of around 50kHz
     EPWM_setClockPrescaler(config->epwmbase,
                            EPWM_CLOCK_DIVIDER_1,
@@ -95,7 +95,14 @@ void set_duty_bridge(const struct bridge_configuration* config, double duty){
     }
 }
 
-void initEPWMWithoutDB(uint32_t base,bool is_buck)
+/*
+ * initializes the following
+ * - set counter max to EPWM_TIMER_TBPRD_BRIDGE / EPWM_TIMER_TBPRD_BUCK
+ * - sets duty to 50%
+ * - set action qualifiers
+ * - set counter synchronization (all counters are synchronized to channel 0)
+ */
+void init_epwm(uint32_t base,bool is_buck)
 {
     //
     // Set-up TBCLK
@@ -107,7 +114,7 @@ void initEPWMWithoutDB(uint32_t base,bool is_buck)
     EPWM_setPhaseShift(base, 0U);
     EPWM_setTimeBaseCounter(base, 0U);
     EPWM_setTimeBaseCounterMode(base, EPWM_COUNTER_MODE_UP_DOWN);
-    EPWM_disablePhaseShiftLoad(base);
+    //EPWM_disablePhaseShiftLoad(base);
 
     //
     // Set ePWM clock pre-scaler
@@ -138,44 +145,20 @@ void initEPWMWithoutDB(uint32_t base,bool is_buck)
     //
     // Set actions
     //
-    EPWM_setActionQualifierAction(base,
-                                      EPWM_AQ_OUTPUT_A,
-                                      EPWM_AQ_OUTPUT_LOW,
-                                      EPWM_AQ_OUTPUT_ON_TIMEBASE_ZERO);
-    EPWM_setActionQualifierAction(base,
-                                      EPWM_AQ_OUTPUT_A,
-                                      EPWM_AQ_OUTPUT_HIGH,
-                                      EPWM_AQ_OUTPUT_ON_TIMEBASE_UP_CMPA);
-    EPWM_setActionQualifierAction(base,
-                                      EPWM_AQ_OUTPUT_A,
-                                      EPWM_AQ_OUTPUT_NO_CHANGE,
-                                      EPWM_AQ_OUTPUT_ON_TIMEBASE_PERIOD);
-    EPWM_setActionQualifierAction(base,
-                                      EPWM_AQ_OUTPUT_A,
-                                      EPWM_AQ_OUTPUT_LOW,
-                                      EPWM_AQ_OUTPUT_ON_TIMEBASE_DOWN_CMPA);
+    EPWM_setActionQualifierAction(base,EPWM_AQ_OUTPUT_A,EPWM_AQ_OUTPUT_HIGH,EPWM_AQ_OUTPUT_ON_TIMEBASE_ZERO);
+    EPWM_setActionQualifierAction(base,EPWM_AQ_OUTPUT_A,EPWM_AQ_OUTPUT_LOW,EPWM_AQ_OUTPUT_ON_TIMEBASE_UP_CMPA);
+    EPWM_setActionQualifierAction(base,EPWM_AQ_OUTPUT_A,EPWM_AQ_OUTPUT_NO_CHANGE,EPWM_AQ_OUTPUT_ON_TIMEBASE_PERIOD);
+    EPWM_setActionQualifierAction(base,EPWM_AQ_OUTPUT_A,EPWM_AQ_OUTPUT_HIGH,EPWM_AQ_OUTPUT_ON_TIMEBASE_DOWN_CMPA);
 
 
-    EPWM_setActionQualifierAction(base,
-                                      EPWM_AQ_OUTPUT_B,
-                                      EPWM_AQ_OUTPUT_LOW,
-                                      EPWM_AQ_OUTPUT_ON_TIMEBASE_ZERO);
-    EPWM_setActionQualifierAction(base,
-                                      EPWM_AQ_OUTPUT_B,
-                                      EPWM_AQ_OUTPUT_HIGH,
-                                      EPWM_AQ_OUTPUT_ON_TIMEBASE_UP_CMPB);
-    EPWM_setActionQualifierAction(base,
-                                      EPWM_AQ_OUTPUT_B,
-                                      EPWM_AQ_OUTPUT_NO_CHANGE,
-                                      EPWM_AQ_OUTPUT_ON_TIMEBASE_PERIOD);
-    EPWM_setActionQualifierAction(base,
-                                      EPWM_AQ_OUTPUT_B,
-                                      EPWM_AQ_OUTPUT_LOW,
-                                      EPWM_AQ_OUTPUT_ON_TIMEBASE_DOWN_CMPB);
+    EPWM_setActionQualifierAction(base,EPWM_AQ_OUTPUT_B,EPWM_AQ_OUTPUT_HIGH,EPWM_AQ_OUTPUT_ON_TIMEBASE_ZERO);
+    EPWM_setActionQualifierAction(base,EPWM_AQ_OUTPUT_B,EPWM_AQ_OUTPUT_LOW,EPWM_AQ_OUTPUT_ON_TIMEBASE_UP_CMPB);
+    EPWM_setActionQualifierAction(base,EPWM_AQ_OUTPUT_B,EPWM_AQ_OUTPUT_NO_CHANGE,EPWM_AQ_OUTPUT_ON_TIMEBASE_PERIOD);
+    EPWM_setActionQualifierAction(base,EPWM_AQ_OUTPUT_B,EPWM_AQ_OUTPUT_HIGH,EPWM_AQ_OUTPUT_ON_TIMEBASE_DOWN_CMPB);
 
 }
 
-void setupEPWMActiveHighComplementary(uint32_t base)
+void setup_epwm_deadband(uint32_t base)
 {
     //
     // Use EPWMA as the input for both RED and FED
@@ -228,12 +211,60 @@ void set_enabled(void* config,bool is_buck,bool enable){
     }
 }
 
+/*
+void setup_phase_control(struct driver_channel** channels,const float* phaseoffsets){
+    //phaseoffsets: 5 phase offsets relative to phase 0
+
+    // TODO : Implement phase shift load and synchronization
+    uint16_t phase1=2*EPWM_TIMER_TBPRD_BRIDGE*phase1_in;
+    uint16_t phase2=2*EPWM_TIMER_TBPRD_BRIDGE*phase2_in;
+
+    // -- Channel 0 Setup
+    //enable sync output of EPWM of channel 0, sync output will be generated when timer reaches zero
+    EPWM_enableSyncOutPulseSource(channels[0]->bridge_config->epwmbase,EPWM_SYNCOUTEN_ZEROEN);
+    //channel 0 does not do a phase shift load
+    EPWM_disablePhaseShiftLoad(channels[0]->bridge_config->epwmbase);
+    //set phase shift register to zero
+    EPWM_setPhaseShift(channels[0]->bridge_config->epwmbase, 0);
+    // -- Channel 1 Setup
+    //set the sync input source to EPWM7 (the EPWM generator of channel bridge 0)
+    EPWM_setSyncInPulseSource(channels[1]->bridge_config->epwmbase,EPWM_SYNC_IN_PULSE_SRC_SYNCOUT_EPWM7);
+    //enable phase shift load for channel 1
+    EPWM_enablePhaseShiftLoad(channels[1]->bridge_config->epwmbase);
+    //set phase shift register
+    EPWM_setPhaseShift(channels[1]->bridge_config->epwmbase, phaseoffsets[0]);
+}
+*/
+
+void synchronize_pwm_tochannel0(struct driver_channel** channels, const unsigned int channel_to_sync){
+    /*
+     * this function synchronizes the epwm counter of <channel_to_sync> to the epwm counter of channel 0
+     * coils 1 and 2 : when the epwm counter of channel 0 reaches zero, the epwm counter of <channel_to_sync> will be loaded with 0 as well
+     * coils 3,4 and 5 : when the epwm counter of channel 0 reaches zero, the epwm counter of <channel_to_sync> will be loaded with countermax/2
+     */
+    //set the sync input source to EPWM7 (the EPWM generator of channel bridge 0)
+    EPWM_setSyncInPulseSource(channels[channel_to_sync]->bridge_config->epwmbase,EPWM_SYNC_IN_PULSE_SRC_SYNCOUT_EPWM7);
+    //enable phase shift load for channel <channel_to_sync>
+    EPWM_enablePhaseShiftLoad(channels[channel_to_sync]->bridge_config->epwmbase);
+    //set phase shift register to zero
+    EPWM_setPhaseShift(channels[channel_to_sync]->bridge_config->epwmbase, 0);
+    //
+    //EPWM_setCountModeAfterSync(channels[channel_to_sync]->bridge_config->epwmbase,EPWM_COUNT_MODE_UP_AFTER_SYNC);
+    return;
+}
+
+void unsynchronize_pwm_tochannel0(struct driver_channel** channels, const unsigned int channel_to_sync){
+    //disable the phase shift load for this channel
+    EPWM_disablePhaseShiftLoad(channels[channel_to_sync]->bridge_config->epwmbase);
+    return;
+}
+
 //set pwm frequency of bridge
-void set_freq_bridge(const struct bridge_configuration* config,const uint32_t freq_mhz){
+void set_freq_bridge(const unsigned int channelno,const uint32_t freq_mhz){
     /* General Formulas & Relationships (see also OneNote notes)
      *
      * Tpwm=1/fpwm
-     * fEPWM=100MH(frequency going into the EPWM modules, can be divided down by clock dividers of EPWM module)
+     * fEPWM=100MHz(frequency going into the EPWM modules, can be divided down by clock dividers of EPWM module)
      *
      * For symmetrical EPWM (e.g. count up and down)
      * -----------------
@@ -257,13 +288,20 @@ void set_freq_bridge(const struct bridge_configuration* config,const uint32_t fr
      * TimeBasePeriod(1kHz)=5000
      * TimeBasePeriod(100Hz)=50000
      */
-    EPWM_setClockPrescaler(config->epwmbase, EPWM_CLOCK_DIVIDER_16, EPWM_HSCLOCK_DIVIDER_1);
+
+    //set the frequency of the EPWM
+    EPWM_setClockPrescaler(driver_channels[channelno]->bridge_config->epwmbase, EPWM_CLOCK_DIVIDER_16, EPWM_HSCLOCK_DIVIDER_1);
 
     unsigned int counterlimit=(((100000000)/(16*2*(freq_mhz/1000))));
 
-    EPWM_setFallingEdgeDelayCount(config->epwmbase, 128);
-    EPWM_setRisingEdgeDelayCount(config->epwmbase, 128);
-    EPWM_setTimeBasePeriod(config->epwmbase, counterlimit);
-    EPWM_setCounterCompareValue(config->epwmbase, EPWM_COUNTER_COMPARE_A, counterlimit/2);
-    EPWM_setCounterCompareValue(config->epwmbase, EPWM_COUNTER_COMPARE_B, counterlimit/2);
+    EPWM_setFallingEdgeDelayCount(driver_channels[channelno]->bridge_config->epwmbase, 128);
+    EPWM_setRisingEdgeDelayCount(driver_channels[channelno]->bridge_config->epwmbase, 128);
+    EPWM_setTimeBasePeriod(driver_channels[channelno]->bridge_config->epwmbase, counterlimit);
+    EPWM_setCounterCompareValue(driver_channels[channelno]->bridge_config->epwmbase, EPWM_COUNTER_COMPARE_A, counterlimit/2);
+    EPWM_setCounterCompareValue(driver_channels[channelno]->bridge_config->epwmbase, EPWM_COUNTER_COMPARE_B, counterlimit/2);
+    //set phase shift to either 0° or 180°
+    if(channelno==1||channelno==2)
+        EPWM_setPhaseShift(driver_channels[channelno]->bridge_config->epwmbase, 0);
+    if(channelno==3||channelno==4||channelno==5)
+        EPWM_setPhaseShift(driver_channels[channelno]->bridge_config->epwmbase, (uint16_t)(counterlimit-1));
 }

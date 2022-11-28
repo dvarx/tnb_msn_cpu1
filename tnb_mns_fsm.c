@@ -233,6 +233,8 @@ void RUNNING_RESONANT_enter(uint8_t channelno){
     //configure & enable bridge
     setup_pinmux_config_bridge(driver_channels[channelno]->bridge_config);
     GPIO_writePin(driver_channels[channelno]->bridge_config->enable_gpio,DRIVER_ENABLE_POLARITY);
+    if(channelno!=0)
+        synchronize_pwm_tochannel0(driver_channels,channelno);
     // TODO-PID : reset PID controller for resonant current control here
 }
 void RUNNING_RESONANT_during(uint8_t channelno){
@@ -240,6 +242,9 @@ void RUNNING_RESONANT_during(uint8_t channelno){
 void RUNNING_RESONANT_exit(uint8_t channelno){
     //disable bridge
     GPIO_writePin(driver_channels[channelno]->bridge_config->enable_gpio,DRIVER_DISABLE_POLARITY);
+    //disable phase synchronization
+    if(channelno!=0)
+        synchronize_pwm_tochannel0(driver_channels,channelno);
 }
 //TERMINATE_RESONANT state
 void TERMINATE_RESONANT_enter(uint8_t channelno){

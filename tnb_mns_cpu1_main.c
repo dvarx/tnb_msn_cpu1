@@ -140,6 +140,18 @@ void main(void)
     setup_pinmux_config_bridge(&chf_bridge);
 
     //
+    // Initialize synchronization of bridges
+    //
+    //enable sync output of EPWM of channel 0, sync output will be generated when timer reaches zero
+    EPWM_enableSyncOutPulseSource(driver_channels[0]->bridge_config->epwmbase,EPWM_SYNCOUTEN_ZEROEN);
+    //channel 0 does not do a phase shift load
+    EPWM_disablePhaseShiftLoad(driver_channels[0]->bridge_config->epwmbase);
+    //set phase shift register to zero
+    EPWM_setPhaseShift(driver_channels[0]->bridge_config->epwmbase, 0);
+    //Hint : when channel 1,2,3,4 or 5 enter resonant mode, their pwm counter will be synchronized to channel 0
+    // channel 0 always needs to be in resonant mode if one of the other coils is in resonant mode
+
+    //
     // Enable Half Bridges
     //
     set_enabled(&cha_buck,true,true);
@@ -531,8 +543,9 @@ void main(void)
             //set frequency for bridge [resonant mode]
             for(i=0; i<NO_CHANNELS; i++){
                 if(driver_channels[i]->channel_state==RUN_RESONANT)
-                    set_freq_bridge(driver_channels[i]->bridge_config,des_freq_resonant_mhz[i]);
+                    set_freq_bridge(i,des_freq_resonant_mhz[i]);
             }
+            //setup_phase_control(driver_channels,debug_phase0,debug_phase1);
 
             //---------------------
             // Read State Of Bridges
