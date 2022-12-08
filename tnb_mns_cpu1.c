@@ -17,36 +17,35 @@
 // ------------------------------------------------------------------------------------
 
 // channel a
-struct buck_configuration cha_buck={40,41,8,GPIO_8_EPWM5A,9,GPIO_9_EPWM5B,EPWM5_BASE,false};
+struct buck_configuration cha_buck={40,41,8,GPIO_8_EPWM5A,9,GPIO_9_EPWM5B,EPWM5_BASE,true};
 struct bridge_configuration cha_bridge={30,22,23,12,GPIO_12_EPWM7A,13,GPIO_13_EPWM7B,EPWM7_BASE,false,false};
 struct driver_channel channela={0,&cha_buck,&cha_bridge,READY,87};
 
 // channel b
-struct buck_configuration chb_buck={35,60,15,GPIO_15_EPWM8B,14,GPIO_14_EPWM8A,EPWM8_BASE,false};
+struct buck_configuration chb_buck={35,60,15,GPIO_15_EPWM8B,14,GPIO_14_EPWM8A,EPWM8_BASE,true};
 struct bridge_configuration chb_bridge={63,61,65,6,GPIO_6_EPWM4A,7,GPIO_7_EPWM4B,EPWM4_BASE,false,false};
 struct driver_channel channelb={1,&chb_buck,&chb_bridge,READY,85};
 
 // channel c
-struct buck_configuration chc_buck={95,89,4,GPIO_4_EPWM3A,5,GPIO_5_EPWM3B,EPWM3_BASE,true};
+struct buck_configuration chc_buck={95,89,4,GPIO_4_EPWM3A,5,GPIO_5_EPWM3B,EPWM3_BASE,false};
 struct bridge_configuration chc_bridge={107,133,93,0,GPIO_0_EPWM1A,1,GPIO_1_EPWM1B,EPWM1_BASE,false,false};
 struct driver_channel channelc={2,&chc_buck,&chc_bridge,READY,83};
 
 // channel d
-struct buck_configuration chd_buck={32,33,2,GPIO_2_EPWM2A,3,GPIO_3_EPWM2B,EPWM2_BASE,true};
-//struct bridge_configuration chd_bridge={48,49,54,10,GPIO_10_EPWM6A,11,GPIO_11_EPWM6B,EPWM6_BASE,false};
-struct bridge_configuration chd_bridge={48,49,54,11,GPIO_11_EPWM6B,10,GPIO_10_EPWM6A,EPWM6_BASE,false,true};
+struct buck_configuration chd_buck={32,33,2,GPIO_2_EPWM2A,3,GPIO_3_EPWM2B,EPWM2_BASE,false};
+struct bridge_configuration chd_bridge={48,49,54,10,GPIO_10_EPWM6A,11,GPIO_11_EPWM6B,EPWM6_BASE,false,true};
 
-struct driver_channel channeld={3,&chd_buck,&chd_bridge,READY,80}; // TODO : resonant enable pin
+struct driver_channel channeld={3,&chd_buck,&chd_bridge,READY,71}; // TODO : resonant enable pin
 
 // channel e
-struct buck_configuration che_buck={125,45,16,GPIO_16_EPWM9A,17,GPIO_17_EPWM9B,EPWM9_BASE,true};
-struct bridge_configuration che_bridge={50,51,55,18,GPIO_18_EPWM10A,19,GPIO_19_EPWM10B,EPWM10_BASE,false,true};
-struct driver_channel channele={4,&che_buck,&che_bridge,READY,80}; // TODO : resonant enable pin
+struct buck_configuration che_buck={125,45,16,GPIO_16_EPWM9A,17,GPIO_17_EPWM9B,EPWM9_BASE,false};
+struct bridge_configuration che_bridge={50,51,55,19,GPIO_19_EPWM10B,18,GPIO_18_EPWM10A,EPWM10_BASE,false,true};
+struct driver_channel channele={4,&che_buck,&che_bridge,READY,73}; // TODO : resonant enable pin
 
 // channel f
-struct buck_configuration chf_buck={96,98,24,GPIO_24_EPWM13A,25,GPIO_25_EPWM13B,EPWM13_BASE,true};
-struct bridge_configuration chf_bridge={52,53,56,26,GPIO_26_EPWM14A,27,GPIO_27_EPWM14B,EPWM14_BASE,false,true};
-struct driver_channel channelf={5,&chf_buck,&chf_bridge,READY,80}; // TODO : resonant enable pin
+struct buck_configuration chf_buck={96,98,24,GPIO_24_EPWM13A,25,GPIO_25_EPWM13B,EPWM13_BASE,false};
+struct bridge_configuration chf_bridge={52,53,56,27,GPIO_27_EPWM14B,26,GPIO_26_EPWM14A,EPWM14_BASE,false,true};
+struct driver_channel channelf={5,&chf_buck,&chf_bridge,READY,126}; // TODO : resonant enable pin
 
 struct driver_channel* driver_channels[NO_CHANNELS]={&channela,&channelb,&channelc,&channeld,&channele,&channelf};
 

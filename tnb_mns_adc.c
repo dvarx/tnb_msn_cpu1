@@ -202,10 +202,11 @@ void initADCSOCs(void)
 /*
  * calibration measurement is of the form m=alpha'*i+beta' => i=alpha*m+beta with alpha=1/alpha' and beta=-beta'/alpha
  */
-const float calib_factor_current_alpha=1.0/132.0;
+const float calib_factor_current_alpha=-0.0076219958202716825;
 const float calib_factor_current_beta=-5.0/132.0;
 
 inline float conv_adc_meas_to_current_a(const uint16_t adc_output){
+    //current measured by sensor is inverted relative to the defined current
     return calib_factor_current_alpha*(float)((int16_t)adc_output-(int16_t)2048)+calib_factor_current_beta;
 }
 

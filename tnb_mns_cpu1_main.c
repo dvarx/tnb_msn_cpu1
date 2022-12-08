@@ -67,6 +67,8 @@
 bool run_main_control_task=false;
 bool enable_waveform_debugging=false;
 
+//float debug_bridge_duties[6]={0.5};
+
 void main(void)
 {
 
@@ -528,7 +530,8 @@ void main(void)
                     #endif
                     float duty_ff=act_voltage_ff/voltage_dclink;
                     float duty_fb=act_voltage_fb/(voltage_dclink);
-                    // TODO-PID : Sanity / Limit Checks on PID go here
+                    // DEBUG
+                    //duty_fb=debug_bridge_duties[i];
 
                     //convert normalized duty cycle, limit it and apply
                     float duty_bridge=0.5*(1+(duty_ff+duty_fb));

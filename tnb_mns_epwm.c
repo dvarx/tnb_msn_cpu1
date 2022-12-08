@@ -74,11 +74,9 @@ void set_duty_buck(const struct buck_configuration* config, double duty){
     //set the duty based on whether the channel has an inverted duty logic or not
     if(config->is_inverted){
         EPWM_setCounterCompareValue(config->epwmbase, EPWM_COUNTER_COMPARE_A, EPWM_TIMER_TBPRD_BUCK-duty_int);
-        EPWM_setCounterCompareValue(config->epwmbase, EPWM_COUNTER_COMPARE_B, duty_int);
     }
     else{
         EPWM_setCounterCompareValue(config->epwmbase, EPWM_COUNTER_COMPARE_A, duty_int);
-        EPWM_setCounterCompareValue(config->epwmbase, EPWM_COUNTER_COMPARE_B, EPWM_TIMER_TBPRD_BUCK-duty_int);
     }
 }
 
@@ -87,11 +85,9 @@ void set_duty_bridge(const struct bridge_configuration* config, double duty){
     //set the duty based on whether the channel has an inverted duty logic or not
     if(config->is_inverted){
         EPWM_setCounterCompareValue(config->epwmbase, EPWM_COUNTER_COMPARE_A, EPWM_TIMER_TBPRD_BRIDGE-duty_int);
-        EPWM_setCounterCompareValue(config->epwmbase, EPWM_COUNTER_COMPARE_B, duty_int);
     }
     else{
         EPWM_setCounterCompareValue(config->epwmbase, EPWM_COUNTER_COMPARE_A, duty_int);
-        EPWM_setCounterCompareValue(config->epwmbase, EPWM_COUNTER_COMPARE_B, EPWM_TIMER_TBPRD_BRIDGE-duty_int);
     }
 }
 
@@ -135,11 +131,9 @@ void init_epwm(uint32_t base,bool is_buck)
     //
     if(is_buck){
         EPWM_setCounterCompareValue(base, EPWM_COUNTER_COMPARE_A, EPWM_TIMER_TBPRD_BUCK/2);
-        EPWM_setCounterCompareValue(base, EPWM_COUNTER_COMPARE_B, EPWM_TIMER_TBPRD_BUCK/2);
     }
     else{
         EPWM_setCounterCompareValue(base, EPWM_COUNTER_COMPARE_A, EPWM_TIMER_TBPRD_BRIDGE/2);
-        EPWM_setCounterCompareValue(base, EPWM_COUNTER_COMPARE_B, EPWM_TIMER_TBPRD_BRIDGE/2);
     }
 
     //
@@ -149,13 +143,6 @@ void init_epwm(uint32_t base,bool is_buck)
     EPWM_setActionQualifierAction(base,EPWM_AQ_OUTPUT_A,EPWM_AQ_OUTPUT_LOW,EPWM_AQ_OUTPUT_ON_TIMEBASE_UP_CMPA);
     EPWM_setActionQualifierAction(base,EPWM_AQ_OUTPUT_A,EPWM_AQ_OUTPUT_NO_CHANGE,EPWM_AQ_OUTPUT_ON_TIMEBASE_PERIOD);
     EPWM_setActionQualifierAction(base,EPWM_AQ_OUTPUT_A,EPWM_AQ_OUTPUT_HIGH,EPWM_AQ_OUTPUT_ON_TIMEBASE_DOWN_CMPA);
-
-
-    EPWM_setActionQualifierAction(base,EPWM_AQ_OUTPUT_B,EPWM_AQ_OUTPUT_HIGH,EPWM_AQ_OUTPUT_ON_TIMEBASE_ZERO);
-    EPWM_setActionQualifierAction(base,EPWM_AQ_OUTPUT_B,EPWM_AQ_OUTPUT_LOW,EPWM_AQ_OUTPUT_ON_TIMEBASE_UP_CMPB);
-    EPWM_setActionQualifierAction(base,EPWM_AQ_OUTPUT_B,EPWM_AQ_OUTPUT_NO_CHANGE,EPWM_AQ_OUTPUT_ON_TIMEBASE_PERIOD);
-    EPWM_setActionQualifierAction(base,EPWM_AQ_OUTPUT_B,EPWM_AQ_OUTPUT_HIGH,EPWM_AQ_OUTPUT_ON_TIMEBASE_DOWN_CMPB);
-
 }
 
 void setup_epwm_deadband(uint32_t base)
@@ -248,14 +235,20 @@ void synchronize_pwm_tochannel0(struct driver_channel** channels, const unsigned
     EPWM_enablePhaseShiftLoad(channels[channel_to_sync]->bridge_config->epwmbase);
     //set phase shift register to zero
     EPWM_setPhaseShift(channels[channel_to_sync]->bridge_config->epwmbase, 0);
-    //
-    //EPWM_setCountModeAfterSync(channels[channel_to_sync]->bridge_config->epwmbase,EPWM_COUNT_MODE_UP_AFTER_SYNC);
+//    if(channel_to_sync==3||channel_to_sync==4||channel_to_sync==5){
+//        //also invert PWM signal for coils 3,4,5 (e.g. swap EPWMA and EPWMB outputs)
+//        EPWM_setDeadBandOutputSwapMode(channels[channel_to_sync]->bridge_config->epwmbase, EPWM_DB_OUTPUT_A, true);
+//        EPWM_setDeadBandOutputSwapMode(channels[channel_to_sync]->bridge_config->epwmbase, EPWM_DB_OUTPUT_B, true);
+//    }
     return;
 }
 
 void unsynchronize_pwm_tochannel0(struct driver_channel** channels, const unsigned int channel_to_sync){
     //disable the phase shift load for this channel
     EPWM_disablePhaseShiftLoad(channels[channel_to_sync]->bridge_config->epwmbase);
+    //do not swap EPWMA output and EPWMB outputs (for channels 3,4,5 they swapped if system was in RUN_RESONAT mode)
+//    EPWM_setDeadBandOutputSwapMode(channels[channel_to_sync]->bridge_config->epwmbase, EPWM_DB_OUTPUT_A, false);
+//    EPWM_setDeadBandOutputSwapMode(channels[channel_to_sync]->bridge_config->epwmbase, EPWM_DB_OUTPUT_B, false);
     return;
 }
 
@@ -298,10 +291,4 @@ void set_freq_bridge(const unsigned int channelno,const uint32_t freq_mhz){
     EPWM_setRisingEdgeDelayCount(driver_channels[channelno]->bridge_config->epwmbase, 128);
     EPWM_setTimeBasePeriod(driver_channels[channelno]->bridge_config->epwmbase, counterlimit);
     EPWM_setCounterCompareValue(driver_channels[channelno]->bridge_config->epwmbase, EPWM_COUNTER_COMPARE_A, counterlimit/2);
-    EPWM_setCounterCompareValue(driver_channels[channelno]->bridge_config->epwmbase, EPWM_COUNTER_COMPARE_B, counterlimit/2);
-    //set phase shift to either 0° or 180°
-    if(channelno==1||channelno==2)
-        EPWM_setPhaseShift(driver_channels[channelno]->bridge_config->epwmbase, 0);
-    if(channelno==3||channelno==4||channelno==5)
-        EPWM_setPhaseShift(driver_channels[channelno]->bridge_config->epwmbase, (uint16_t)(counterlimit-1));
 }
