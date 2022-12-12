@@ -91,6 +91,7 @@ struct first_order des_current_filt[NO_CHANNELS]={
 };
 
 uint32_t des_freq_resonant_mhz[NO_CHANNELS]={DEFAULT_RES_FREQ_MILLIHZ,DEFAULT_RES_FREQ_MILLIHZ,DEFAULT_RES_FREQ_MILLIHZ};
+float des_currents_res[NO_CHANNELS]={0.4};
 struct tnb_mns_msg_c2000 ipc_tnb_mns_msg_c2000;
 
 // ---------------------
@@ -255,10 +256,13 @@ __interrupt void IPC_ISR0()
                 //currents are sent in units of [mA]
                 des_currents[i]=(float)(ipc_tnb_mns_msg_c2000.desCurrents[i])*1e-3;
                 des_duty_buck[i]=(float)(ipc_tnb_mns_msg_c2000.desDuties[i])*(1.0/(float)(UINT16_MAX));
+                des_currents_res[i]=(float)(ipc_tnb_mns_msg_c2000.desCurrentsRes[i])*1e-3;
+
             }
             else{
                 des_currents[i]=0.0;
                 des_duty_buck[i]=0.0;
+                des_currents_res[i]=0.4;
             }
         }
         //check frequencies and set them

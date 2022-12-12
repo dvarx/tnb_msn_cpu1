@@ -507,7 +507,7 @@ void main(void)
                         float act_voltage_ff=0.0;
                         //compute feedback actuation term (limits [-1,1] for this duty)
                         bool output_saturated=fabsf((current_pi+i)->u)>=0.95*voltage_dclink;
-                        float des_current=(des_current_filt+i)->y+irippleamps[i]*sin(2*M_PI*ripplefreqs[i]*loop_counter*deltaT);
+                        float des_current=(des_current_filt+i)->y+des_currents_res[i]*sin(2*M_PI*ripplefreqs[i]*loop_counter*deltaT);
                         if(i==0)
                             current_log[loop_counter%1024]=des_current;
 //                        float des_current=0;

@@ -100,6 +100,7 @@ extern float des_duty_bridge[NO_CHANNELS];             //desired duties for brid
 extern float des_duty_buck[NO_CHANNELS];               //desired duties for bucks, set by COMM interface
 extern float des_currents[NO_CHANNELS];
 extern uint32_t des_freq_resonant_mhz[NO_CHANNELS];     //desired frequencies for resonant bridges, set by COMM interface
+extern float des_currents_res[NO_CHANNELS];
 extern struct first_order des_duty_buck_filt[NO_CHANNELS];
 extern struct first_order des_current_filt[NO_CHANNELS];
 extern struct pi_controller current_pi[NO_CHANNELS];
