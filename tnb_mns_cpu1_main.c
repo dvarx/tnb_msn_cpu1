@@ -108,6 +108,10 @@ void main(void)
     GPIO_setDirectionMode(LED_2_GPIO, GPIO_DIR_MODE_OUT);
     GPIO_setPadConfig(LED_2_GPIO,GPIO_PIN_TYPE_STD);
     GPIO_writePin(LED_2_GPIO,1);
+    //start of frame (SOF) GPIO
+    GPIO_setDirectionMode(SOF_GPIO, GPIO_DIR_MODE_OUT);
+    GPIO_setPadConfig(SOF_GPIO,GPIO_PIN_TYPE_STD);
+    GPIO_writePin(SOF_GPIO,1);
 
     //
     // Initialize ADCs
@@ -424,6 +428,13 @@ void main(void)
             //toggle heartbeat gpio
             GPIO_writePin(HEARTBEAT_GPIO,0);
 
+
+            //set start of frame (SOF) output
+            if(loop_counter<(int)(SAMPLE_PERIOD_S/deltaT))
+                GPIO_writePin(SOF_GPIO,1);
+            else
+                GPIO_writePin(SOF_GPIO,0);
+
             //---------------------
             // State Machine
             //---------------------
@@ -460,7 +471,7 @@ void main(void)
             unsigned int i=0;
             for(i=0; i<NO_CHANNELS; i++){
                 //update_first_order(des_duty_buck_filt+i,des_duty_buck[i]); //don't need this without buck stage
-                update_first_order(des_current_filt+i,des_currents[i]);
+                update_second_order_system(des_current_filt+i,des_currents[i]);
             }
 
 
@@ -507,7 +518,7 @@ void main(void)
                         float act_voltage_ff=0.0;
                         //compute feedback actuation term (limits [-1,1] for this duty)
                         bool output_saturated=fabsf((current_pi+i)->u)>=0.95*voltage_dclink;
-                        float des_current=(des_current_filt+i)->y+des_currents_res[i]*sin(2*M_PI*ripplefreqs[i]*loop_counter*deltaT);
+                        float des_current=(des_current_filt+i)->ynm1+des_currents_res[i]*sin(2*M_PI*ripplefreqs[i]*loop_counter*deltaT);
                         if(i==0)
                             current_log[loop_counter%1024]=des_current;
 //                        float des_current=0;
@@ -554,7 +565,11 @@ void main(void)
             uint32_t chc_bridge_state_v=GPIO_readPin(chc_bridge.state_u_gpio);
 
             run_main_task=false;
-            loop_counter=loop_counter+1;
+            //reset the loop counter
+            if(loop_counter>=FRAME_PERIOD_S/deltaT)
+                loop_counter=0;
+            else
+                loop_counter+=1;
             GPIO_writePin(HEARTBEAT_GPIO,1);
         }
     }

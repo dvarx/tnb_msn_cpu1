@@ -12,6 +12,9 @@
 
 //controller time interval
 #define deltaT 100e-6
+#define SAMPLE_PERIOD_S 2e-3
+#define FRAME_PERIOD_S 0.5
+#define SOF_GPIO 76
 
 struct pi_controller{
     float kp;
@@ -32,6 +35,16 @@ struct first_order{
     float x_nm1;
     float y_nm1;
     float y;
+};
+
+struct second_order_system{
+    //numerators {b0,b1,b2}, denominator {1,a1,a2}
+    double den[3];
+    double num[3];
+    double xnm1;
+    double xnm2;
+    double ynm1;
+    double ynm2;
 };
 
 /*
@@ -60,6 +73,17 @@ inline float update_first_order(struct first_order* fir,float x){
     fir->x_nm1=x;
     fir->y=y;
     return y;
+}
+
+inline double update_second_order_system(struct second_order_system* sys,double xn){
+    //compute current output
+    double yn=sys->num[0]*xn + sys->num[1]*sys->xnm1 + sys->num[2]*sys->xnm2 - sys->den[1]*sys->ynm1 - sys->den[2]*sys->ynm2;
+    //update previous inputs / outputs
+    sys->xnm2=sys->xnm1;
+    sys->ynm2=sys->ynm1;
+    sys->xnm1=xn;
+    sys->ynm1=yn;
+    return yn;
 }
 
 /*
