@@ -13,7 +13,6 @@
 //controller time interval
 #define deltaT 100e-6
 #define SAMPLE_PERIOD_S 2e-3
-#define FRAME_PERIOD_S 0.5
 #define SOF_GPIO 76
 
 struct pi_controller{

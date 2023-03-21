@@ -28,6 +28,7 @@
 //define the pin polarity of the voltage needed to enable the ate driver
 #define DRIVER_ENABLE_POLARITY 0
 #define DRIVER_DISABLE_POLARITY 1
+extern float frame_period_ms;
 
 struct buck_configuration{
     uint32_t enable_gpio;

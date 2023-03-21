@@ -12,6 +12,8 @@
 #include "tnb_mns_defs.h"
 #include "tnb_mns_fsm.h"
 
+float frame_period_ms=200;
+
 // ------------------------------------------------------------------------------------
 // Pin & Pad Configuration Structures
 // ------------------------------------------------------------------------------------
@@ -103,7 +105,7 @@ struct tnb_mns_msg_c2000 ipc_tnb_mns_msg_c2000;
 // Ripple Localization related variables
 // ---------------------
 //float ripplefreqs[NO_CHANNELS]={48,52,56,50,50,50};
-float ripplefreqs[NO_CHANNELS]={92,98,104,50,50,50};
+float ripplefreqs[NO_CHANNELS]={70,90,110,50,50,50};
 //float irippleamps[NO_CHANNELS]={0.8,0.8,0.8,0.4,0.4,0.4};
 float irippleamps[NO_CHANNELS]={0.4,0.4,0.4,0.4,0.4,0.4};
 float current_log[1024];
@@ -270,17 +272,9 @@ __interrupt void IPC_ISR0()
                 des_currents_res[i]=0.4;
             }
         }
-        //check frequencies and set them
-        //changing the resonant frequency is only allowed in the RUN_RESONANT state
+        //in this branch we interpret these fields as the frame time of the oscillations
         for(i=0; i<NO_CHANNELS; i++){
-            if(driver_channels[i]->channel_state!=RUN_RESONANT)
-                des_freq_resonant_mhz[i]=DEFAULT_RES_FREQ_MILLIHZ;
-            else{
-                if(ipc_tnb_mns_msg_c2000.desFreqs[i]<MINIMUM_RES_FREQ_MILLIHZ)
-                    des_freq_resonant_mhz[i]=MINIMUM_RES_FREQ_MILLIHZ;
-                else
-                    des_freq_resonant_mhz[i]=(uint32_t)(ipc_tnb_mns_msg_c2000.desFreqs[i]);
-            }
+            frame_period_ms=(uint32_t)(ipc_tnb_mns_msg_c2000.desFreqs[0]);
         }
         //set the communication_active variable
         communication_active=true;

@@ -566,7 +566,7 @@ void main(void)
 
             run_main_task=false;
             //reset the loop counter
-            if(loop_counter>=FRAME_PERIOD_S/deltaT)
+            if(loop_counter>=(float)frame_period_ms*1e-3/deltaT)
                 loop_counter=0;
             else
                 loop_counter+=1;
