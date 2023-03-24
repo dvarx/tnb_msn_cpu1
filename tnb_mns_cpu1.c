@@ -105,7 +105,7 @@ struct tnb_mns_msg_c2000 ipc_tnb_mns_msg_c2000;
 // Ripple Localization related variables
 // ---------------------
 //float ripplefreqs[NO_CHANNELS]={48,52,56,50,50,50};
-float ripplefreqs[NO_CHANNELS]={70,90,110,50,50,50};
+float ripplefreqs[NO_CHANNELS]={90,110,120,50,50,50};
 //float irippleamps[NO_CHANNELS]={0.8,0.8,0.8,0.4,0.4,0.4};
 float irippleamps[NO_CHANNELS]={0.4,0.4,0.4,0.4,0.4,0.4};
 float current_log[1024];

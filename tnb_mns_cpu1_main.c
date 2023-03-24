@@ -64,8 +64,17 @@
 #include "ipc.h"
 #include "tnb_mns_cpu1.h"
 
-bool run_main_control_task=false;
+bool run_main_act_freqscontrol_task=false;
 bool enable_waveform_debugging=false;
+
+//actuation frequact_freqsencies to be tested
+float act_freqs[]={1/5.0 , 1/4.0 , 1/3.0 , 1/2.0 , 1.0 , 2.0 , 4.0 , 1.0};
+int no_act_freqs=sizeof(act_freqs)/sizeof(float);
+unsigned int current_act_freq_no=0;
+//amplitude of the oscillating currents in the three coils
+float ampl_des_currents[]={4.5,4.5,4.5,4.5,4.5,4.5,4.5,0};
+
+#define ACT_PERIOD_S 30
 
 void main(void)
 {
@@ -422,6 +431,7 @@ void main(void)
     }
 
     uint32_t loop_counter=0;
+    uint32_t loop_counter_act=0;
     // Main Loop
     while(1){
         if(run_main_task){
@@ -474,23 +484,6 @@ void main(void)
                 update_second_order_system(des_current_filt+i,des_currents[i]);
             }
 
-
-            //---------------------
-            // Control Law Execution
-            //---------------------
-            //compute optional reference waveform
-            //#define OMEGA 2*3.14159265358979323846*5
-            //float ides=sin(OMEGA*loop_counter*deltaT);
-//            const unsigned int periodn=500e-3/deltaT;
-//            float ides=0.0;
-//            if(loop_counter%periodn<periodn/2)
-//                ides=1.0;
-//            else
-//                ides=-1.0;
-            //regulate outputs of channels
-            // ...
-
-
             //---------------------
             // Control Law Execution & Output Actuation
             //---------------------
@@ -518,15 +511,7 @@ void main(void)
                         float act_voltage_ff=0.0;
                         //compute feedback actuation term (limits [-1,1] for this duty)
                         bool output_saturated=fabsf((current_pi+i)->u)>=0.95*voltage_dclink;
-                        float des_current=(des_current_filt+i)->ynm1+des_currents_res[i]*sin(2*M_PI*ripplefreqs[i]*loop_counter*deltaT);
-                        if(i==0)
-                            current_log[loop_counter%1024]=des_current;
-//                        float des_current=0;
-//                        if((loop_counter%5000)<2500)
-//                            des_current=1.0;
-//                        else
-//                            des_current=0;
-
+                        float des_current=ampl_des_currents[current_act_freq_no]*sin(2*M_PI*act_freqs[current_act_freq_no]*loop_counter_act*deltaT)+des_currents_res[i]*sin(2*M_PI*ripplefreqs[i]*loop_counter*deltaT);
                         float act_voltage_fb=update_pid(current_pi+i,des_current,system_dyn_state.is[i],output_saturated);
                     #endif
                     float duty_ff=act_voltage_ff/voltage_dclink;
@@ -570,6 +555,14 @@ void main(void)
                 loop_counter=0;
             else
                 loop_counter+=1;
+            //adjust the actuation loop counter
+            if(loop_counter_act>ACT_PERIOD_S/deltaT){
+                loop_counter_act=0;
+                current_act_freq_no=(current_act_freq_no+1)%no_act_freqs;
+            }
+            else
+                loop_counter_act+=1;
+
             GPIO_writePin(HEARTBEAT_GPIO,1);
         }
     }
