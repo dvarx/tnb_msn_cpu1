@@ -74,10 +74,10 @@ SECTIONS
 
 #if defined(__TI_EABI__)
    .init_array      : > FLASH1, ALIGN(8)
-   .bss             : > RAMLS5
+   .bss             : >> RAMGS0 | RAMGS1 | RAMGS2 | RAMGS3 | RAMGS4 | RAMGS5 | RAMGS6
    .bss:output      : > RAMLS3
    .bss:cio         : > RAMLS5
-   .data            : > RAMLS5
+   .data            : > RAMLS5 | RAMLS6 | RAMLS7
    .sysmem          : > RAMLS5
    /* Initalized sections go in Flash */
    .const           : > FLASH5, ALIGN(8)

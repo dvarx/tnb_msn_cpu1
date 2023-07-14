@@ -11,7 +11,7 @@
 #include <stdbool.h>
 
 //controller time interval
-#define deltaT 100e-6
+#define deltaT 50e-6
 
 struct pi_controller{
     float kp;

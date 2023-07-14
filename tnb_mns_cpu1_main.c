@@ -67,6 +67,22 @@
 bool run_main_control_task=false;
 bool enable_waveform_debugging=false;
 
+//variables related to resonant control
+float fres=238;
+float Tres=1/240.0;
+float actvolts[3]={0.0,0.0,0.0};
+float actthetas[3]={0.0,0.0,0.0};
+float periodstart=0;               //start of current point of oscillation
+
+
+#define ADC_BUF_SIZE 256
+float adc_buffer[7][ADC_BUF_SIZE];
+uint16_t adc_buffer_cnt=0;
+uint16_t act_volt_buffer_cnt=0;
+uint16_t buffer_prdstrt_pointer_0=0;      //pointer that points to the sample at the beginning of the latest oscillation period in the ADC buffer
+uint16_t buffer_prdstrt_pointer_1=0;      //pointer that points to the sample at the beginning of the last oscillation period in the ADC buffer
+bool adc_record=0;
+
 void main(void)
 {
 
@@ -418,11 +434,23 @@ void main(void)
     }
 
     uint32_t loop_counter=0;
+    float reltime=0;
     // Main Loop
     while(1){
         if(run_main_task){
             //toggle heartbeat gpio
             GPIO_togglePin(HEARTBEAT_GPIO);
+            //compute reltime
+            reltime=loop_counter*deltaT;
+            //compute the start point for the current period
+            if(reltime>periodstart+Tres){
+                periodstart=reltime-0.5*deltaT;
+                //mark the samples in the ADC at the beginning of the oscillation period
+                if(adc_record){
+                    buffer_prdstrt_pointer_1=buffer_prdstrt_pointer_0;
+                    buffer_prdstrt_pointer_0=adc_buffer_cnt;
+                }
+            }
 
             //---------------------
             // State Machine
@@ -454,30 +482,15 @@ void main(void)
 
             // Read ADCs sequentially, this updates the system_dyn_state structure
             readAnalogInputs();
-            // TODO: Filter the acquired analog signals in system_dyn_state_filtered
-            // ---
-            // TODO: Filter the input reference signals
-            unsigned int i=0;
-            for(i=0; i<NO_CHANNELS; i++){
-                update_first_order(des_duty_buck_filt+i,des_duty_buck[i]);
+            //write to ADC buffer
+            if(adc_record){
+                adc_buffer[0][adc_buffer_cnt]=system_dyn_state.is[0];
+                adc_buffer[1][adc_buffer_cnt]=system_dyn_state.is[1];
+                adc_buffer[2][adc_buffer_cnt]=system_dyn_state.is[2];
             }
 
-
-            //---------------------
-            // Control Law Execution
-            //---------------------
-            //compute optional reference waveform
-            //#define OMEGA 2*3.14159265358979323846*5
-            //float ides=sin(OMEGA*loop_counter*deltaT);
-            const unsigned int periodn=500e-3/deltaT;
-            float ides=0.0;
-            if(loop_counter%periodn<periodn/2)
-                ides=1.0;
-            else
-                ides=-1.0;
-            //regulate outputs of channels
-            // ...
-
+            //loop variable
+            unsigned int i=0;
 
             //---------------------
             // Control Law Execution & Output Actuation
@@ -486,6 +499,9 @@ void main(void)
             for(i=0; i<NO_CHANNELS; i++){
                 set_duty_buck(driver_channels[i]->buck_config,(des_duty_buck_filt+i)->y);
             }
+            //store reference waveform
+            if(adc_record)
+                adc_buffer[6][adc_buffer_cnt]=sin(fres*2*M_PI*reltime);
             //set output duties for bridge [regular mode]
             for(i=0; i<NO_CHANNELS; i++){
                 if(driver_channels[i]->channel_state==RUN_REGULAR){
@@ -496,11 +512,13 @@ void main(void)
                             ides=0.0;
                     #endif
                     //execute the PI control low
-                    float voltage_dclink=VIN*(des_duty_buck_filt+i)->y;
+                    float voltage_dclink=60.0;
                     //compute feed forward actuation term (limits [-1,1] for this duty) - feed-forward term currently not used
                     #ifdef FEED_FORWARD_ONLY
-                        float act_voltage_ff=des_currents[i]*RDC;
+                        float act_voltage_ff=actvolts[i]*sin(fres*2*M_PI*reltime+actthetas[i]);
                         float act_voltage_fb=0.0;
+                        if(adc_record)
+                            adc_buffer[3+i][adc_buffer_cnt]=act_voltage_ff;
                     #endif
                     #ifdef TUNE_CLOSED_LOOP
                         float act_voltage_ff=0.0;
@@ -551,6 +569,7 @@ void main(void)
 
             run_main_task=false;
             loop_counter=loop_counter+1;
+            adc_buffer_cnt=(adc_buffer_cnt+1)%ADC_BUF_SIZE;
         }
     }
 }
