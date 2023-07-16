@@ -11,7 +11,12 @@
 #include <stdbool.h>
 
 //controller time interval
-#define deltaT 50e-6
+#define deltaT 10e-6
+#define taudq 50e-3
+#define modCTRL 100
+#define modPWMADCBUF 5
+
+extern float fres;
 
 struct pi_controller{
     float kp;

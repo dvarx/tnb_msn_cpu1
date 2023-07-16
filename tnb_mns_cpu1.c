@@ -11,6 +11,7 @@
 #include "fbctrl.h"
 #include "tnb_mns_defs.h"
 #include "tnb_mns_fsm.h"
+#include <math.h>
 
 // ------------------------------------------------------------------------------------
 // Pin & Pad Configuration Structures
@@ -64,6 +65,15 @@ float des_duty_bridge[NO_CHANNELS]={0.5,0.5,0.5,0.5,0.5,0.5};
 float des_currents[NO_CHANNELS]={0.0,0.0,0.0,0.0,0.0,0.0};
 float des_duty_buck[NO_CHANNELS]={0,0,0,0,0,0};
 bool communication_active=false;
+float mastertime=0.0;
+
+//resonant control related
+float adc_buffer[7][ADC_BUF_SIZE];
+uint16_t adc_buffer_cnt=0;
+uint16_t act_volt_buffer_cnt=0;
+uint16_t buffer_prdstrt_pointer_0=0;      //pointer that points to the sample at the beginning of the latest oscillation period in the ADC buffer
+uint16_t buffer_prdstrt_pointer_1=0;      //pointer that points to the sample at the beginning of the last oscillation period in the ADC buffer
+bool adc_record=0;
 
 struct pi_controller current_pi[NO_CHANNELS]={
                                  {CTRL_KP,CTRL_KI,0.0,0.0,0.0,0.0},
@@ -87,7 +97,7 @@ struct tnb_mns_msg_c2000 ipc_tnb_mns_msg_c2000;
 // Main CPU Timer Related Functions
 // ------------------------------------------------------------------------------------
 
-uint16_t cpuTimer0IntCount;
+uint32_t mastercounter=0;
 uint16_t cpuTimer1IntCount;
 uint16_t cpuTimer2IntCount;
 
@@ -129,7 +139,7 @@ initCPUTimers(void)
     //
     // Reset interrupt counter
     //
-    cpuTimer0IntCount = 0;
+    mastercounter = 0;
     //cpuTimer1IntCount = 0;
     //cpuTimer2IntCount = 0;
 }
@@ -172,7 +182,7 @@ configCPUTimer(uint32_t cpuTimer, uint32_t period)
     //
     if (cpuTimer == CPUTIMER0_BASE)
     {
-        cpuTimer0IntCount = 0;
+        mastercounter = 0;
     }
     else if(cpuTimer == CPUTIMER1_BASE)
     {
@@ -303,7 +313,37 @@ __interrupt void IPC_ISR0()
 __interrupt void
 cpuTimer0ISR(void)
 {
-    cpuTimer0IntCount++;
+    mastercounter++;
+    mastertime=mastercounter*deltaT;
+
+    //process analog signals from last iteration
+    float currentcos=cos(2*M_PI*fres*mastertime);
+    float currentsin=sin(2*M_PI*fres*mastertime);
+
+    //read adc results
+    float ia=conv_adc_meas_to_current_a(ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER0));
+    float ib=conv_adc_meas_to_current_a(ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER1));
+    float ic=conv_adc_meas_to_current_a(ADC_readResult(ADCDRESULT_BASE, ADC_SOC_NUMBER0));
+
+    //record data in ADC buffer if required
+    if((mastercounter%modPWMADCBUF==0)&&adc_record){
+        adc_buffer[0][adc_buffer_cnt]=ia;
+        adc_buffer[1][adc_buffer_cnt]=ib;
+        adc_buffer[2][adc_buffer_cnt]=ic;
+        adc_buffer[6][adc_buffer_cnt]=currentcos;
+    }
+
+    //start new sampling
+    ADC_forceMultipleSOC(ADCB_BASE, (ADC_FORCE_SOC0 | ADC_FORCE_SOC1));
+    ADC_forceMultipleSOC(ADCD_BASE, (ADC_FORCE_SOC0 ));
+
+    //update dq estimates
+    ids[0]=taudq/(taudq+deltaT)*ids[0]+2*deltaT/(taudq+deltaT)*currentcos*ia;
+    ids[1]=taudq/(taudq+deltaT)*ids[1]+2*deltaT/(taudq+deltaT)*currentcos*ib;
+    ids[2]=taudq/(taudq+deltaT)*ids[2]+2*deltaT/(taudq+deltaT)*currentcos*ic;
+    iqs[0]=taudq/(taudq+deltaT)*iqs[0]+2*deltaT/(taudq+deltaT)*currentsin*ia;
+    iqs[1]=taudq/(taudq+deltaT)*iqs[1]+2*deltaT/(taudq+deltaT)*currentsin*ib;
+    iqs[2]=taudq/(taudq+deltaT)*iqs[2]+2*deltaT/(taudq+deltaT)*currentsin*ic;
 
     run_main_task=true;
 

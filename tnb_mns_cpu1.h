@@ -15,9 +15,11 @@
 #include "stdint.h"
 #include "fbctrl.h"
 #include "comm_interface.h"
+#include "tnb_mns_adc.h"
 
 #define NO_CHANNELS 3
-#define HEARTBEAT_GPIO 35
+#define HEARTBEAT_GPIO 35 // pin 122 on breakoutboard
+#define SAMPLING_GPIO 99 // pin 96 on breakoutboard
 #define MAIN_RELAY_GPIO 92
 #define SLAVE_RELAY_GPIO 62
 #define DEFAULT_RES_FREQ_MILLIHZ    10000000
@@ -112,9 +114,19 @@ extern bool communication_active;                       //variable indicates whe
 //
 // Globals
 //
-extern uint16_t cpuTimer0IntCount;
+extern uint32_t mastercounter;
+extern float mastertime;
 //extern uint16_t cpuTimer1IntCount;
 //extern uint16_t cpuTimer2IntCount;
+
+//resonant control related
+#define ADC_BUF_SIZE 256
+extern float adc_buffer[7][ADC_BUF_SIZE];
+extern uint16_t adc_buffer_cnt;
+extern uint16_t act_volt_buffer_cnt;
+extern uint16_t buffer_prdstrt_pointer_0;      //pointer that points to the sample at the beginning of the latest oscillation period in the ADC buffer
+extern uint16_t buffer_prdstrt_pointer_1;      //pointer that points to the sample at the beginning of the last oscillation period in the ADC buffer
+extern bool adc_record;
 
 __interrupt void cpuTimer0ISR(void);
 __interrupt void IPC_ISR0(void);

@@ -24,6 +24,8 @@
 // Sample on pair of pins (difference between pins is converted, subject to
 // common mode voltage requirements; see the device data manual)
 
+float iqs[3]={0,0,0};
+float ids[3]={0,0,0};
 
 //
 // Function to configure and power up ADCs A,B,C,D
@@ -68,9 +70,9 @@ void initADCs(void)
     //
     // Power up the ADCs and then delay for 1 ms
     //
-    ADC_enableConverter(ADCA_BASE);
+    //ADC_enableConverter(ADCA_BASE);
     ADC_enableConverter(ADCB_BASE);
-    ADC_enableConverter(ADCC_BASE);
+    //ADC_enableConverter(ADCC_BASE);
     ADC_enableConverter(ADCD_BASE);
 
     DEVICE_DELAY_US(1000);
@@ -81,6 +83,7 @@ void initADCs(void)
 //
 void initADCSOCs(void)
 {
+    /*
     //----------------------------------------------------------------
     // ADCA Configuration
     //  ADCA measures: [iB(A0),vD(A1),iE(A2),iDres(A3),iFres(A4),iEres(A5)]
@@ -104,6 +107,7 @@ void initADCSOCs(void)
         ADC_setupSOC(ADCA_BASE, ADC_SOC_NUMBER1, ADC_TRIGGER_SW_ONLY,
                      ADC_CH_ADCIN1, 64);
     #endif
+    */
 
     //
     // Set SOC4 to set the interrupt 1 flag. Enable the interrupt and make
@@ -120,15 +124,9 @@ void initADCSOCs(void)
 
     #if(EX_ADC_RESOLUTION == 12)
         ADC_setupSOC(ADCB_BASE, ADC_SOC_NUMBER0, ADC_TRIGGER_SW_ONLY,
-                     ADC_CH_ADCIN0, 15);
+                     ADC_CH_ADCIN0, 200);
         ADC_setupSOC(ADCB_BASE, ADC_SOC_NUMBER1, ADC_TRIGGER_SW_ONLY,
-                     ADC_CH_ADCIN2, 15);
-        ADC_setupSOC(ADCB_BASE, ADC_SOC_NUMBER2, ADC_TRIGGER_SW_ONLY,
-                     ADC_CH_ADCIN4, 15);
-        ADC_setupSOC(ADCB_BASE, ADC_SOC_NUMBER3, ADC_TRIGGER_SW_ONLY,
-                     ADC_CH_ADCIN5, 15);
-        ADC_setupSOC(ADCB_BASE, ADC_SOC_NUMBER4, ADC_TRIGGER_SW_ONLY,
-                     ADC_CH_ADCIN1, 15);
+                     ADC_CH_ADCIN4, 200);
     #elif(EX_ADC_RESOLUTION == 16)
         ADC_setupSOC(ADCA_BASE, ADC_SOC_NUMBER0, ADC_TRIGGER_SW_ONLY,
                      ADC_CH_ADCIN0, 64);
@@ -140,10 +138,11 @@ void initADCSOCs(void)
     // Set SOC4 to set the interrupt 1 flag. Enable the interrupt and make
     // sure its flag is cleared.
     //
-    ADC_setInterruptSource(ADCB_BASE, ADC_INT_NUMBER1, ADC_SOC_NUMBER2);
+    ADC_setInterruptSource(ADCB_BASE, ADC_INT_NUMBER1, ADC_SOC_NUMBER1);
     ADC_enableInterrupt(ADCB_BASE, ADC_INT_NUMBER1);
     ADC_clearInterruptStatus(ADCB_BASE, ADC_INT_NUMBER1);
 
+    /*
     //----------------------------------------------------------------
     // ADCC Configuration
     //  ADCC measures: [iApeak(C0),vE(C2),iF(C3),vF(C4)]
@@ -169,6 +168,9 @@ void initADCSOCs(void)
     ADC_setInterruptSource(ADCC_BASE, ADC_INT_NUMBER1, ADC_SOC_NUMBER3);
     ADC_enableInterrupt(ADCC_BASE, ADC_INT_NUMBER1);
     ADC_clearInterruptStatus(ADCC_BASE, ADC_INT_NUMBER1);
+
+    */
+
     //----------------------------------------------------------------
     // ADCD Configuration
     //  ADCD measures: [ipeakC(D0),ipeakB(D1),iC(D2),vC(D3),]
@@ -176,13 +178,7 @@ void initADCSOCs(void)
 
     #if(EX_ADC_RESOLUTION == 12)
         ADC_setupSOC(ADCD_BASE, ADC_SOC_NUMBER0, ADC_TRIGGER_SW_ONLY,
-                     ADC_CH_ADCIN2, 15);
-        ADC_setupSOC(ADCD_BASE, ADC_SOC_NUMBER1, ADC_TRIGGER_SW_ONLY,
-                     ADC_CH_ADCIN3, 15);
-        ADC_setupSOC(ADCD_BASE, ADC_SOC_NUMBER2, ADC_TRIGGER_SW_ONLY,
-                     ADC_CH_ADCIN0, 15);
-        ADC_setupSOC(ADCD_BASE, ADC_SOC_NUMBER3, ADC_TRIGGER_SW_ONLY,
-                     ADC_CH_ADCIN1, 15);
+                     ADC_CH_ADCIN2, 200);
     #elif(EX_ADC_RESOLUTION == 16)
         ADC_setupSOC(ADCC_BASE, ADC_SOC_NUMBER0, ADC_TRIGGER_SW_ONLY,
                      ADC_CH_ADCIN2, 64);
@@ -204,10 +200,6 @@ void initADCSOCs(void)
  */
 const float calib_factor_current_alpha=1.0/132.0;
 const float calib_factor_current_beta=-5.0/132.0;
-
-inline float conv_adc_meas_to_current_a(const uint16_t adc_output){
-    return calib_factor_current_alpha*(float)((int16_t)adc_output-(int16_t)2048)+calib_factor_current_beta;
-}
 
 // This function reads the analog inputs and stores them in the system_dyn_state structure
 void readAnalogInputs(void){

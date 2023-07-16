@@ -68,20 +68,33 @@ bool run_main_control_task=false;
 bool enable_waveform_debugging=false;
 
 //variables related to resonant control
-float fres=238;
-float Tres=1/240.0;
+float fres=236;
 float actvolts[3]={0.0,0.0,0.0};
 float actthetas[3]={0.0,0.0,0.0};
+//debugging purposes -----------------------
+float actvolts_[3]={0.0,0.0,0.0};
+float actthetas_[3]={0.0,0.0,0.0};
+//------------------------------------------
 float periodstart=0;               //start of current point of oscillation
 
-
-#define ADC_BUF_SIZE 256
-float adc_buffer[7][ADC_BUF_SIZE];
-uint16_t adc_buffer_cnt=0;
-uint16_t act_volt_buffer_cnt=0;
-uint16_t buffer_prdstrt_pointer_0=0;      //pointer that points to the sample at the beginning of the latest oscillation period in the ADC buffer
-uint16_t buffer_prdstrt_pointer_1=0;      //pointer that points to the sample at the beginning of the last oscillation period in the ADC buffer
-bool adc_record=0;
+//definition of the system impedance matrix
+const float zmatr[2][2]={
+                   {5,0},
+                   {0,5}
+};
+const float zmati[2][2]={
+                   {0,-1},
+                   {-1,0}
+};
+//input to impedance matrix, corresponds
+float xvecd[2]={1,1};
+float xvecq[2]={0,0};
+float vvecd[2]={0};
+float vvecq[2]={0};
+inline void matmul2(const float mat[2][2],const float vec[2], float res[2]){
+    res[0]=mat[0][0]*vec[0]+mat[0][1]*vec[1];
+    res[1]=mat[1][0]*vec[0]+mat[1][1]*vec[1];
+}
 
 void main(void)
 {
@@ -110,6 +123,9 @@ void main(void)
     //heartbeat
     GPIO_setDirectionMode(HEARTBEAT_GPIO, GPIO_DIR_MODE_OUT);   //output
     GPIO_setPadConfig(HEARTBEAT_GPIO,GPIO_PIN_TYPE_STD);        //push pull output
+    //sampling signal
+    GPIO_setDirectionMode(SAMPLING_GPIO, GPIO_DIR_MODE_OUT);   //output
+    GPIO_setPadConfig(SAMPLING_GPIO,GPIO_PIN_TYPE_STD);        //push pull output
     //main input relay
     GPIO_setDirectionMode(MAIN_RELAY_GPIO, GPIO_DIR_MODE_OUT);   //output
     GPIO_setPadConfig(MAIN_RELAY_GPIO,GPIO_PIN_TYPE_STD);        //push pull output
@@ -198,7 +214,7 @@ void main(void)
     // Register ISR for cupTimer0
     Interrupt_register(INT_TIMER0, &cpuTimer0ISR);
     // Initialize CPUTimer0
-    configCPUTimer(CPUTIMER0_BASE, 1e6*deltaT);
+    configCPUTimer(CPUTIMER0_BASE, deltaT*1e6);
     // Enable CPUTimer0 Interrupt within CPUTimer0 Module
     CPUTimer_enableInterrupt(CPUTIMER0_BASE);
     // Enable TIMER0 Interrupt on CPU coming from TIMER0
@@ -433,145 +449,102 @@ void main(void)
         driver_channels[n]->channel_state=READY;
     }
 
-    uint32_t loop_counter=0;
-    float reltime=0;
     // Main Loop
     while(1){
         if(run_main_task){
             //toggle heartbeat gpio
             GPIO_togglePin(HEARTBEAT_GPIO);
-            //compute reltime
-            reltime=loop_counter*deltaT;
-            //compute the start point for the current period
-            if(reltime>periodstart+Tres){
-                periodstart=reltime-0.5*deltaT;
-                //mark the samples in the ADC at the beginning of the oscillation period
-                if(adc_record){
-                    buffer_prdstrt_pointer_1=buffer_prdstrt_pointer_0;
-                    buffer_prdstrt_pointer_0=adc_buffer_cnt;
-                }
-            }
 
-            //---------------------
-            // State Machine
-            //---------------------
-            //Main Relay Opening Logic
-            unsigned int channel_counter=0;
-            bool main_relay_active=false;
-            for(channel_counter=0; channel_counter<NO_CHANNELS; channel_counter++){
-                run_channel_fsm(driver_channels[channel_counter]);
-                //we enable the main relay when one channel is not in state READY anymore (e.g. when one channel requires power)
-                if(driver_channels[channel_counter]->channel_state!=READY)
-                    main_relay_active=true;
-            }
-            GPIO_writePin(MAIN_RELAY_GPIO,main_relay_active);
-            GPIO_writePin(SLAVE_RELAY_GPIO,main_relay_active);
-            GPIO_writePin(LED_1_GPIO,!main_relay_active);
-            //Communication Active Logic (If no communication, issue a STOP command
-            if(!communication_active){
-                for(channel_counter=0; channel_counter<NO_CHANNELS; channel_counter++){
-                    fsm_req_flags_stop[channel_counter]=1;
-                }
-            }
-
-
-
-            //---------------------
-            // Signal Acquisition & Filtering
-            //---------------------
-
-            // Read ADCs sequentially, this updates the system_dyn_state structure
-            readAnalogInputs();
-            //write to ADC buffer
-            if(adc_record){
-                adc_buffer[0][adc_buffer_cnt]=system_dyn_state.is[0];
-                adc_buffer[1][adc_buffer_cnt]=system_dyn_state.is[1];
-                adc_buffer[2][adc_buffer_cnt]=system_dyn_state.is[2];
-            }
-
+            /* -------------------------------------
+             * update sinusoidal PWMs (do this at 1/10th of the main rate, e.g. 10kHz)
+             * -------------------------------------
+             */
             //loop variable
             unsigned int i=0;
 
-            //---------------------
-            // Control Law Execution & Output Actuation
-            //---------------------
-            //set output duties for buck
-            for(i=0; i<NO_CHANNELS; i++){
-                set_duty_buck(driver_channels[i]->buck_config,(des_duty_buck_filt+i)->y);
-            }
-            //store reference waveform
-            if(adc_record)
-                adc_buffer[6][adc_buffer_cnt]=sin(fres*2*M_PI*reltime);
-            //set output duties for bridge [regular mode]
-            for(i=0; i<NO_CHANNELS; i++){
-                if(driver_channels[i]->channel_state==RUN_REGULAR){
-                    #ifdef TUNE_CLOSED_LOOP
-                        if(enable_waveform_debugging)
-                            des_currents[i]=ides;
-                        else
-                            ides=0.0;
-                    #endif
-                    //execute the PI control low
-                    float voltage_dclink=60.0;
-                    //compute feed forward actuation term (limits [-1,1] for this duty) - feed-forward term currently not used
-                    #ifdef FEED_FORWARD_ONLY
-                        float act_voltage_ff=actvolts[i]*sin(fres*2*M_PI*reltime+actthetas[i]);
-                        float act_voltage_fb=0.0;
+            if(mastercounter%modPWMADCBUF==0){
+                GPIO_togglePin(SAMPLING_GPIO);
+                //set output duties for bridge [regular mode]
+                for(i=0; i<NO_CHANNELS; i++){
+                    if(driver_channels[i]->channel_state==RUN_REGULAR){
+                        //execute the PI control low
+                        float voltage_dclink=60.0;
+                        //compute feed forward actuation term (limits [-1,1] for this duty) - feed-forward term currently not used
+                        float act_voltage_ff=actvolts[i]*cos(fres*2*M_PI*mastertime+actthetas[i]);
+                        //store actuation voltages in ADC buffer
                         if(adc_record)
                             adc_buffer[3+i][adc_buffer_cnt]=act_voltage_ff;
-                    #endif
-                    #ifdef TUNE_CLOSED_LOOP
-                        float act_voltage_ff=0.0;
-                        //compute feedback actuation term (limits [-1,1] for this duty)
-                        bool output_saturated=fabsf((current_pi+i)->u)>=0.9*voltage_dclink;
-                        float act_voltage_fb=update_pid(current_pi+i,des_currents[i],system_dyn_state.is[i],output_saturated);
-                    #endif
-                    #ifdef CLOSED_LOOP
-                        float act_voltage_ff=0.0;
-                        //compute feedback actuation term (limits [-1,1] for this duty)
-                        bool output_saturated=fabsf((current_pi+i)->u)>=0.9*voltage_dclink;
-                        float act_voltage_fb=update_pid(current_pi+i,des_currents[i],system_dyn_state.is[i],output_saturated);
-                    #endif
-                    float duty_ff=act_voltage_ff/voltage_dclink;
-                    float duty_fb=act_voltage_fb/(voltage_dclink);
-                    // TODO-PID : Sanity / Limit Checks on PID go here
+                        float act_voltage_fb=0.0;
+                        float duty_ff=act_voltage_ff/voltage_dclink;
+                        float duty_fb=act_voltage_fb/(voltage_dclink);
+                        // TODO-PID : Sanity / Limit Checks on PID go here
 
-                    //convert normalized duty cycle, limit it and apply
-                    float duty_bridge=0.5*(1+(duty_ff+duty_fb));
-                    if(duty_bridge>0.9)
-                        duty_bridge=0.9;
-                    if(duty_bridge<0.1)
-                        duty_bridge=0.1;
-                    set_duty_bridge(driver_channels[i]->bridge_config,duty_bridge);
+                        //convert normalized duty cycle, limit it and apply
+                        float duty_bridge=0.5*(1+(duty_ff+duty_fb));
+                        if(duty_bridge>0.9)
+                            duty_bridge=0.9;
+                        if(duty_bridge<0.1)
+                            duty_bridge=0.1;
+                        set_duty_bridge(driver_channels[i]->bridge_config,duty_bridge);
+                    }
+                    //set_duty_bridge(driver_channels[i]->bridge_config,des_duty_bridge[i]);
                 }
-                //set_duty_bridge(driver_channels[i]->bridge_config,des_duty_bridge[i]);
+                adc_buffer_cnt=(adc_buffer_cnt+1)%ADC_BUF_SIZE;
+                //set frequency for bridge [resonant mode]
+                //for(i=0; i<NO_CHANNELS; i++){
+                //    if(driver_channels[i]->channel_state==RUN_RESONANT)
+                //        set_freq_bridge(driver_channels[i]->bridge_config,des_freq_resonant_mhz[i]);
+                //}
             }
-            //set frequency for bridge [resonant mode]
-            for(i=0; i<NO_CHANNELS; i++){
-                if(driver_channels[i]->channel_state==RUN_RESONANT)
-                    set_freq_bridge(driver_channels[i]->bridge_config,des_freq_resonant_mhz[i]);
-            }
+
 
             //---------------------
-            // Read State Of Bridges
+            // run main state machine and control loops (do this at 1/100th of the main rate, e.g. 1kHz)
             //---------------------
-            uint32_t cha_buck_state=GPIO_readPin(cha_buck.state_gpio);
-            uint32_t cha_bridge_state_u=GPIO_readPin(cha_bridge.state_v_gpio);
-            uint32_t cha_bridge_state_v=GPIO_readPin(cha_bridge.state_u_gpio);
+            if(mastercounter%modCTRL==0){
+                //Main Relay Opening Logic
+                unsigned int channel_counter=0;
+                bool main_relay_active=false;
+                for(channel_counter=0; channel_counter<NO_CHANNELS; channel_counter++){
+                    run_channel_fsm(driver_channels[channel_counter]);
+                    //we enable the main relay when one channel is not in state READY anymore (e.g. when one channel requires power)
+                    if(driver_channels[channel_counter]->channel_state!=READY)
+                        main_relay_active=true;
+                }
+                GPIO_writePin(MAIN_RELAY_GPIO,main_relay_active);
+                GPIO_writePin(SLAVE_RELAY_GPIO,main_relay_active);
+                GPIO_writePin(LED_1_GPIO,!main_relay_active);
+                //Communication Active Logic (If no communication, issue a STOP command
+                if(!communication_active){
+                    for(channel_counter=0; channel_counter<NO_CHANNELS; channel_counter++){
+                        fsm_req_flags_stop[channel_counter]=1;
+                    }
+                }
 
-            uint32_t chb_buck_state=GPIO_readPin(chb_buck.state_gpio);
-            uint32_t chb_bridge_state_u=GPIO_readPin(chb_bridge.state_v_gpio);
-            uint32_t chb_bridge_state_v=GPIO_readPin(chb_bridge.state_u_gpio);
+                //PID control laws, compute voltage phasor necessary for actuation
 
-            uint32_t chc_buck_state=GPIO_readPin(chc_buck.state_gpio);
-            uint32_t chc_bridge_state_u=GPIO_readPin(chc_bridge.state_v_gpio);
-            uint32_t chc_bridge_state_v=GPIO_readPin(chc_bridge.state_u_gpio);
+                //temporary storage
+                float vec1[2];
+                float vec2[2];
+                //compute real component of actuation voltage
+                matmul2(zmatr,xvecd,vec1);
+                matmul2(zmati,xvecq,vec2);
+                vvecd[0]=vec1[0]-vec2[0];
+                vvecd[1]=vec1[1]-vec2[1];
+                //compute imaginary component of actuation voltage
+                matmul2(zmatr,xvecq,vec1);
+                matmul2(zmati,xvecd,vec2);
+                vvecq[0]=vec1[0]+vec2[0];
+                vvecq[1]=vec1[1]+vec2[1];
+                //compute voltage magnitudes
+                actvolts_[0]=sqrt(vvecd[0]*vvecd[0]+vvecq[0]*vvecq[0]);
+                actvolts_[1]=sqrt(vvecd[1]*vvecd[1]+vvecq[1]*vvecq[1]);
+                //compute voltage angles
+                actthetas_[0]=atan2(vvecq[0],vvecd[0]);
+                actthetas_[1]=atan2(vvecq[1],vvecd[1]);
+            }
 
             run_main_task=false;
-            loop_counter=loop_counter+1;
-            adc_buffer_cnt=(adc_buffer_cnt+1)%ADC_BUF_SIZE;
         }
     }
 }
-
-
