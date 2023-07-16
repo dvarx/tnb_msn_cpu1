@@ -67,35 +67,6 @@
 bool run_main_control_task=false;
 bool enable_waveform_debugging=false;
 
-//variables related to resonant control
-float fres=236;
-float actvolts[3]={0.0,0.0,0.0};
-float actthetas[3]={0.0,0.0,0.0};
-//debugging purposes -----------------------
-float actvolts_[3]={0.0,0.0,0.0};
-float actthetas_[3]={0.0,0.0,0.0};
-//------------------------------------------
-float periodstart=0;               //start of current point of oscillation
-
-//definition of the system impedance matrix
-const float zmatr[2][2]={
-                   {5,0},
-                   {0,5}
-};
-const float zmati[2][2]={
-                   {0,-1},
-                   {-1,0}
-};
-//input to impedance matrix, corresponds
-float xvecd[2]={1,1};
-float xvecq[2]={0,0};
-float vvecd[2]={0};
-float vvecq[2]={0};
-inline void matmul2(const float mat[2][2],const float vec[2], float res[2]){
-    res[0]=mat[0][0]*vec[0]+mat[0][1]*vec[1];
-    res[1]=mat[1][0]*vec[0]+mat[1][1]*vec[1];
-}
-
 void main(void)
 {
 
@@ -462,87 +433,49 @@ void main(void)
             //loop variable
             unsigned int i=0;
 
-            if(mastercounter%modPWMADCBUF==0){
-                GPIO_togglePin(SAMPLING_GPIO);
-                //set output duties for bridge [regular mode]
-                for(i=0; i<NO_CHANNELS; i++){
-                    if(driver_channels[i]->channel_state==RUN_REGULAR){
-                        //execute the PI control low
-                        float voltage_dclink=60.0;
-                        //compute feed forward actuation term (limits [-1,1] for this duty) - feed-forward term currently not used
-                        float act_voltage_ff=actvolts[i]*cos(fres*2*M_PI*mastertime+actthetas[i]);
-                        //store actuation voltages in ADC buffer
-                        if(adc_record)
-                            adc_buffer[3+i][adc_buffer_cnt]=act_voltage_ff;
-                        float act_voltage_fb=0.0;
-                        float duty_ff=act_voltage_ff/voltage_dclink;
-                        float duty_fb=act_voltage_fb/(voltage_dclink);
-                        // TODO-PID : Sanity / Limit Checks on PID go here
-
-                        //convert normalized duty cycle, limit it and apply
-                        float duty_bridge=0.5*(1+(duty_ff+duty_fb));
-                        if(duty_bridge>0.9)
-                            duty_bridge=0.9;
-                        if(duty_bridge<0.1)
-                            duty_bridge=0.1;
-                        set_duty_bridge(driver_channels[i]->bridge_config,duty_bridge);
-                    }
-                    //set_duty_bridge(driver_channels[i]->bridge_config,des_duty_bridge[i]);
-                }
-                adc_buffer_cnt=(adc_buffer_cnt+1)%ADC_BUF_SIZE;
-                //set frequency for bridge [resonant mode]
-                //for(i=0; i<NO_CHANNELS; i++){
-                //    if(driver_channels[i]->channel_state==RUN_RESONANT)
-                //        set_freq_bridge(driver_channels[i]->bridge_config,des_freq_resonant_mhz[i]);
-                //}
-            }
-
-
             //---------------------
             // run main state machine and control loops (do this at 1/100th of the main rate, e.g. 1kHz)
             //---------------------
-            if(mastercounter%modCTRL==0){
-                //Main Relay Opening Logic
-                unsigned int channel_counter=0;
-                bool main_relay_active=false;
-                for(channel_counter=0; channel_counter<NO_CHANNELS; channel_counter++){
-                    run_channel_fsm(driver_channels[channel_counter]);
-                    //we enable the main relay when one channel is not in state READY anymore (e.g. when one channel requires power)
-                    if(driver_channels[channel_counter]->channel_state!=READY)
-                        main_relay_active=true;
-                }
-                GPIO_writePin(MAIN_RELAY_GPIO,main_relay_active);
-                GPIO_writePin(SLAVE_RELAY_GPIO,main_relay_active);
-                GPIO_writePin(LED_1_GPIO,!main_relay_active);
-                //Communication Active Logic (If no communication, issue a STOP command
-                if(!communication_active){
-                    for(channel_counter=0; channel_counter<NO_CHANNELS; channel_counter++){
-                        fsm_req_flags_stop[channel_counter]=1;
-                    }
-                }
-
-                //PID control laws, compute voltage phasor necessary for actuation
-
-                //temporary storage
-                float vec1[2];
-                float vec2[2];
-                //compute real component of actuation voltage
-                matmul2(zmatr,xvecd,vec1);
-                matmul2(zmati,xvecq,vec2);
-                vvecd[0]=vec1[0]-vec2[0];
-                vvecd[1]=vec1[1]-vec2[1];
-                //compute imaginary component of actuation voltage
-                matmul2(zmatr,xvecq,vec1);
-                matmul2(zmati,xvecd,vec2);
-                vvecq[0]=vec1[0]+vec2[0];
-                vvecq[1]=vec1[1]+vec2[1];
-                //compute voltage magnitudes
-                actvolts_[0]=sqrt(vvecd[0]*vvecd[0]+vvecq[0]*vvecq[0]);
-                actvolts_[1]=sqrt(vvecd[1]*vvecd[1]+vvecq[1]*vvecq[1]);
-                //compute voltage angles
-                actthetas_[0]=atan2(vvecq[0],vvecd[0]);
-                actthetas_[1]=atan2(vvecq[1],vvecd[1]);
+            //Main Relay Opening Logic
+            unsigned int channel_counter=0;
+            bool main_relay_active=false;
+            for(channel_counter=0; channel_counter<NO_CHANNELS; channel_counter++){
+                run_channel_fsm(driver_channels[channel_counter]);
+                //we enable the main relay when one channel is not in state READY anymore (e.g. when one channel requires power)
+                if(driver_channels[channel_counter]->channel_state!=READY)
+                    main_relay_active=true;
             }
+            GPIO_writePin(MAIN_RELAY_GPIO,main_relay_active);
+            GPIO_writePin(SLAVE_RELAY_GPIO,main_relay_active);
+            GPIO_writePin(LED_1_GPIO,!main_relay_active);
+            //Communication Active Logic (If no communication, issue a STOP command
+            if(!communication_active){
+                for(channel_counter=0; channel_counter<NO_CHANNELS; channel_counter++){
+                    fsm_req_flags_stop[channel_counter]=1;
+                }
+            }
+
+            //PID control laws, compute voltage phasor necessary for actuation
+
+            //temporary storage
+            float vec1[2];
+            float vec2[2];
+            //compute real component of actuation voltage
+            matmul2(zmatr,xvecd,vec1);
+            matmul2(zmati,xvecq,vec2);
+            vvecd[0]=vec1[0]-vec2[0];
+            vvecd[1]=vec1[1]-vec2[1];
+            //compute imaginary component of actuation voltage
+            matmul2(zmatr,xvecq,vec1);
+            matmul2(zmati,xvecd,vec2);
+            vvecq[0]=vec1[0]+vec2[0];
+            vvecq[1]=vec1[1]+vec2[1];
+            //compute voltage magnitudes
+            actvolts[0]=sqrt(vvecd[0]*vvecd[0]+vvecq[0]*vvecq[0]);
+            actvolts[1]=sqrt(vvecd[1]*vvecd[1]+vvecq[1]*vvecq[1]);
+            //compute voltage angles
+            actthetas[0]=atan2(vvecq[0],vvecd[0]);
+            actthetas[1]=atan2(vvecq[1],vvecd[1]);
 
             run_main_task=false;
         }

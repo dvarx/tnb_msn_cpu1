@@ -75,6 +75,27 @@ uint16_t buffer_prdstrt_pointer_0=0;      //pointer that points to the sample at
 uint16_t buffer_prdstrt_pointer_1=0;      //pointer that points to the sample at the beginning of the last oscillation period in the ADC buffer
 bool adc_record=0;
 
+//variables related to resonant control
+float fres=236;
+float actvolts[3]={0.0,0.0,0.0};
+float actthetas[3]={0.0,0.0,0.0};
+//------------------------------------------
+float periodstart=0;               //start of current point of oscillation
+//definition of the system impedance matrix
+const float zmatr[2][2]={
+                   {6.7,0.6},
+                   {0.8,7.3}
+};
+const float zmati[2][2]={
+                   {-4.5,-6.5},
+                   {-7.2,-8.1}
+};
+//input to impedance matrix, corresponds
+float xvecd[2]={1,1};
+float xvecq[2]={0,0};
+float vvecd[2]={0};
+float vvecq[2]={0};
+
 struct pi_controller current_pi[NO_CHANNELS]={
                                  {CTRL_KP,CTRL_KI,0.0,0.0,0.0,0.0},
                                  {CTRL_KP,CTRL_KI,0.0,0.0,0.0,0.0},
@@ -337,6 +358,44 @@ cpuTimer0ISR(void)
     ADC_forceMultipleSOC(ADCB_BASE, (ADC_FORCE_SOC0 | ADC_FORCE_SOC1));
     ADC_forceMultipleSOC(ADCD_BASE, (ADC_FORCE_SOC0 ));
 
+    //update pwm if necessary
+    unsigned int i=0;
+    if(mastercounter%modPWMADCBUF==0){
+        GPIO_togglePin(SAMPLING_GPIO);
+        //set output duties for bridge [regular mode]
+        for(i=0; i<NO_CHANNELS; i++){
+            if(driver_channels[i]->channel_state==RUN_REGULAR){
+                //execute the PI control low
+                float voltage_dclink=60.0;
+                //compute feed forward actuation term (limits [-1,1] for this duty) - feed-forward term currently not used
+                float act_voltage_ff=actvolts[i]*cos(fres*2*M_PI*mastertime+actthetas[i]);
+                //store actuation voltages in ADC buffer
+                if(adc_record)
+                    adc_buffer[3+i][adc_buffer_cnt]=act_voltage_ff;
+                float act_voltage_fb=0.0;
+                float duty_ff=act_voltage_ff/voltage_dclink;
+                float duty_fb=act_voltage_fb/(voltage_dclink);
+                // TODO-PID : Sanity / Limit Checks on PID go here
+
+                //convert normalized duty cycle, limit it and apply
+                float duty_bridge=0.5*(1+(duty_ff+duty_fb));
+                if(duty_bridge>0.9)
+                    duty_bridge=0.9;
+                if(duty_bridge<0.1)
+                    duty_bridge=0.1;
+                set_duty_bridge(driver_channels[i]->bridge_config,duty_bridge);
+            }
+            //set_duty_bridge(driver_channels[i]->bridge_config,des_duty_bridge[i]);
+        }
+        adc_buffer_cnt=(adc_buffer_cnt+1)%ADC_BUF_SIZE;
+        //set frequency for bridge [resonant mode]
+        //for(i=0; i<NO_CHANNELS; i++){
+        //    if(driver_channels[i]->channel_state==RUN_RESONANT)
+        //        set_freq_bridge(driver_channels[i]->bridge_config,des_freq_resonant_mhz[i]);
+        //}
+    }
+
+
     //update dq estimates
     ids[0]=taudq/(taudq+deltaT)*ids[0]+2*deltaT/(taudq+deltaT)*currentcos*ia;
     ids[1]=taudq/(taudq+deltaT)*ids[1]+2*deltaT/(taudq+deltaT)*currentcos*ib;
@@ -345,7 +404,8 @@ cpuTimer0ISR(void)
     iqs[1]=taudq/(taudq+deltaT)*iqs[1]+2*deltaT/(taudq+deltaT)*currentsin*ib;
     iqs[2]=taudq/(taudq+deltaT)*iqs[2]+2*deltaT/(taudq+deltaT)*currentsin*ic;
 
-    run_main_task=true;
+    if(mastercounter%modCTRL==0)
+        run_main_task=true;
 
     //
     // Acknowledge this interrupt to receive more interrupts from group 1

@@ -107,6 +107,28 @@ extern struct pi_controller current_pi[NO_CHANNELS];
 extern struct tnb_mns_msg ipc_tnb_mns_msg;
 extern bool communication_active;                       //variable indicates whether there is a TCP connection active (true if a package was received in the last 200ms)
 
+//variables related to resonant control
+extern float fres;
+extern float actvolts[3];
+extern float actthetas[3];
+//debugging purposes -----------------------
+extern float actvolts_[3];
+extern float actthetas_[3];
+//------------------------------------------
+extern float periodstart;               //start of current point of oscillation
+//definition of the system impedance matrix
+extern const float zmatr[2][2];
+extern const float zmati[2][2];
+//input to impedance matrix, corresponds
+extern float xvecd[2];
+extern float xvecq[2];
+extern float vvecd[2];
+extern float vvecq[2];
+inline void matmul2(const float mat[2][2],const float vec[2], float res[2]){
+    res[0]=mat[0][0]*vec[0]+mat[0][1]*vec[1];
+    res[1]=mat[1][0]*vec[0]+mat[1][1]*vec[1];
+}
+
 // ---------------------
 // Main CPU Timer Related Functions
 // ---------------------
