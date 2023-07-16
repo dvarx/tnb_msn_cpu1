@@ -120,8 +120,14 @@ extern float periodstart;               //start of current point of oscillation
 extern const float zmatr[2][2];
 extern const float zmati[2][2];
 //input to impedance matrix, corresponds
+extern struct pi_controller ctrl_i_d_0;
+extern struct pi_controller ctrl_i_d_1;
+extern struct pi_controller ctrl_i_q_0;
+extern struct pi_controller ctrl_i_q_1;
 extern float xvecd[2];
 extern float xvecq[2];
+extern float rvecd[2];
+extern float rvecq[2];
 extern float vvecd[2];
 extern float vvecq[2];
 inline void matmul2(const float mat[2][2],const float vec[2], float res[2]){

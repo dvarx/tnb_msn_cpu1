@@ -12,8 +12,9 @@
 
 //controller time interval
 #define deltaT 10e-6
-#define taudq 50e-3
 #define modCTRL 100
+#define deltaTCTRL 1e-3
+#define taudq 50e-3
 #define modPWMADCBUF 5
 
 extern float fres;
@@ -49,7 +50,7 @@ inline float update_pid(struct pi_controller* ctrlr,float r,float y,bool output_
     float e=r-y;
     //update the error integral using trapezoidal rule, but only if the output is not saturated (anti-windup measure)
     if(!output_saturated)
-        ctrlr->errint+=(deltaT*0.5)*(e+ctrlr->errnm1);
+        ctrlr->errint+=(deltaTCTRL*0.5)*(e+ctrlr->errnm1);
     //store the current error for later use
     ctrlr->errnm1=e;
     //update the output

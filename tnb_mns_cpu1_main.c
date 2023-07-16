@@ -66,6 +66,7 @@
 
 bool run_main_control_task=false;
 bool enable_waveform_debugging=false;
+bool use_pi=false;
 
 void main(void)
 {
@@ -457,25 +458,40 @@ void main(void)
 
             //PID control laws, compute voltage phasor necessary for actuation
 
-            //temporary storage
-            float vec1[2];
-            float vec2[2];
-            //compute real component of actuation voltage
-            matmul2(zmatr,xvecd,vec1);
-            matmul2(zmati,xvecq,vec2);
-            vvecd[0]=vec1[0]-vec2[0];
-            vvecd[1]=vec1[1]-vec2[1];
-            //compute imaginary component of actuation voltage
-            matmul2(zmatr,xvecq,vec1);
-            matmul2(zmati,xvecd,vec2);
-            vvecq[0]=vec1[0]+vec2[0];
-            vvecq[1]=vec1[1]+vec2[1];
-            //compute voltage magnitudes
-            actvolts[0]=sqrt(vvecd[0]*vvecd[0]+vvecq[0]*vvecq[0]);
-            actvolts[1]=sqrt(vvecd[1]*vvecd[1]+vvecq[1]*vvecq[1]);
-            //compute voltage angles
-            actthetas[0]=atan2(vvecq[0],vvecd[0]);
-            actthetas[1]=atan2(vvecq[1],vvecd[1]);
+            if(driver_channels[0]->channel_state==RUN_REGULAR&&driver_channels[1]->channel_state==RUN_REGULAR){
+                //temporary storage
+                float vec1[2];
+                float vec2[2];
+
+                //run pi controllers
+                xvecd[0]=rvecd[0];
+                xvecd[1]=rvecd[1];
+                xvecq[0]=rvecq[0];
+                xvecq[1]=rvecq[1];
+                if(use_pi){
+                    xvecd[0]+=update_pid(&ctrl_i_d_0,rvecd[0],ivecd[0],0);
+                    xvecd[1]+=update_pid(&ctrl_i_d_1,rvecd[1],ivecd[1],0);
+                    xvecq[0]+=update_pid(&ctrl_i_q_0,rvecq[0],ivecq[0],0);
+                    xvecq[1]+=update_pid(&ctrl_i_q_1,rvecq[1],ivecq[1],0);
+
+                }
+                //compute real component of actuation voltage
+                matmul2(zmatr,xvecd,vec1);
+                matmul2(zmati,xvecq,vec2);
+                vvecd[0]=vec1[0]-vec2[0];
+                vvecd[1]=vec1[1]-vec2[1];
+                //compute imaginary component of actuation voltage
+                matmul2(zmatr,xvecq,vec1);
+                matmul2(zmati,xvecd,vec2);
+                vvecq[0]=vec1[0]+vec2[0];
+                vvecq[1]=vec1[1]+vec2[1];
+                //compute voltage magnitudes
+                actvolts[0]=sqrt(vvecd[0]*vvecd[0]+vvecq[0]*vvecq[0]);
+                actvolts[1]=sqrt(vvecd[1]*vvecd[1]+vvecq[1]*vvecq[1]);
+                //compute voltage angles
+                actthetas[0]=atan2(vvecq[0],vvecd[0]);
+                actthetas[1]=atan2(vvecq[1],vvecd[1]);
+            }
 
             run_main_task=false;
         }

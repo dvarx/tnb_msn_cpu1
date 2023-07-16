@@ -24,8 +24,8 @@
 // Sample on pair of pins (difference between pins is converted, subject to
 // common mode voltage requirements; see the device data manual)
 
-float iqs[3]={0,0,0};
-float ids[3]={0,0,0};
+float ivecq[3]={0,0,0};
+float ivecd[3]={0,0,0};
 
 //
 // Function to configure and power up ADCs A,B,C,D

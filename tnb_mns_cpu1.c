@@ -79,6 +79,12 @@ bool adc_record=0;
 float fres=236;
 float actvolts[3]={0.0,0.0,0.0};
 float actthetas[3]={0.0,0.0,0.0};
+#define CTRLKP 0.0
+#define CTRLKI 0.1
+struct pi_controller ctrl_i_d_0={CTRLKP,CTRLKI,0,0,0,0};
+struct pi_controller ctrl_i_d_1={CTRLKP,CTRLKI,0,0,0,0};
+struct pi_controller ctrl_i_q_0={CTRLKP,CTRLKI,0,0,0,0};
+struct pi_controller ctrl_i_q_1={CTRLKP,CTRLKI,0,0,0,0};
 //------------------------------------------
 float periodstart=0;               //start of current point of oscillation
 //definition of the system impedance matrix
@@ -95,7 +101,8 @@ float xvecd[2]={1,1};
 float xvecq[2]={0,0};
 float vvecd[2]={0};
 float vvecq[2]={0};
-
+float rvecd[2]={0};
+float rvecq[2]={0};
 struct pi_controller current_pi[NO_CHANNELS]={
                                  {CTRL_KP,CTRL_KI,0.0,0.0,0.0,0.0},
                                  {CTRL_KP,CTRL_KI,0.0,0.0,0.0,0.0},
@@ -397,12 +404,12 @@ cpuTimer0ISR(void)
 
 
     //update dq estimates
-    ids[0]=taudq/(taudq+deltaT)*ids[0]+2*deltaT/(taudq+deltaT)*currentcos*ia;
-    ids[1]=taudq/(taudq+deltaT)*ids[1]+2*deltaT/(taudq+deltaT)*currentcos*ib;
-    ids[2]=taudq/(taudq+deltaT)*ids[2]+2*deltaT/(taudq+deltaT)*currentcos*ic;
-    iqs[0]=taudq/(taudq+deltaT)*iqs[0]+2*deltaT/(taudq+deltaT)*currentsin*ia;
-    iqs[1]=taudq/(taudq+deltaT)*iqs[1]+2*deltaT/(taudq+deltaT)*currentsin*ib;
-    iqs[2]=taudq/(taudq+deltaT)*iqs[2]+2*deltaT/(taudq+deltaT)*currentsin*ic;
+    ivecd[0]=taudq/(taudq+deltaT)*ivecd[0]+2*deltaT/(taudq+deltaT)*currentcos*ia;
+    ivecd[1]=taudq/(taudq+deltaT)*ivecd[1]+2*deltaT/(taudq+deltaT)*currentcos*ib;
+    ivecd[2]=taudq/(taudq+deltaT)*ivecd[2]+2*deltaT/(taudq+deltaT)*currentcos*ic;
+    ivecq[0]=taudq/(taudq+deltaT)*ivecq[0]-2*deltaT/(taudq+deltaT)*currentsin*ia;
+    ivecq[1]=taudq/(taudq+deltaT)*ivecq[1]-2*deltaT/(taudq+deltaT)*currentsin*ib;
+    ivecq[2]=taudq/(taudq+deltaT)*ivecq[2]-2*deltaT/(taudq+deltaT)*currentsin*ic;
 
     if(mastercounter%modCTRL==0)
         run_main_task=true;

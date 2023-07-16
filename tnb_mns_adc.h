@@ -8,8 +8,8 @@
 #ifndef TNB_MNS_ADC_H_
 #define TNB_MNS_ADC_H_
 
-extern float iqs[3];
-extern float ids[3];
+extern float ivecq[3];
+extern float ivecd[3];
 
 extern const float calib_factor_current_alpha;
 extern const float calib_factor_current_beta;
