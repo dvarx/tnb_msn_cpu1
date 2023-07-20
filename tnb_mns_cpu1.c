@@ -64,11 +64,54 @@ uint32_t enable_res_cap_c=0;     //variable control the resonant relay of channe
 float des_duty_bridge[NO_CHANNELS]={0.5,0.5,0.5,0.5,0.5,0.5};
 float des_currents[NO_CHANNELS]={0.0,0.0,0.0,0.0,0.0,0.0};
 float des_duty_buck[NO_CHANNELS]={0,0,0,0,0,0};
-bool communication_active=false;
+bool communication_active=true;
 float mastertime=0.0;
 
 //resonant control related
-float adc_buffer[7][ADC_BUF_SIZE];
+//float adc_buffer[7][ADC_BUF_SIZE];
+
+//buffers for storing measured currents and voltages
+#pragma DATA_SECTION(adc_buffer_current_0,"ADC_BUFFER_I0")
+#pragma DATA_SECTION(adc_buffer_current_1,"ADC_BUFFER_I1")
+#pragma DATA_SECTION(adc_buffer_current_2,"ADC_BUFFER_I2")
+#pragma DATA_SECTION(adc_buffer_voltage_0,"ADC_BUFFER_V0")
+#pragma DATA_SECTION(adc_buffer_voltage_1,"ADC_BUFFER_V1")
+#pragma DATA_SECTION(adc_buffer_voltage_2,"ADC_BUFFER_V2")
+#pragma DATA_SECTION(adc_buffer_refsig,"BUFFER_REFSIG")
+
+float adc_buffer_current_0[ADC_BUF_SIZE];
+float adc_buffer_current_1[ADC_BUF_SIZE];
+float adc_buffer_current_2[ADC_BUF_SIZE];
+float adc_buffer_voltage_0[ADC_BUF_SIZE];
+float adc_buffer_voltage_1[ADC_BUF_SIZE];
+float adc_buffer_voltage_2[ADC_BUF_SIZE];
+float adc_buffer_refsig[ADC_BUF_SIZE];
+
+float* adc_buffer[7]={adc_buffer_current_0,adc_buffer_current_1,adc_buffer_current_2,
+                       adc_buffer_voltage_0,adc_buffer_voltage_1,adc_buffer_voltage_2,
+                       adc_buffer_refsig
+};
+
+//buffers for storing phasor coordinates
+uint16_t buffer_idq_cnt=0;
+#pragma DATA_SECTION(buffer_id_0,"BUFFER_ID0")
+#pragma DATA_SECTION(buffer_id_1,"BUFFER_ID1")
+#pragma DATA_SECTION(buffer_id_2,"BUFFER_ID2")
+#pragma DATA_SECTION(buffer_iq_0,"BUFFER_IQ0")
+#pragma DATA_SECTION(buffer_iq_1,"BUFFER_IQ1")
+#pragma DATA_SECTION(buffer_iq_2,"BUFFER_IQ2")
+float buffer_iq_0[ADC_BUF_SIZE];
+float buffer_iq_1[ADC_BUF_SIZE];
+float buffer_iq_2[ADC_BUF_SIZE];
+float buffer_id_0[ADC_BUF_SIZE];
+float buffer_id_1[ADC_BUF_SIZE];
+float buffer_id_2[ADC_BUF_SIZE];
+uint16_t modidqsample=50;
+
+float* buffer_idq[6]={buffer_id_0,buffer_id_1,buffer_id_2,
+                      buffer_iq_0,buffer_iq_1,buffer_iq_2
+};
+
 uint16_t adc_buffer_cnt=0;
 uint16_t act_volt_buffer_cnt=0;
 uint16_t buffer_prdstrt_pointer_0=0;      //pointer that points to the sample at the beginning of the latest oscillation period in the ADC buffer
@@ -80,29 +123,37 @@ float fres=236;
 float actvolts[3]={0.0,0.0,0.0};
 float actthetas[3]={0.0,0.0,0.0};
 #define CTRLKP 0.0
-#define CTRLKI 0.1
-struct pi_controller ctrl_i_d_0={CTRLKP,CTRLKI,0,0,0,0};
-struct pi_controller ctrl_i_d_1={CTRLKP,CTRLKI,0,0,0,0};
-struct pi_controller ctrl_i_q_0={CTRLKP,CTRLKI,0,0,0,0};
-struct pi_controller ctrl_i_q_1={CTRLKP,CTRLKI,0,0,0,0};
+#define CTRLKI 1
+struct pi_controller ctrl_i_ds[3]={
+                                   {CTRLKP,CTRLKI,0,0,0,0},
+                                   {CTRLKP,CTRLKI,0,0,0,0},
+                                   {CTRLKP,CTRLKI,0,0,0,0}
+};
+struct pi_controller ctrl_i_qs[3]={
+                                   {CTRLKP,CTRLKI,0,0,0,0},
+                                   {CTRLKP,CTRLKI,0,0,0,0},
+                                   {CTRLKP,CTRLKI,0,0,0,0}
+};
 //------------------------------------------
 float periodstart=0;               //start of current point of oscillation
 //definition of the system impedance matrix
-const float zmatr[2][2]={
-                   {6.7,0.6},
-                   {0.8,7.3}
+float zmatr[NO_CHANNELS][NO_CHANNELS]={
+                   {8,1.4,1.7},
+                   {1.28,8,1.7},
+                   {0.75,0.8,8}
 };
-const float zmati[2][2]={
-                   {-4.5,-6.5},
-                   {-7.2,-8.1}
+float zmati[NO_CHANNELS][NO_CHANNELS]={
+                   {1.4,-8.4,-8.2},
+                   {-8.4,0.4,-8.2},
+                   {-8.2,-8.2,0.2}
 };
 //input to impedance matrix, corresponds
-float xvecd[2]={1,1};
-float xvecq[2]={0,0};
-float vvecd[2]={0};
-float vvecq[2]={0};
-float rvecd[2]={0};
-float rvecq[2]={0};
+float xvecd[NO_CHANNELS]={0};
+float xvecq[NO_CHANNELS]={0};
+float vvecd[NO_CHANNELS]={0};
+float vvecq[NO_CHANNELS]={0};
+float rvecd[NO_CHANNELS]={0};
+float rvecq[NO_CHANNELS]={0};
 struct pi_controller current_pi[NO_CHANNELS]={
                                  {CTRL_KP,CTRL_KI,0.0,0.0,0.0,0.0},
                                  {CTRL_KP,CTRL_KI,0.0,0.0,0.0,0.0},
@@ -235,6 +286,7 @@ configCPUTimer(uint32_t cpuTimer, uint32_t period)
 
 __interrupt void IPC_ISR0()
 {
+    return;
     int i;
     uint32_t command, addr, data;
     bool status = false;
@@ -341,6 +393,7 @@ __interrupt void IPC_ISR0()
 __interrupt void
 cpuTimer0ISR(void)
 {
+    GPIO_writePin(HEARTBEAT_GPIO,1);
     mastercounter++;
     mastertime=mastercounter*deltaT;
 
@@ -354,7 +407,7 @@ cpuTimer0ISR(void)
     float ic=conv_adc_meas_to_current_a(ADC_readResult(ADCDRESULT_BASE, ADC_SOC_NUMBER0));
 
     //record data in ADC buffer if required
-    if((mastercounter%modPWMADCBUF==0)&&adc_record){
+    if(adc_record){
         adc_buffer[0][adc_buffer_cnt]=ia;
         adc_buffer[1][adc_buffer_cnt]=ib;
         adc_buffer[2][adc_buffer_cnt]=ic;
@@ -367,49 +420,54 @@ cpuTimer0ISR(void)
 
     //update pwm if necessary
     unsigned int i=0;
-    if(mastercounter%modPWMADCBUF==0){
-        GPIO_togglePin(SAMPLING_GPIO);
-        //set output duties for bridge [regular mode]
-        for(i=0; i<NO_CHANNELS; i++){
-            if(driver_channels[i]->channel_state==RUN_REGULAR){
-                //execute the PI control low
-                float voltage_dclink=60.0;
-                //compute feed forward actuation term (limits [-1,1] for this duty) - feed-forward term currently not used
-                float act_voltage_ff=actvolts[i]*cos(fres*2*M_PI*mastertime+actthetas[i]);
-                //store actuation voltages in ADC buffer
-                if(adc_record)
-                    adc_buffer[3+i][adc_buffer_cnt]=act_voltage_ff;
-                float act_voltage_fb=0.0;
-                float duty_ff=act_voltage_ff/voltage_dclink;
-                float duty_fb=act_voltage_fb/(voltage_dclink);
-                // TODO-PID : Sanity / Limit Checks on PID go here
+    //set output duties for bridge [regular mode]
+    for(i=0; i<NO_CHANNELS; i++){
+        if(driver_channels[i]->channel_state==RUN_REGULAR){
+            //compute feed forward actuation term (limits [-1,1] for this duty) - feed-forward term currently not used
+            float act_voltage_ff=actvolts[i]*cos(fres*2*M_PI*mastertime+actthetas[i]);
+            //store actuation voltages in ADC buffer
+            if(adc_record)
+                adc_buffer[3+i][adc_buffer_cnt]=act_voltage_ff;
+            float act_voltage_fb=0.0;
+            float duty_ff=act_voltage_ff/VOLTAGE_DCLINK;
+            //float duty_fb=act_voltage_fb*(1/voltage_dclink);
 
-                //convert normalized duty cycle, limit it and apply
-                float duty_bridge=0.5*(1+(duty_ff+duty_fb));
-                if(duty_bridge>0.9)
-                    duty_bridge=0.9;
-                if(duty_bridge<0.1)
-                    duty_bridge=0.1;
-                set_duty_bridge(driver_channels[i]->bridge_config,duty_bridge);
-            }
-            //set_duty_bridge(driver_channels[i]->bridge_config,des_duty_bridge[i]);
+            //convert normalized duty cycle, limit it and apply
+            float duty_bridge=0.5*(1+(duty_ff));
+            if(duty_bridge>0.9)
+                duty_bridge=0.9;
+            if(duty_bridge<0.1)
+                duty_bridge=0.1;
+            set_duty_bridge(driver_channels[i]->bridge_config,duty_bridge);
         }
-        adc_buffer_cnt=(adc_buffer_cnt+1)%ADC_BUF_SIZE;
+        //set_duty_bridge(driver_channels[i]->bridge_config,des_duty_bridge[i]);
         //set frequency for bridge [resonant mode]
         //for(i=0; i<NO_CHANNELS; i++){
         //    if(driver_channels[i]->channel_state==RUN_RESONANT)
         //        set_freq_bridge(driver_channels[i]->bridge_config,des_freq_resonant_mhz[i]);
         //}
     }
+    adc_buffer_cnt=(adc_buffer_cnt+1)%ADC_BUF_SIZE;
 
 
     //update dq estimates
+    GPIO_writePin(SAMPLING_GPIO,1);
     ivecd[0]=taudq/(taudq+deltaT)*ivecd[0]+2*deltaT/(taudq+deltaT)*currentcos*ia;
     ivecd[1]=taudq/(taudq+deltaT)*ivecd[1]+2*deltaT/(taudq+deltaT)*currentcos*ib;
     ivecd[2]=taudq/(taudq+deltaT)*ivecd[2]+2*deltaT/(taudq+deltaT)*currentcos*ic;
     ivecq[0]=taudq/(taudq+deltaT)*ivecq[0]-2*deltaT/(taudq+deltaT)*currentsin*ia;
     ivecq[1]=taudq/(taudq+deltaT)*ivecq[1]-2*deltaT/(taudq+deltaT)*currentsin*ib;
     ivecq[2]=taudq/(taudq+deltaT)*ivecq[2]-2*deltaT/(taudq+deltaT)*currentsin*ic;
+    if((mastercounter%modidqsample==0)&&adc_record){
+        buffer_idq[0][buffer_idq_cnt]=ivecd[0];
+        buffer_idq[1][buffer_idq_cnt]=ivecd[1];
+        buffer_idq[2][buffer_idq_cnt]=ivecd[2];
+        buffer_idq[3][buffer_idq_cnt]=ivecq[0];
+        buffer_idq[4][buffer_idq_cnt]=ivecq[1];
+        buffer_idq[5][buffer_idq_cnt]=ivecq[2];
+        buffer_idq_cnt=(buffer_idq_cnt+1)%ADC_BUF_SIZE;
+    }
+    GPIO_writePin(SAMPLING_GPIO,0);
 
     if(mastercounter%modCTRL==0)
         run_main_task=true;
@@ -418,6 +476,7 @@ cpuTimer0ISR(void)
     // Acknowledge this interrupt to receive more interrupts from group 1
     //
     Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP1);
+    GPIO_writePin(HEARTBEAT_GPIO,0);
 }
 
 //

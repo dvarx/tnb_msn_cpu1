@@ -68,6 +68,8 @@ bool run_main_control_task=false;
 bool enable_waveform_debugging=false;
 bool use_pi=false;
 
+//#define SYSID
+
 void main(void)
 {
 
@@ -177,11 +179,11 @@ void main(void)
     Interrupt_initVectorTable();
     //--------------- IPC interrupt ---------------
     //clear any IPC flags
-    IPC_clearFlagLtoR(IPC_CPU1_L_CM_R, IPC_FLAG_ALL);
+    //IPC_clearFlagLtoR(IPC_CPU1_L_CM_R, IPC_FLAG_ALL);
     //register IPC interrupt from CM to CPU1 using IPC_INT0
-    IPC_registerInterrupt(IPC_CPU1_L_CM_R, IPC_INT0, IPC_ISR0);
+    //IPC_registerInterrupt(IPC_CPU1_L_CM_R, IPC_INT0, IPC_ISR0);
     //synchronize CM and CPU1 using IPC_FLAG31
-    IPC_sync(IPC_CPU1_L_CM_R, IPC_FLAG31);
+    //IPC_sync(IPC_CPU1_L_CM_R, IPC_FLAG31);
     //--------------- CPU1 Timer0 interrupt (main task) ---------------
     // Register ISR for cupTimer0
     Interrupt_register(INT_TIMER0, &cpuTimer0ISR);
@@ -201,9 +203,9 @@ void main(void)
     // Enable CPUTimer0 Interrupt within CPUTimer1 Module
     CPUTimer_enableInterrupt(CPUTIMER1_BASE);
     // Enable TIMER1 Interrupt on CPU coming from TIMER1
-    Interrupt_enable(INT_TIMER1);
+    //Interrupt_enable(INT_TIMER1);
     // Start CPUTimer0
-    CPUTimer_startTimer(CPUTIMER1_BASE);
+    //CPUTimer_startTimer(CPUTIMER1_BASE);
 
     // Enable Global Interrupt (INTM) and realtime interrupt (DBGM)
     EINT;
@@ -425,7 +427,7 @@ void main(void)
     while(1){
         if(run_main_task){
             //toggle heartbeat gpio
-            GPIO_togglePin(HEARTBEAT_GPIO);
+
 
             /* -------------------------------------
              * update sinusoidal PWMs (do this at 1/10th of the main rate, e.g. 10kHz)
@@ -460,37 +462,49 @@ void main(void)
 
             if(driver_channels[0]->channel_state==RUN_REGULAR&&driver_channels[1]->channel_state==RUN_REGULAR){
                 //temporary storage
-                float vec1[2];
-                float vec2[2];
+                float vec1[NO_CHANNELS];
+                float vec2[NO_CHANNELS];
 
                 //run pi controllers
                 xvecd[0]=rvecd[0];
                 xvecd[1]=rvecd[1];
+                xvecd[2]=rvecd[2];
                 xvecq[0]=rvecq[0];
                 xvecq[1]=rvecq[1];
+                xvecq[2]=rvecq[2];
                 if(use_pi){
-                    xvecd[0]+=update_pid(&ctrl_i_d_0,rvecd[0],ivecd[0],0);
-                    xvecd[1]+=update_pid(&ctrl_i_d_1,rvecd[1],ivecd[1],0);
-                    xvecq[0]+=update_pid(&ctrl_i_q_0,rvecq[0],ivecq[0],0);
-                    xvecq[1]+=update_pid(&ctrl_i_q_1,rvecq[1],ivecq[1],0);
+                    for(i=0; i<3; i++){
+                        xvecd[i]+=update_pid(ctrl_i_ds+i,rvecd[i],ivecd[i],0);
+                        xvecq[i]+=update_pid(ctrl_i_qs+i,rvecq[i],ivecq[i],0);
+                    }
+                    //xvecd[0]+=update_pid(&ctrl_i_d_0,rvecd[0],ivecd[0],0);
+                    //xvecd[1]+=update_pid(&ctrl_i_d_1,rvecd[1],ivecd[1],0);
+                    //xvecq[0]+=update_pid(&ctrl_i_q_0,rvecq[0],ivecq[0],0);
+                    //xvecq[1]+=update_pid(&ctrl_i_q_1,rvecq[1],ivecq[1],0);
 
                 }
                 //compute real component of actuation voltage
-                matmul2(zmatr,xvecd,vec1);
-                matmul2(zmati,xvecq,vec2);
+                matmul3(zmatr,xvecd,vec1);
+                matmul3(zmati,xvecq,vec2);
                 vvecd[0]=vec1[0]-vec2[0];
                 vvecd[1]=vec1[1]-vec2[1];
+                vvecd[2]=vec1[2]-vec2[2];
                 //compute imaginary component of actuation voltage
-                matmul2(zmatr,xvecq,vec1);
-                matmul2(zmati,xvecd,vec2);
+                matmul3(zmatr,xvecq,vec1);
+                matmul3(zmati,xvecd,vec2);
                 vvecq[0]=vec1[0]+vec2[0];
                 vvecq[1]=vec1[1]+vec2[1];
+                vvecq[2]=vec1[2]+vec2[2];
+                #ifndef SYSID
                 //compute voltage magnitudes
                 actvolts[0]=sqrt(vvecd[0]*vvecd[0]+vvecq[0]*vvecq[0]);
                 actvolts[1]=sqrt(vvecd[1]*vvecd[1]+vvecq[1]*vvecq[1]);
+                actvolts[2]=sqrt(vvecd[2]*vvecd[2]+vvecq[2]*vvecq[2]);
                 //compute voltage angles
                 actthetas[0]=atan2(vvecq[0],vvecd[0]);
                 actthetas[1]=atan2(vvecq[1],vvecd[1]);
+                actthetas[2]=atan2(vvecq[2],vvecd[2]);
+                #endif
             }
 
             run_main_task=false;

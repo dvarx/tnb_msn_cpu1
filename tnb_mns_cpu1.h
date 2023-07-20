@@ -18,7 +18,7 @@
 #include "tnb_mns_adc.h"
 
 #define NO_CHANNELS 3
-#define HEARTBEAT_GPIO 35 // pin 122 on breakoutboard
+#define HEARTBEAT_GPIO 35 // pin 121 on breakoutboard
 #define SAMPLING_GPIO 99 // pin 96 on breakoutboard
 #define MAIN_RELAY_GPIO 92
 #define SLAVE_RELAY_GPIO 62
@@ -117,24 +117,26 @@ extern float actthetas_[3];
 //------------------------------------------
 extern float periodstart;               //start of current point of oscillation
 //definition of the system impedance matrix
-extern const float zmatr[2][2];
-extern const float zmati[2][2];
+extern float zmatr[NO_CHANNELS][NO_CHANNELS];
+extern float zmati[NO_CHANNELS][NO_CHANNELS];
 //input to impedance matrix, corresponds
-extern struct pi_controller ctrl_i_d_0;
-extern struct pi_controller ctrl_i_d_1;
-extern struct pi_controller ctrl_i_q_0;
-extern struct pi_controller ctrl_i_q_1;
-extern float xvecd[2];
-extern float xvecq[2];
-extern float rvecd[2];
-extern float rvecq[2];
-extern float vvecd[2];
-extern float vvecq[2];
+extern struct pi_controller ctrl_i_ds[3];
+extern struct pi_controller ctrl_i_qs[3];
+extern float xvecd[NO_CHANNELS];
+extern float xvecq[NO_CHANNELS];
+extern float rvecd[NO_CHANNELS];
+extern float rvecq[NO_CHANNELS];
+extern float vvecd[NO_CHANNELS];
+extern float vvecq[NO_CHANNELS];
 inline void matmul2(const float mat[2][2],const float vec[2], float res[2]){
     res[0]=mat[0][0]*vec[0]+mat[0][1]*vec[1];
     res[1]=mat[1][0]*vec[0]+mat[1][1]*vec[1];
 }
-
+inline void matmul3(const float mat[3][3],const float vec[3], float res[3]){
+    res[0]=mat[0][0]*vec[0]+mat[0][1]*vec[1]+mat[0][2]*vec[2];
+    res[1]=mat[1][0]*vec[0]+mat[1][1]*vec[1]+mat[1][2]*vec[2];
+    res[2]=mat[2][0]*vec[0]+mat[2][1]*vec[1]+mat[2][2]*vec[2];
+}
 // ---------------------
 // Main CPU Timer Related Functions
 // ---------------------
@@ -148,9 +150,12 @@ extern float mastertime;
 //extern uint16_t cpuTimer2IntCount;
 
 //resonant control related
-#define ADC_BUF_SIZE 256
-extern float adc_buffer[7][ADC_BUF_SIZE];
+#define ADC_BUF_SIZE 1024
+//extern float adc_buffer[7][ADC_BUF_SIZE];
+extern float* adc_buffer[7];
+extern float* adc_buffer_idq[6];
 extern uint16_t adc_buffer_cnt;
+extern uint16_t buffer_idq_cnt;
 extern uint16_t act_volt_buffer_cnt;
 extern uint16_t buffer_prdstrt_pointer_0;      //pointer that points to the sample at the beginning of the latest oscillation period in the ADC buffer
 extern uint16_t buffer_prdstrt_pointer_1;      //pointer that points to the sample at the beginning of the last oscillation period in the ADC buffer

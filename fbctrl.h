@@ -11,13 +11,15 @@
 #include <stdbool.h>
 
 //controller time interval
-#define deltaT 10e-6
+#define deltaT 20e-6
 #define modCTRL 100
 #define deltaTCTRL 1e-3
 #define taudq 50e-3
-#define modPWMADCBUF 5
+//execute the PI control low
+#define VOLTAGE_DCLINK 60.0;
 
 extern float fres;
+extern uint16_t modidqsample;
 
 struct pi_controller{
     float kp;
