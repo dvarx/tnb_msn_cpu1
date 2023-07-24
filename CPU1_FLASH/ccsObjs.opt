@@ -1,0 +1,10 @@
+"./tnb_mns_adc.obj"
+"./tnb_mns_cpu1.obj"
+"./tnb_mns_cpu1_main.obj"
+"./tnb_mns_epwm.obj"
+"./tnb_mns_fsm.obj"
+"./device/device.obj"
+"./device/f2838x_codestartbranch.obj"
+"../2838x_FLASH_lnk_cpu1.cmd"
+"/home/dvarx/ti/C2000Ware_3_04_00_00_Software/driverlib/f2838x/driverlib/ccs/Debug/driverlib.lib"
+-llibc.a
