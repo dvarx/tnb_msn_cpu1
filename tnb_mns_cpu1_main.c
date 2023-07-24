@@ -67,6 +67,8 @@
 bool run_main_control_task=false;
 bool enable_waveform_debugging=false;
 bool use_pi=false;
+float curcos=0.0;
+float cursin=0.0;
 
 //#define SYSID
 
@@ -100,6 +102,9 @@ void main(void)
     //sampling signal
     GPIO_setDirectionMode(SAMPLING_GPIO, GPIO_DIR_MODE_OUT);   //output
     GPIO_setPadConfig(SAMPLING_GPIO,GPIO_PIN_TYPE_STD);        //push pull output
+    //main task signal
+    GPIO_setDirectionMode(MAIN_TASK_GPIO, GPIO_DIR_MODE_OUT);   //output
+    GPIO_setPadConfig(MAIN_TASK_GPIO,GPIO_PIN_TYPE_STD);        //push pull output
     //main input relay
     GPIO_setDirectionMode(MAIN_RELAY_GPIO, GPIO_DIR_MODE_OUT);   //output
     GPIO_setPadConfig(MAIN_RELAY_GPIO,GPIO_PIN_TYPE_STD);        //push pull output
@@ -427,7 +432,7 @@ void main(void)
     while(1){
         if(run_main_task){
             //toggle heartbeat gpio
-
+            GPIO_writePin(MAIN_TASK_GPIO,1);
 
             /* -------------------------------------
              * update sinusoidal PWMs (do this at 1/10th of the main rate, e.g. 10kHz)
@@ -458,9 +463,54 @@ void main(void)
                 }
             }
 
-            //PID control laws, compute voltage phasor necessary for actuation
+            //estimate ids and iqs
+            //if we are currently recording into aux buffer, use values from the normal buffer to estimate ids and iqs
+            ivecd[0]=0;
+            ivecd[1]=0;
+            ivecd[2]=0;
+            ivecq[0]=0;
+            ivecq[1]=0;
+            ivecq[2]=0;
+            if(use_aux_current_buffer){
+                for(i=0; i<period_no; i++){
+                    ivecd[0]+=obs_buffer[0][i]*cosinebuf[i];
+                    ivecd[1]+=obs_buffer[1][i]*cosinebuf[i];
+                    ivecd[2]+=obs_buffer[2][i]*cosinebuf[i];
+                    ivecq[0]+=obs_buffer[0][i]*nsinebuf[i];
+                    ivecq[1]+=obs_buffer[1][i]*nsinebuf[i];
+                    ivecq[2]+=obs_buffer[2][i]*nsinebuf[i];
+                }
+            }
+            else{
+                for(i=0; i<period_no; i++){
+                    ivecd[0]+=obs_buffer_aux[0][i]*cosinebuf[i];
+                    ivecd[1]+=obs_buffer_aux[1][i]*cosinebuf[i];
+                    ivecd[2]+=obs_buffer_aux[2][i]*cosinebuf[i];
+                    ivecq[0]+=obs_buffer_aux[0][i]*nsinebuf[i];
+                    ivecq[1]+=obs_buffer_aux[1][i]*nsinebuf[i];
+                    ivecq[2]+=obs_buffer_aux[2][i]*nsinebuf[i];
+                }
+            }
+            ivecd[0]=ivecd[0]*2/period_no;
+            ivecd[1]=ivecd[1]*2/period_no;
+            ivecd[2]=ivecd[2]*2/period_no;
+            ivecq[0]=ivecq[0]*2/period_no;
+            ivecq[1]=ivecq[1]*2/period_no;
+            ivecq[2]=ivecq[2]*2/period_no;
+            //store computed ids and iqs in buffer
+            if(adc_record){
+                buffer_idq[0][buffer_idq_cnt]=ivecd[0];
+                buffer_idq[1][buffer_idq_cnt]=ivecd[1];
+                buffer_idq[2][buffer_idq_cnt]=ivecd[2];
+                buffer_idq[3][buffer_idq_cnt]=ivecq[0];
+                buffer_idq[4][buffer_idq_cnt]=ivecq[1];
+                buffer_idq[5][buffer_idq_cnt]=ivecq[2];
+                buffer_idq_cnt=(buffer_idq_cnt+1)%ADC_BUF_SIZE;
+            }
 
-            if(driver_channels[0]->channel_state==RUN_REGULAR&&driver_channels[1]->channel_state==RUN_REGULAR){
+
+            //PID control laws, compute voltage phasor necessary for actuation
+            if(driver_channels[0]->channel_state==RUN_REGULAR&&driver_channels[1]->channel_state==RUN_REGULAR&&driver_channels[2]->channel_state==RUN_REGULAR){
                 //temporary storage
                 float vec1[NO_CHANNELS];
                 float vec2[NO_CHANNELS];
@@ -507,6 +557,7 @@ void main(void)
                 #endif
             }
 
+            GPIO_writePin(MAIN_TASK_GPIO,0);
             run_main_task=false;
         }
     }

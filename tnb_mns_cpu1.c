@@ -70,7 +70,29 @@ float mastertime=0.0;
 //resonant control related
 //float adc_buffer[7][ADC_BUF_SIZE];
 
-//buffers for storing measured currents and voltages
+//buffers used for estimating idqs
+#pragma DATA_SECTION(obs_buffer_current_0,"OBS_BUFFER_I0")
+#pragma DATA_SECTION(obs_buffer_current_1,"OBS_BUFFER_I1")
+#pragma DATA_SECTION(obs_buffer_current_2,"OBS_BUFFER_I2")
+float obs_buffer_current_0[OBS_BUF_SIZE];
+float obs_buffer_current_1[OBS_BUF_SIZE];
+float obs_buffer_current_2[OBS_BUF_SIZE];
+#pragma DATA_SECTION(adc_buffer_current_0_aux,"OBS_BUFFER_I0AUX")
+#pragma DATA_SECTION(adc_buffer_current_1_aux,"OBS_BUFFER_I1AUX")
+#pragma DATA_SECTION(adc_buffer_current_2_aux,"OBS_BUFFER_I2AUX")
+float obs_buffer_current_0_aux[OBS_BUF_SIZE];
+float obs_buffer_current_1_aux[OBS_BUF_SIZE];
+float obs_buffer_current_2_aux[OBS_BUF_SIZE];
+float cosinebuf[OBS_BUF_SIZE];
+float nsinebuf[OBS_BUF_SIZE];
+float phasebuf[OBS_BUF_SIZE];
+
+float* obs_buffer[3]={obs_buffer_current_0,obs_buffer_current_1,obs_buffer_current_2
+};
+float* obs_buffer_aux[3]={obs_buffer_current_0_aux,obs_buffer_current_1_aux,obs_buffer_current_2_aux};
+bool use_aux_current_buffer=false;
+
+//buffers for system analysis / debugging
 #pragma DATA_SECTION(adc_buffer_current_0,"ADC_BUFFER_I0")
 #pragma DATA_SECTION(adc_buffer_current_1,"ADC_BUFFER_I1")
 #pragma DATA_SECTION(adc_buffer_current_2,"ADC_BUFFER_I2")
@@ -78,7 +100,6 @@ float mastertime=0.0;
 #pragma DATA_SECTION(adc_buffer_voltage_1,"ADC_BUFFER_V1")
 #pragma DATA_SECTION(adc_buffer_voltage_2,"ADC_BUFFER_V2")
 #pragma DATA_SECTION(adc_buffer_refsig,"BUFFER_REFSIG")
-
 float adc_buffer_current_0[ADC_BUF_SIZE];
 float adc_buffer_current_1[ADC_BUF_SIZE];
 float adc_buffer_current_2[ADC_BUF_SIZE];
@@ -86,13 +107,11 @@ float adc_buffer_voltage_0[ADC_BUF_SIZE];
 float adc_buffer_voltage_1[ADC_BUF_SIZE];
 float adc_buffer_voltage_2[ADC_BUF_SIZE];
 float adc_buffer_refsig[ADC_BUF_SIZE];
-
-float* adc_buffer[7]={adc_buffer_current_0,adc_buffer_current_1,adc_buffer_current_2,
-                       adc_buffer_voltage_0,adc_buffer_voltage_1,adc_buffer_voltage_2,
-                       adc_buffer_refsig
+float* adc_buffer[]={adc_buffer_current_0,adc_buffer_current_1,adc_buffer_current_2,
+                   adc_buffer_voltage_0,adc_buffer_voltage_1,adc_buffer_voltage_2,
+                   adc_buffer_refsig
 };
 
-//buffers for storing phasor coordinates
 uint16_t buffer_idq_cnt=0;
 #pragma DATA_SECTION(buffer_id_0,"BUFFER_ID0")
 #pragma DATA_SECTION(buffer_id_1,"BUFFER_ID1")
@@ -107,11 +126,13 @@ float buffer_id_0[ADC_BUF_SIZE];
 float buffer_id_1[ADC_BUF_SIZE];
 float buffer_id_2[ADC_BUF_SIZE];
 uint16_t modidqsample=50;
+unsigned int period_no=217;
 
 float* buffer_idq[6]={buffer_id_0,buffer_id_1,buffer_id_2,
                       buffer_iq_0,buffer_iq_1,buffer_iq_2
 };
 
+uint16_t obs_buffer_cnt=0;
 uint16_t adc_buffer_cnt=0;
 uint16_t act_volt_buffer_cnt=0;
 uint16_t buffer_prdstrt_pointer_0=0;      //pointer that points to the sample at the beginning of the latest oscillation period in the ADC buffer
@@ -119,7 +140,7 @@ uint16_t buffer_prdstrt_pointer_1=0;      //pointer that points to the sample at
 bool adc_record=0;
 
 //variables related to resonant control
-float fres=236;
+float fres=230;
 float actvolts[3]={0.0,0.0,0.0};
 float actthetas[3]={0.0,0.0,0.0};
 #define CTRLKP 0.0
@@ -398,20 +419,30 @@ cpuTimer0ISR(void)
     mastertime=mastercounter*deltaT;
 
     //process analog signals from last iteration
-    float currentcos=cos(2*M_PI*fres*mastertime);
-    float currentsin=sin(2*M_PI*fres*mastertime);
+    float currentcos=cosinebuf[mastercounter%period_no];
+    if(adc_record)
+        adc_buffer[6][adc_buffer_cnt]=currentcos;
 
     //read adc results
     float ia=conv_adc_meas_to_current_a(ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER0));
     float ib=conv_adc_meas_to_current_a(ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER1));
     float ic=conv_adc_meas_to_current_a(ADC_readResult(ADCDRESULT_BASE, ADC_SOC_NUMBER0));
 
-    //record data in ADC buffer if required
+    //record data in ADC buffer and OBS buffer if required
     if(adc_record){
         adc_buffer[0][adc_buffer_cnt]=ia;
         adc_buffer[1][adc_buffer_cnt]=ib;
         adc_buffer[2][adc_buffer_cnt]=ic;
-        adc_buffer[6][adc_buffer_cnt]=currentcos;
+    }
+    if(!use_aux_current_buffer){
+        obs_buffer[0][obs_buffer_cnt]=ia;
+        obs_buffer[1][obs_buffer_cnt]=ib;
+        obs_buffer[2][obs_buffer_cnt]=ic;
+    }
+    else{
+        obs_buffer_aux[0][obs_buffer_cnt]=ia;
+        obs_buffer_aux[1][obs_buffer_cnt]=ib;
+        obs_buffer_aux[2][obs_buffer_cnt]=ic;
     }
 
     //start new sampling
@@ -424,7 +455,7 @@ cpuTimer0ISR(void)
     for(i=0; i<NO_CHANNELS; i++){
         if(driver_channels[i]->channel_state==RUN_REGULAR){
             //compute feed forward actuation term (limits [-1,1] for this duty) - feed-forward term currently not used
-            float act_voltage_ff=actvolts[i]*cos(fres*2*M_PI*mastertime+actthetas[i]);
+            float act_voltage_ff=actvolts[i]*cos(phasebuf[mastercounter%period_no]+actthetas[i]);
             //store actuation voltages in ADC buffer
             if(adc_record)
                 adc_buffer[3+i][adc_buffer_cnt]=act_voltage_ff;
@@ -447,30 +478,18 @@ cpuTimer0ISR(void)
         //        set_freq_bridge(driver_channels[i]->bridge_config,des_freq_resonant_mhz[i]);
         //}
     }
-    adc_buffer_cnt=(adc_buffer_cnt+1)%ADC_BUF_SIZE;
 
+    //update buffer counters
+    obs_buffer_cnt+=1;
+    adc_buffer_cnt=(1+adc_buffer_cnt)%ADC_BUF_SIZE;
 
-    //update dq estimates
-    GPIO_writePin(SAMPLING_GPIO,1);
-    ivecd[0]=taudq/(taudq+deltaT)*ivecd[0]+2*deltaT/(taudq+deltaT)*currentcos*ia;
-    ivecd[1]=taudq/(taudq+deltaT)*ivecd[1]+2*deltaT/(taudq+deltaT)*currentcos*ib;
-    ivecd[2]=taudq/(taudq+deltaT)*ivecd[2]+2*deltaT/(taudq+deltaT)*currentcos*ic;
-    ivecq[0]=taudq/(taudq+deltaT)*ivecq[0]-2*deltaT/(taudq+deltaT)*currentsin*ia;
-    ivecq[1]=taudq/(taudq+deltaT)*ivecq[1]-2*deltaT/(taudq+deltaT)*currentsin*ib;
-    ivecq[2]=taudq/(taudq+deltaT)*ivecq[2]-2*deltaT/(taudq+deltaT)*currentsin*ic;
-    if((mastercounter%modidqsample==0)&&adc_record){
-        buffer_idq[0][buffer_idq_cnt]=ivecd[0];
-        buffer_idq[1][buffer_idq_cnt]=ivecd[1];
-        buffer_idq[2][buffer_idq_cnt]=ivecd[2];
-        buffer_idq[3][buffer_idq_cnt]=ivecq[0];
-        buffer_idq[4][buffer_idq_cnt]=ivecq[1];
-        buffer_idq[5][buffer_idq_cnt]=ivecq[2];
-        buffer_idq_cnt=(buffer_idq_cnt+1)%ADC_BUF_SIZE;
-    }
-    GPIO_writePin(SAMPLING_GPIO,0);
-
-    if(mastercounter%modCTRL==0)
+    if(mastercounter%period_no==0){
+        //write into the other currents buffer for the next frame period
+        use_aux_current_buffer=!use_aux_current_buffer;
+        //launch the main control task
         run_main_task=true;
+        obs_buffer_cnt=0;
+    }
 
     //
     // Acknowledge this interrupt to receive more interrupts from group 1

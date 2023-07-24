@@ -20,6 +20,7 @@
 #define NO_CHANNELS 3
 #define HEARTBEAT_GPIO 35 // pin 121 on breakoutboard
 #define SAMPLING_GPIO 99 // pin 96 on breakoutboard
+#define MAIN_TASK_GPIO 37 // pin 123 on breakout board
 #define MAIN_RELAY_GPIO 92
 #define SLAVE_RELAY_GPIO 62
 #define DEFAULT_RES_FREQ_MILLIHZ    10000000
@@ -151,9 +152,20 @@ extern float mastertime;
 
 //resonant control related
 #define ADC_BUF_SIZE 1024
+#define OBS_BUF_SIZE 512
 //extern float adc_buffer[7][ADC_BUF_SIZE];
+extern float* obs_buffer[3];
+extern float* obs_buffer_aux[3];
 extern float* adc_buffer[7];
 extern float* adc_buffer_idq[6];
+extern bool use_aux_current_buffer;
+extern float cosinebuf[OBS_BUF_SIZE];
+extern float nsinebuf[OBS_BUF_SIZE];
+extern float phasebuf[OBS_BUF_SIZE];
+extern float currentids[3];
+extern float currentiqs[3];
+extern float* buffer_idq[6];
+extern uint16_t obs_buffer_cnt;
 extern uint16_t adc_buffer_cnt;
 extern uint16_t buffer_idq_cnt;
 extern uint16_t act_volt_buffer_cnt;

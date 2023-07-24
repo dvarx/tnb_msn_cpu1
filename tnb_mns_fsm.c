@@ -9,11 +9,12 @@
 #include "tnb_mns_cpu1.h"
 #include <stdint.h>
 #include "tnb_mns_epwm.h"
+#include <math.h>
 
 struct channel_fsm coil_fsm_states[NO_CHANNELS];
 
 //number of control cycles system remains in TERMINATE_REGULAR state
-const unsigned int TERMINATE_REGULAR_TIMEVAL=(unsigned int)(0.5/deltaT);
+const unsigned int TERMINATE_REGULAR_TIMEVAL=(unsigned int)(10);
 
 // ---------------------------------
 // FSM flags used to trigger FSM transitions
@@ -190,6 +191,19 @@ void INIT_REGULAR_RUN_during(uint8_t channelno){
 void INIT_REGULAR_RUN_exit(uint8_t channelno){return;}
 //RUNNING_REGULAR state
 void RUNNING_REGULAR_enter(uint8_t channelno){
+    //
+    // Precompute sine/cosine/phase buffers
+    //
+    unsigned int i=0;
+    //compute period_no
+    period_no=round(1/(fres*deltaT));
+    for(i=0; i<period_no; i++){
+        float iflt=i;
+        cosinebuf[i]=cos(deltaT*iflt*fres*2*M_PI);
+        nsinebuf[i]=-sin(deltaT*iflt*fres*2*M_PI);
+        phasebuf[i]=deltaT*iflt*fres*2*M_PI;
+    }
+
     //enable buck
     GPIO_writePin(driver_channels[channelno]->buck_config->enable_gpio,DRIVER_ENABLE_POLARITY);
     //configure & enable bridge

@@ -13,6 +13,7 @@
 //controller time interval
 #define deltaT 20e-6
 #define modCTRL 100
+extern unsigned int period_no;
 #define deltaTCTRL 1e-3
 #define taudq 50e-3
 //execute the PI control low
