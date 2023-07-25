@@ -26,6 +26,12 @@
 
 //current sensor calibration values
 float isensoroffsets[6]={2048.47,2049.42,2052.62,2048,2048,2048};
+float isensorgains[6]={-0.0076219958202716825,
+                       -0.0076219958202716825*3.9/4.0,
+                       -0.0076219958202716825*4.01/4.0,
+                       -0.0076219958202716825,
+                       -0.0076219958202716825,
+                       -0.0076219958202716825};
 
 //
 // Function to configure and power up ADCs A,B,C,D
@@ -208,7 +214,7 @@ const float calib_factor_current_alpha=-0.0076219958202716825;
 
 inline float conv_adc_meas_to_current_a(const uint16_t adc_output,uint8_t sensorno){
     //current measured by sensor is inverted relative to the defined current
-    return calib_factor_current_alpha*(float)((float)adc_output-isensoroffsets[sensorno]);
+    return isensorgains[sensorno]*(float)((float)adc_output-isensoroffsets[sensorno]);
 }
 
 
@@ -238,14 +244,18 @@ void readAnalogInputs(void){
     ADC_forceMultipleSOC(ADCB_BASE, (ADC_FORCE_SOC0 | ADC_FORCE_SOC1 | ADC_FORCE_SOC2 | ADC_FORCE_SOC3| ADC_FORCE_SOC4));
     // Wait for ADCB to complete, then acknowledge flag
     while(ADC_getInterruptStatus(ADCB_BASE, ADC_INT_NUMBER1) == false){}
+
     buffer_i0s[buffer_cnt]=ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER0);
-    system_dyn_state.is[0] = conv_adc_meas_to_current_a(buffer_i1s[buffer_cnt],0);
+    system_dyn_state.is[0] = conv_adc_meas_to_current_a(buffer_i0s[buffer_cnt],0);
     buffer_i0s_fl[buffer_cnt]=system_dyn_state.is[0];
+
     system_dyn_state.is_res[0] = conv_adc_meas_to_current_a(ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER4),0);    // TODO : conv factor
     system_dyn_state.vs[0] = ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER1);
+
     buffer_i1s[buffer_cnt]=ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER2);
     system_dyn_state.is[1] = conv_adc_meas_to_current_a(buffer_i1s[buffer_cnt],1);
     buffer_i1s_fl[buffer_cnt]=system_dyn_state.is[1];
+
     system_dyn_state.vs[1] = ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER3);
     ADC_clearInterruptStatus(ADCB_BASE, ADC_INT_NUMBER1);
 
@@ -262,9 +272,11 @@ void readAnalogInputs(void){
     ADC_forceMultipleSOC(ADCD_BASE, (ADC_FORCE_SOC0 | ADC_FORCE_SOC1 | ADC_FORCE_SOC2 | ADC_FORCE_SOC3));
     // Wait for ADCD to complete, then acknowledge flag
     while(ADC_getInterruptStatus(ADCD_BASE, ADC_INT_NUMBER1) == false){}
+
     buffer_i2s[buffer_cnt]=ADC_readResult(ADCDRESULT_BASE, ADC_SOC_NUMBER0);
     system_dyn_state.is[2] = conv_adc_meas_to_current_a(buffer_i2s[buffer_cnt],2);
     buffer_i2s_fl[buffer_cnt]=system_dyn_state.is[2];
+
     system_dyn_state.vs[2] = ADC_readResult(ADCDRESULT_BASE, ADC_SOC_NUMBER1);
     system_dyn_state.is_res[2] = conv_adc_meas_to_current_a(ADC_readResult(ADCDRESULT_BASE, ADC_SOC_NUMBER2),2);  // TODO : conv factor
     system_dyn_state.is_res[1]= conv_adc_meas_to_current_a(ADC_readResult(ADCDRESULT_BASE, ADC_SOC_NUMBER3),1);   // TODO : conv factor
