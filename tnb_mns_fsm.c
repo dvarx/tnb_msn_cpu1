@@ -203,6 +203,11 @@ void RUNNING_REGULAR_enter(uint8_t channelno){
         nsinebuf[i]=-sin(deltaT*iflt*fres*2*M_PI);
         phasebuf[i]=deltaT*iflt*fres*2*M_PI;
     }
+    //reset pids
+    for(i=0; i<NO_CHANNELS; i++){
+        reset_pid(ctrl_i_ds+i);
+        reset_pid(ctrl_i_qs+i);
+    }
 
     //enable buck
     GPIO_writePin(driver_channels[channelno]->buck_config->enable_gpio,DRIVER_ENABLE_POLARITY);

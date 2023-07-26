@@ -66,9 +66,26 @@
 
 bool run_main_control_task=false;
 bool enable_waveform_debugging=false;
-bool use_pi=false;
+bool use_pi=true;
 float curcos=0.0;
 float cursin=0.0;
+
+//communication struct from CPU2 to CPU1
+struct comm_cpu2cpu1{
+    float ids[3];
+    float iqs[3];
+    float freq;
+    bool en_flags[3];
+    bool runreg_flags[3];
+    bool stop_flags[3];
+};
+struct comm_cpu2cpu1* msg_cpu2tocpu1=(struct comm_cpu2cpu1*)0x03B000;
+struct comm_cpu1cpu2{
+    float actvolts[3];
+    float ids[3];
+    float iqs[3];
+};
+struct comm_cpu1cpu2* msg_cpu1tocpu2=(struct comm_cpu1cpu2*)0x03A000;
 
 //#define SYSID
 
@@ -80,6 +97,43 @@ void main(void)
     //
     Device_init();
 
+    /*-----------------------------------------------------
+     * CPU2 STARTUP CODE
+     -----------------------------------------------------*/
+
+    //set controlling CPU for SCI module 1 to CPU2
+    SysCtl_selectCPUForPeripheral(SYSCTL_CPUSEL5_SCI, 1, SYSCTL_CPUSEL_CPU2);
+    //
+    // GPIO28 is the SCI Rx pin.
+    //
+    GPIO_setMasterCore(DEVICE_GPIO_PIN_SCIRXDA, GPIO_CORE_CPU2);
+    GPIO_setPinConfig(DEVICE_GPIO_CFG_SCIRXDA);
+    GPIO_setDirectionMode(DEVICE_GPIO_PIN_SCIRXDA, GPIO_DIR_MODE_IN);
+    GPIO_setPadConfig(DEVICE_GPIO_PIN_SCIRXDA, GPIO_PIN_TYPE_STD);
+    GPIO_setQualificationMode(DEVICE_GPIO_PIN_SCIRXDA, GPIO_QUAL_ASYNC);
+
+    //
+    // GPIO29 is the SCI Tx pin.
+    //
+    GPIO_setMasterCore(DEVICE_GPIO_PIN_SCITXDA, GPIO_CORE_CPU2);
+    GPIO_setPinConfig(DEVICE_GPIO_CFG_SCITXDA);
+    GPIO_setDirectionMode(DEVICE_GPIO_PIN_SCITXDA, GPIO_DIR_MODE_OUT);
+    GPIO_setPadConfig(DEVICE_GPIO_PIN_SCITXDA, GPIO_PIN_TYPE_STD);
+    GPIO_setQualificationMode(DEVICE_GPIO_PIN_SCITXDA, GPIO_QUAL_ASYNC);
+
+    GPIO_setPinConfig(DEVICE_GPIO_CFG_SCIRXDA);
+    GPIO_setPinConfig(DEVICE_GPIO_CFG_SCITXDA);
+    //
+    // Boot CPU2 core
+    //
+    #ifdef _FLASH
+        Device_bootCPU2(BOOTMODE_BOOT_TO_FLASH_SECTOR0);
+    #else
+        Device_bootCPU2(BOOTMODE_BOOT_TO_M0RAM);
+    #endif
+
+
+/*
     //
     // Boot CM core
     //
@@ -88,6 +142,7 @@ void main(void)
 #else
     Device_bootCM(BOOTMODE_BOOT_TO_S0RAM);
 #endif
+*/
 
     //
     // Disable pin locks and enable internal pull-ups.
@@ -216,6 +271,7 @@ void main(void)
     EINT;
     ERTM;
 
+    /*
 #ifdef ETHERNET
     //
     // Set up EnetCLK to use SYSPLL as the clock source and set the
@@ -284,6 +340,7 @@ void main(void)
     GPIO_setPadConfig(119, GPIO_PIN_TYPE_PULLUP);
     GPIO_writePin(119,1);
 #endif
+*/
 
 #ifdef MCAN
     //
@@ -428,6 +485,8 @@ void main(void)
         driver_channels[n]->channel_state=READY;
     }
 
+    float ivecqtmp[3];
+    float ivecdtmp[3];
     // Main Loop
     while(1){
         if(run_main_task){
@@ -440,12 +499,26 @@ void main(void)
              */
             //loop variable
             unsigned int i=0;
+            unsigned int channel_counter=0;
+
+            //read flags
+            for(i=0; i<NO_CHANNELS; i++){
+                fsm_req_flags_en_buck[i]=msg_cpu2tocpu1->en_flags[i];
+                fsm_req_flags_stop[i]=msg_cpu2tocpu1->stop_flags[i];
+                fsm_req_flags_run_regular[i]=msg_cpu2tocpu1->runreg_flags[i];
+            }
+            //translate desired frequency from mHz to Hz
+            fres=((float)msg_cpu2tocpu1->freq);
+            for(i=0; i<NO_CHANNELS; i++){
+                rvecd[i]=msg_cpu2tocpu1->ids[i];
+                rvecq[i]=msg_cpu2tocpu1->iqs[i];
+            }
+
 
             //---------------------
             // run main state machine and control loops (do this at 1/100th of the main rate, e.g. 1kHz)
             //---------------------
             //Main Relay Opening Logic
-            unsigned int channel_counter=0;
             bool main_relay_active=false;
             for(channel_counter=0; channel_counter<NO_CHANNELS; channel_counter++){
                 run_channel_fsm(driver_channels[channel_counter]);
@@ -465,38 +538,38 @@ void main(void)
 
             //estimate ids and iqs
             //if we are currently recording into aux buffer, use values from the normal buffer to estimate ids and iqs
-            ivecd[0]=0;
-            ivecd[1]=0;
-            ivecd[2]=0;
-            ivecq[0]=0;
-            ivecq[1]=0;
-            ivecq[2]=0;
+            ivecdtmp[0]=0;
+            ivecdtmp[1]=0;
+            ivecdtmp[2]=0;
+            ivecqtmp[0]=0;
+            ivecqtmp[1]=0;
+            ivecqtmp[2]=0;
             if(use_aux_current_buffer){
                 for(i=0; i<period_no; i++){
-                    ivecd[0]+=obs_buffer[0][i]*cosinebuf[i];
-                    ivecd[1]+=obs_buffer[1][i]*cosinebuf[i];
-                    ivecd[2]+=obs_buffer[2][i]*cosinebuf[i];
-                    ivecq[0]+=obs_buffer[0][i]*nsinebuf[i];
-                    ivecq[1]+=obs_buffer[1][i]*nsinebuf[i];
-                    ivecq[2]+=obs_buffer[2][i]*nsinebuf[i];
+                    ivecdtmp[0]+=obs_buffer[0][i]*cosinebuf[i];
+                    ivecdtmp[1]+=obs_buffer[1][i]*cosinebuf[i];
+                    ivecdtmp[2]+=obs_buffer[2][i]*cosinebuf[i];
+                    ivecqtmp[0]+=obs_buffer[0][i]*nsinebuf[i];
+                    ivecqtmp[1]+=obs_buffer[1][i]*nsinebuf[i];
+                    ivecqtmp[2]+=obs_buffer[2][i]*nsinebuf[i];
                 }
             }
             else{
                 for(i=0; i<period_no; i++){
-                    ivecd[0]+=obs_buffer_aux[0][i]*cosinebuf[i];
-                    ivecd[1]+=obs_buffer_aux[1][i]*cosinebuf[i];
-                    ivecd[2]+=obs_buffer_aux[2][i]*cosinebuf[i];
-                    ivecq[0]+=obs_buffer_aux[0][i]*nsinebuf[i];
-                    ivecq[1]+=obs_buffer_aux[1][i]*nsinebuf[i];
-                    ivecq[2]+=obs_buffer_aux[2][i]*nsinebuf[i];
+                    ivecdtmp[0]+=obs_buffer_aux[0][i]*cosinebuf[i];
+                    ivecdtmp[1]+=obs_buffer_aux[1][i]*cosinebuf[i];
+                    ivecdtmp[2]+=obs_buffer_aux[2][i]*cosinebuf[i];
+                    ivecqtmp[0]+=obs_buffer_aux[0][i]*nsinebuf[i];
+                    ivecqtmp[1]+=obs_buffer_aux[1][i]*nsinebuf[i];
+                    ivecqtmp[2]+=obs_buffer_aux[2][i]*nsinebuf[i];
                 }
             }
-            ivecd[0]=ivecd[0]*2/period_no;
-            ivecd[1]=ivecd[1]*2/period_no;
-            ivecd[2]=ivecd[2]*2/period_no;
-            ivecq[0]=ivecq[0]*2/period_no;
-            ivecq[1]=ivecq[1]*2/period_no;
-            ivecq[2]=ivecq[2]*2/period_no;
+            ivecd[0]=ivecdtmp[0]*2/period_no;
+            ivecd[1]=ivecdtmp[1]*2/period_no;
+            ivecd[2]=ivecdtmp[2]*2/period_no;
+            ivecq[0]=ivecqtmp[0]*2/period_no;
+            ivecq[1]=ivecqtmp[1]*2/period_no;
+            ivecq[2]=ivecqtmp[2]*2/period_no;
             //store computed ids and iqs in buffer
             if(adc_record){
                 buffer_idq[0][buffer_idq_cnt]=ivecd[0];
@@ -506,6 +579,13 @@ void main(void)
                 buffer_idq[4][buffer_idq_cnt]=ivecq[1];
                 buffer_idq[5][buffer_idq_cnt]=ivecq[2];
                 buffer_idq_cnt=(buffer_idq_cnt+1)%ADC_BUF_SIZE;
+            }
+
+            //message ids and iqs and actvolts to CPU2
+            for(i=0; i<3; i++){
+                msg_cpu1tocpu2->ids[i]=ivecd[i];
+                msg_cpu1tocpu2->iqs[i]=ivecq[i];
+                msg_cpu1tocpu2->actvolts[i]=actvolts[i];
             }
 
 

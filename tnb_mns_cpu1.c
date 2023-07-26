@@ -11,6 +11,7 @@
 #include "fbctrl.h"
 #include "tnb_mns_defs.h"
 #include "tnb_mns_fsm.h"
+#include "tnb_mns_epwm.h"
 #include <math.h>
 
 // ------------------------------------------------------------------------------------
@@ -77,9 +78,9 @@ float mastertime=0.0;
 float obs_buffer_current_0[OBS_BUF_SIZE];
 float obs_buffer_current_1[OBS_BUF_SIZE];
 float obs_buffer_current_2[OBS_BUF_SIZE];
-#pragma DATA_SECTION(adc_buffer_current_0_aux,"OBS_BUFFER_I0AUX")
-#pragma DATA_SECTION(adc_buffer_current_1_aux,"OBS_BUFFER_I1AUX")
-#pragma DATA_SECTION(adc_buffer_current_2_aux,"OBS_BUFFER_I2AUX")
+#pragma DATA_SECTION(obs_buffer_current_0_aux,"OBS_BUFFER_I0AUX")
+#pragma DATA_SECTION(obs_buffer_current_1_aux,"OBS_BUFFER_I1AUX")
+#pragma DATA_SECTION(obs_buffer_current_2_aux,"OBS_BUFFER_I2AUX")
 float obs_buffer_current_0_aux[OBS_BUF_SIZE];
 float obs_buffer_current_1_aux[OBS_BUF_SIZE];
 float obs_buffer_current_2_aux[OBS_BUF_SIZE];
@@ -140,7 +141,7 @@ uint16_t buffer_prdstrt_pointer_1=0;      //pointer that points to the sample at
 bool adc_record=0;
 
 //variables related to resonant control
-float fres=230;
+float fres=216;
 float actvolts[3]={0.0,0.0,0.0};
 float actthetas[3]={0.0,0.0,0.0};
 #define CTRLKP 0.0
@@ -157,7 +158,11 @@ struct pi_controller ctrl_i_qs[3]={
 };
 //------------------------------------------
 float periodstart=0;               //start of current point of oscillation
-//definition of the system impedance matrix
+
+
+
+//definition of the system impedance matrix (coupled system 230Hz)
+
 float zmatr[NO_CHANNELS][NO_CHANNELS]={
                    {8,1.4,1.7},
                    {1.28,8,1.7},
@@ -168,6 +173,23 @@ float zmati[NO_CHANNELS][NO_CHANNELS]={
                    {-8.4,0.4,-8.2},
                    {-8.2,-8.2,0.2}
 };
+
+//definition of the system impedance matrix (coupled system 230Hz)
+/*
+float zmatr[NO_CHANNELS][NO_CHANNELS]={
+                   {7.2,0.2,0.2},
+                   {0.2,7.6,0.3},
+                   {0.2,0.3,7.2}
+};
+float zmati[NO_CHANNELS][NO_CHANNELS]={
+                   {0.3,0.46,0.6},
+                   {0.46,-0.4,1.3},
+                   {0.6,1.3,0.1}
+};
+*/
+
+
+
 //input to impedance matrix, corresponds
 float xvecd[NO_CHANNELS]={0};
 float xvecq[NO_CHANNELS]={0};
@@ -416,7 +438,6 @@ cpuTimer0ISR(void)
 {
     GPIO_writePin(HEARTBEAT_GPIO,1);
     mastercounter++;
-    mastertime=mastercounter*deltaT;
 
     //process analog signals from last iteration
     float currentcos=cosinebuf[mastercounter%period_no];
@@ -424,9 +445,9 @@ cpuTimer0ISR(void)
         adc_buffer[6][adc_buffer_cnt]=currentcos;
 
     //read adc results
-    float ia=conv_adc_meas_to_current_a(ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER0));
-    float ib=conv_adc_meas_to_current_a(ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER1));
-    float ic=conv_adc_meas_to_current_a(ADC_readResult(ADCDRESULT_BASE, ADC_SOC_NUMBER0));
+    float ia=conv_adc_meas_to_current_a(ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER0),0);
+    float ib=conv_adc_meas_to_current_a(ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER1),1);
+    float ic=conv_adc_meas_to_current_a(ADC_readResult(ADCDRESULT_BASE, ADC_SOC_NUMBER0),2);
 
     //record data in ADC buffer and OBS buffer if required
     if(adc_record){
@@ -459,8 +480,7 @@ cpuTimer0ISR(void)
             //store actuation voltages in ADC buffer
             if(adc_record)
                 adc_buffer[3+i][adc_buffer_cnt]=act_voltage_ff;
-            float act_voltage_fb=0.0;
-            float duty_ff=act_voltage_ff/VOLTAGE_DCLINK;
+            float duty_ff=act_voltage_ff*VOLTAGE_DCLINK_INV;
             //float duty_fb=act_voltage_fb*(1/voltage_dclink);
 
             //convert normalized duty cycle, limit it and apply
