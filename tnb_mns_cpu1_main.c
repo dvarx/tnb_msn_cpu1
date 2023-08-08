@@ -69,6 +69,7 @@ bool enable_waveform_debugging=false;
 bool use_pi=true;
 float curcos=0.0;
 float cursin=0.0;
+bool readcpu2=true;
 
 //communication struct from CPU2 to CPU1
 struct comm_cpu2cpu1{
@@ -86,6 +87,8 @@ struct comm_cpu1cpu2{
     float iqs[3];
 };
 struct comm_cpu1cpu2* msg_cpu1tocpu2=(struct comm_cpu1cpu2*)0x03A000;
+
+bool actsaturated[3]={false,false,false};
 
 //#define SYSID
 
@@ -501,18 +504,22 @@ void main(void)
             unsigned int i=0;
             unsigned int channel_counter=0;
 
-            //read flags
-            for(i=0; i<NO_CHANNELS; i++){
-                fsm_req_flags_en_buck[i]=msg_cpu2tocpu1->en_flags[i];
-                fsm_req_flags_stop[i]=msg_cpu2tocpu1->stop_flags[i];
-                fsm_req_flags_run_regular[i]=msg_cpu2tocpu1->runreg_flags[i];
+            #ifndef SYSID
+            if(readcpu2){
+                //read flags
+                for(i=0; i<NO_CHANNELS; i++){
+                    fsm_req_flags_en_buck[i]=msg_cpu2tocpu1->en_flags[i];
+                    fsm_req_flags_stop[i]=msg_cpu2tocpu1->stop_flags[i];
+                    fsm_req_flags_run_regular[i]=msg_cpu2tocpu1->runreg_flags[i];
+                }
+                //translate desired frequency from mHz to Hz
+                fres=((float)msg_cpu2tocpu1->freq);
+                for(i=0; i<NO_CHANNELS; i++){
+                    rvecd[i]=msg_cpu2tocpu1->ids[i];
+                    rvecq[i]=msg_cpu2tocpu1->iqs[i];
+                }
             }
-            //translate desired frequency from mHz to Hz
-            fres=((float)msg_cpu2tocpu1->freq);
-            for(i=0; i<NO_CHANNELS; i++){
-                rvecd[i]=msg_cpu2tocpu1->ids[i];
-                rvecq[i]=msg_cpu2tocpu1->iqs[i];
-            }
+            #endif
 
 
             //---------------------
@@ -596,22 +603,17 @@ void main(void)
                 float vec2[NO_CHANNELS];
 
                 //run pi controllers
-                xvecd[0]=rvecd[0];
-                xvecd[1]=rvecd[1];
-                xvecd[2]=rvecd[2];
-                xvecq[0]=rvecq[0];
-                xvecq[1]=rvecq[1];
-                xvecq[2]=rvecq[2];
+                xvecd[0]=0.0;//0.5*rvecd[0];
+                xvecd[1]=0.0;//0.5*rvecd[1];
+                xvecd[2]=0.0;//0.5*rvecd[2];
+                xvecq[0]=0.0;//0.5*rvecq[0];
+                xvecq[1]=0.0;//0.5*rvecq[1];
+                xvecq[2]=0.0;//0.5*rvecq[2];
                 if(use_pi){
                     for(i=0; i<3; i++){
-                        xvecd[i]+=update_pid(ctrl_i_ds+i,rvecd[i],ivecd[i],0);
-                        xvecq[i]+=update_pid(ctrl_i_qs+i,rvecq[i],ivecq[i],0);
+                        xvecd[i]+=update_pid(ctrl_i_ds+i,rvecd[i],ivecd[i],actsaturated[i]);
+                        xvecq[i]+=update_pid(ctrl_i_qs+i,rvecq[i],ivecq[i],actsaturated[i]);
                     }
-                    //xvecd[0]+=update_pid(&ctrl_i_d_0,rvecd[0],ivecd[0],0);
-                    //xvecd[1]+=update_pid(&ctrl_i_d_1,rvecd[1],ivecd[1],0);
-                    //xvecq[0]+=update_pid(&ctrl_i_q_0,rvecq[0],ivecq[0],0);
-                    //xvecq[1]+=update_pid(&ctrl_i_q_1,rvecq[1],ivecq[1],0);
-
                 }
                 //compute real component of actuation voltage
                 matmul3(zmatr,xvecd,vec1);
@@ -634,6 +636,8 @@ void main(void)
                 actthetas[0]=atan2(vvecq[0],vvecd[0]);
                 actthetas[1]=atan2(vvecq[1],vvecd[1]);
                 actthetas[2]=atan2(vvecq[2],vvecd[2]);
+                for(i=0;i<3;i++)
+                    actsaturated[i]=(actvolts[i]>dc_link_voltage);
                 #endif
             }
 

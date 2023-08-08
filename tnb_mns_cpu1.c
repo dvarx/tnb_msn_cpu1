@@ -128,6 +128,7 @@ float buffer_id_1[ADC_BUF_SIZE];
 float buffer_id_2[ADC_BUF_SIZE];
 uint16_t modidqsample=50;
 unsigned int period_no=217;
+const float dc_link_voltage=96.0;
 
 float* buffer_idq[6]={buffer_id_0,buffer_id_1,buffer_id_2,
                       buffer_iq_0,buffer_iq_1,buffer_iq_2
@@ -141,7 +142,7 @@ uint16_t buffer_prdstrt_pointer_1=0;      //pointer that points to the sample at
 bool adc_record=0;
 
 //variables related to resonant control
-float fres=216;
+float fres=214;
 float actvolts[3]={0.0,0.0,0.0};
 float actthetas[3]={0.0,0.0,0.0};
 #define CTRLKP 0.0
@@ -159,34 +160,48 @@ struct pi_controller ctrl_i_qs[3]={
 //------------------------------------------
 float periodstart=0;               //start of current point of oscillation
 
-
-
-//definition of the system impedance matrix (coupled system 230Hz)
-
+//definition of the system impedance matrix (decoupled system 424hz)
 float zmatr[NO_CHANNELS][NO_CHANNELS]={
-                   {8,1.4,1.7},
-                   {1.28,8,1.7},
-                   {0.75,0.8,8}
+                   {7.45,0.0,0.0},
+                   {0.0,7.65,0.0},
+                   {0.0,0.0,7.7}
 };
 float zmati[NO_CHANNELS][NO_CHANNELS]={
-                   {1.4,-8.4,-8.2},
-                   {-8.4,0.4,-8.2},
-                   {-8.2,-8.2,0.2}
+                   {2.7,0.4,0.1},
+                   {0.4,1.5,-0.1},
+                   {0.1,-0.1,0.1}
 };
+
 
 //definition of the system impedance matrix (coupled system 230Hz)
 /*
 float zmatr[NO_CHANNELS][NO_CHANNELS]={
-                   {7.2,0.2,0.2},
-                   {0.2,7.6,0.3},
-                   {0.2,0.3,7.2}
+                   {8,0.5,0.5},
+                   {0.5,8,0.5},
+                   {0.5,0.5,8}
 };
 float zmati[NO_CHANNELS][NO_CHANNELS]={
-                   {0.3,0.46,0.6},
-                   {0.46,-0.4,1.3},
-                   {0.6,1.3,0.1}
+                   {2.0,-8.2,-8.2},
+                   {-8.2,2.0,-8.2},
+                   {-8.2,-8.2,2.0}
 };
 */
+
+
+//definition of the system impedance matrix (decoupled system 214Hz)
+/*
+float zmatr[NO_CHANNELS][NO_CHANNELS]={
+                   {5.4,0.1,0.1},
+                   {0.1,5.4,0.1},
+                   {0.1,0.1,5.4}
+};
+float zmati[NO_CHANNELS][NO_CHANNELS]={
+                   {-0.1,0.0,0.0},
+                   {0.0,-0.6,0.0},
+                   {0.0,0.0,-1.1}
+};
+*/
+
 
 
 

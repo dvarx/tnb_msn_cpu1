@@ -14,7 +14,7 @@
 struct channel_fsm coil_fsm_states[NO_CHANNELS];
 
 //number of control cycles system remains in TERMINATE_REGULAR state
-const unsigned int TERMINATE_REGULAR_TIMEVAL=(unsigned int)(10);
+const unsigned int TERMINATE_REGULAR_TIMEVAL=(unsigned int)(300);
 
 // ---------------------------------
 // FSM flags used to trigger FSM transitions
