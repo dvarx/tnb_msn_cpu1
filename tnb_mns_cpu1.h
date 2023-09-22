@@ -152,7 +152,7 @@ extern float mastertime;
 
 //resonant control related
 #define ADC_BUF_SIZE 1024
-#define OBS_BUF_SIZE 512
+#define OBS_BUF_SIZE 1024
 //extern float adc_buffer[7][ADC_BUF_SIZE];
 extern float* obs_buffer[3];
 extern float* obs_buffer_aux[3];

@@ -146,7 +146,7 @@ float fres=214;
 float actvolts[3]={0.0,0.0,0.0};
 float actthetas[3]={0.0,0.0,0.0};
 #define CTRLKP 0.0
-#define CTRLKI 1
+#define CTRLKI 40
 struct pi_controller ctrl_i_ds[3]={
                                    {CTRLKP,CTRLKI,0,0,0,0},
                                    {CTRLKP,CTRLKI,0,0,0,0},
@@ -160,7 +160,51 @@ struct pi_controller ctrl_i_qs[3]={
 //------------------------------------------
 float periodstart=0;               //start of current point of oscillation
 
+//definition of the system impedance matrix (coupled system 94.5Hz)
+/*
+float zmatr[NO_CHANNELS][NO_CHANNELS]={
+                   {6.1,0,0},
+                   {0,6.1,0},
+                   {0.0,0.0,6.1}
+};
+float zmati[NO_CHANNELS][NO_CHANNELS]={
+                   {-0.17,-2.9,-2.84},
+                   {-2.85,0.5,-2.9},
+                   {-2.85,-2.98,0.6}
+};
+*/
+
+//definition of the system impedance matrix (decoupled system 89Hz)
+/*
+float zmatr[NO_CHANNELS][NO_CHANNELS]={
+                   {5.1,0,0},
+                   {0,5.1,0},
+                   {0.0,0.0,5.1}
+};
+float zmati[NO_CHANNELS][NO_CHANNELS]={
+                   {0,0,0},
+                   {0,0,0},
+                   {0,0,0}
+};
+*/
+
+//definition of the system impedance matrix (decoupled system 108.5HzHz)
+
+float zmatr[NO_CHANNELS][NO_CHANNELS]={
+                   {5.1,0,0},
+                   {0,5.1,0},
+                   {0.0,0.0,5.1}
+};
+float zmati[NO_CHANNELS][NO_CHANNELS]={
+                   {0,0,0},
+                   {0,0,0},
+                   {0,0,0}
+};
+
+
+
 //definition of the system impedance matrix (decoupled system 424hz)
+/*
 float zmatr[NO_CHANNELS][NO_CHANNELS]={
                    {7.45,0.0,0.0},
                    {0.0,7.65,0.0},
@@ -171,9 +215,26 @@ float zmati[NO_CHANNELS][NO_CHANNELS]={
                    {0.4,1.5,-0.1},
                    {0.1,-0.1,0.1}
 };
+*/
 
 
-//definition of the system impedance matrix (coupled system 230Hz)
+//definition of the system impedance matrix (coupled system 452hz)
+/*
+float zmatr[NO_CHANNELS][NO_CHANNELS]={
+                   {10,0.0,0.0},
+                   {0.0,10,0.0},
+                   {0.0,0.0,10}
+};
+float zmati[NO_CHANNELS][NO_CHANNELS]={
+                   {-0.8,-16,-16},
+                   {-16,-2.17,-16},
+                   {-16,-16,-1.95}
+};
+*/
+
+
+
+//definition of the system impedance matrix (coupled system 232Hz)
 /*
 float zmatr[NO_CHANNELS][NO_CHANNELS]={
                    {8,0.5,0.5},
@@ -181,26 +242,28 @@ float zmatr[NO_CHANNELS][NO_CHANNELS]={
                    {0.5,0.5,8}
 };
 float zmati[NO_CHANNELS][NO_CHANNELS]={
-                   {2.0,-8.2,-8.2},
-                   {-8.2,2.0,-8.2},
-                   {-8.2,-8.2,2.0}
+                   {1.7,-8.2,-8.2},
+                   {-8.2,0.4,-8.2},
+                   {-8.2,-8.2,0.56}
 };
 */
 
-
-//definition of the system impedance matrix (decoupled system 214Hz)
+//definition of the system impedance matrix (decoupled system 216Hz)
 /*
 float zmatr[NO_CHANNELS][NO_CHANNELS]={
-                   {5.4,0.1,0.1},
-                   {0.1,5.4,0.1},
-                   {0.1,0.1,5.4}
+                   {6,0.1,0.1},
+                   {0.1,6,0.1},
+                   {0.1,0.1,6}
 };
 float zmati[NO_CHANNELS][NO_CHANNELS]={
-                   {-0.1,0.0,0.0},
-                   {0.0,-0.6,0.0},
-                   {0.0,0.0,-1.1}
+                   {2,0.0,0.0},
+                   {0.0,0.4,0.0},
+                   {0.0,0.0,0.0}
 };
 */
+
+
+
 
 
 
