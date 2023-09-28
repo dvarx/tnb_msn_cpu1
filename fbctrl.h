@@ -9,6 +9,7 @@
 #define FBCTRL_H_
 
 #include <stdbool.h>
+#include <math.h>
 
 //controller time interval
 #define deltaT 20e-6
@@ -32,6 +33,17 @@ struct pi_controller{
     float u;
 };
 
+struct pi_controller_dq{
+    float kp;
+    float ki;
+    float rd;
+    float rq;
+    float errdnm1;
+    float errqnm1;
+    float ud;
+    float uq;
+};
+
 /*
  * First order IIR filter
  */
@@ -43,6 +55,23 @@ struct first_order{
     float y_nm1;
     float y;
 };
+
+inline void update_pid_dq(struct pi_controller_dq* ctrlr,float rd, float rq,float yd, float yq){
+    //compute the current errors
+    float ed=rd-yd;
+    float eq=rq-yq;
+    //compute the new actuation voltages
+    ctrlr->ud+=0.5*deltaTCTRL*ctrlr->ki*(ed+ctrlr->errdnm1)+ctrlr->kp*ed;
+    ctrlr->uq+=0.5*deltaTCTRL*ctrlr->ki*(eq+ctrlr->errqnm1)+ctrlr->kp*eq;
+    //voltage limitation (anti windup measure)
+    float vact=sqrt(ctrlr->ud*ctrlr->ud+ctrlr->uq*ctrlr->uq);
+    float alpha=VOLTAGE_DCLINK_INV*vact;
+    if(alpha>1.0){
+        float alphainv=1.0/alpha;
+        ctrlr->ud=ctrlr->ud*alphainv;
+        ctrlr->uq=ctrlr->uq*alphainv;
+    }
+}
 
 /*
  * ctrl: pointer to the pi_controller structure

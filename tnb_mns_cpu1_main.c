@@ -611,8 +611,9 @@ void main(void)
                 xvecq[2]=0.0;//0.5*rvecq[2];
                 if(use_pi){
                     for(i=0; i<3; i++){
-                        xvecd[i]+=update_pid(ctrl_i_ds+i,rvecd[i],ivecd[i],actsaturated[i]);
-                        xvecq[i]+=update_pid(ctrl_i_qs+i,rvecq[i],ivecq[i],actsaturated[i]);
+                        update_pid_dq(&ctrl_i_dqs[i],rvecd[i],rvecq[i],ivecd[i],ivecq[i]);
+                        xvecd[i]+=ctrl_i_dqs[i].ud;
+                        xvecq[i]+=ctrl_i_dqs[i].uq;
                     }
                 }
                 //compute real component of actuation voltage
@@ -636,8 +637,6 @@ void main(void)
                 actthetas[0]=atan2(vvecq[0],vvecd[0]);
                 actthetas[1]=atan2(vvecq[1],vvecd[1]);
                 actthetas[2]=atan2(vvecq[2],vvecd[2]);
-                for(i=0;i<3;i++)
-                    actsaturated[i]=(actvolts[i]>dc_link_voltage);
                 #endif
             }
 

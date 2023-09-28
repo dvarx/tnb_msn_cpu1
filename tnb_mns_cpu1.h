@@ -121,8 +121,7 @@ extern float periodstart;               //start of current point of oscillation
 extern float zmatr[NO_CHANNELS][NO_CHANNELS];
 extern float zmati[NO_CHANNELS][NO_CHANNELS];
 //input to impedance matrix, corresponds
-extern struct pi_controller ctrl_i_ds[3];
-extern struct pi_controller ctrl_i_qs[3];
+extern struct pi_controller_dq ctrl_i_dqs[3];
 extern float xvecd[NO_CHANNELS];
 extern float xvecq[NO_CHANNELS];
 extern float rvecd[NO_CHANNELS];

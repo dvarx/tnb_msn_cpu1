@@ -205,8 +205,8 @@ void RUNNING_REGULAR_enter(uint8_t channelno){
     }
     //reset pids
     for(i=0; i<NO_CHANNELS; i++){
-        reset_pid(ctrl_i_ds+i);
-        reset_pid(ctrl_i_qs+i);
+        ctrl_i_dqs[i].ud=0;
+        ctrl_i_dqs[i].uq=0;
     }
 
     //enable buck
