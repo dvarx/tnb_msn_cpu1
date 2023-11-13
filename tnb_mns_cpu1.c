@@ -21,7 +21,7 @@
 // channel a
 struct buck_configuration cha_buck={40,41,8,GPIO_8_EPWM5A,9,GPIO_9_EPWM5B,EPWM5_BASE,false};
 struct bridge_configuration cha_bridge={30,22,23,12,GPIO_12_EPWM7A,13,GPIO_13_EPWM7B,EPWM7_BASE,false,false};
-struct driver_channel channela={0,&cha_buck,&cha_bridge,READY,87};
+struct driver_channel channela={0,&cha_buck,&cha_bridge,READY,83};
 
 // channel b
 struct buck_configuration chb_buck={35,60,15,GPIO_15_EPWM8B,14,GPIO_14_EPWM8A,EPWM8_BASE,false};
@@ -31,7 +31,7 @@ struct driver_channel channelb={1,&chb_buck,&chb_bridge,READY,85};
 // channel c
 struct buck_configuration chc_buck={95,89,4,GPIO_4_EPWM3A,5,GPIO_5_EPWM3B,EPWM3_BASE,true};
 struct bridge_configuration chc_bridge={107,133,93,0,GPIO_0_EPWM1A,1,GPIO_1_EPWM1B,EPWM1_BASE,false,false};
-struct driver_channel channelc={2,&chc_buck,&chc_bridge,READY,83};
+struct driver_channel channelc={2,&chc_buck,&chc_bridge,READY,87};
 
 // channel d
 struct buck_configuration chd_buck={32,33,2,GPIO_2_EPWM2A,3,GPIO_3_EPWM2B,EPWM2_BASE,true};
@@ -146,7 +146,7 @@ float fres=214;
 float actvolts[3]={0.0,0.0,0.0};
 float actthetas[3]={0.0,0.0,0.0};
 #define CTRLKP 0.0
-#define CTRLKI 30
+#define CTRLKI 60
 struct pi_controller_dq ctrl_i_dqs[3]={
                                    {CTRLKP,CTRLKI,0,0,0,0,0,0},
                                    {CTRLKP,CTRLKI,0,0,0,0,0,0},
@@ -505,7 +505,7 @@ __interrupt void IPC_ISR0()
 }
 
 //
-// cpuTimer0ISR - Counter for CpuTimer0
+// cpuTimer0ISR - Counter for CpuTimer0 at approx. 50kHz
 //
 __interrupt void
 cpuTimer0ISR(void)
@@ -559,18 +559,12 @@ cpuTimer0ISR(void)
 
             //convert normalized duty cycle, limit it and apply
             float duty_bridge=0.5*(1+(duty_ff));
-            if(duty_bridge>0.9)
-                duty_bridge=0.9;
-            if(duty_bridge<0.1)
-                duty_bridge=0.1;
+            if(duty_bridge>0.95)
+                duty_bridge=0.95;
+            if(duty_bridge<0.05)
+                duty_bridge=0.05;
             set_duty_bridge(driver_channels[i]->bridge_config,duty_bridge);
         }
-        //set_duty_bridge(driver_channels[i]->bridge_config,des_duty_bridge[i]);
-        //set frequency for bridge [resonant mode]
-        //for(i=0; i<NO_CHANNELS; i++){
-        //    if(driver_channels[i]->channel_state==RUN_RESONANT)
-        //        set_freq_bridge(driver_channels[i]->bridge_config,des_freq_resonant_mhz[i]);
-        //}
     }
 
     //update buffer counters

@@ -90,7 +90,7 @@ struct comm_cpu1cpu2* msg_cpu1tocpu2=(struct comm_cpu1cpu2*)0x03A000;
 
 bool actsaturated[3]={false,false,false};
 
-//#define SYSID
+#define SYSID
 
 void main(void)
 {

@@ -209,6 +209,9 @@ void RUNNING_REGULAR_enter(uint8_t channelno){
         ctrl_i_dqs[i].uq=0;
     }
 
+    //enable resonant mode (e.g. open switch parallel to capacitor)
+    GPIO_writePin(driver_channels[channelno]->enable_resonant_gpio,1);
+
     //enable buck
     GPIO_writePin(driver_channels[channelno]->buck_config->enable_gpio,DRIVER_ENABLE_POLARITY);
     //configure & enable bridge
