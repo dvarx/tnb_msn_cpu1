@@ -98,6 +98,7 @@ extern struct bridge_configuration chf_bridge;
 // ---------------------
 
 extern bool run_main_task;                              //variable is set by CPU1 ISR
+extern bool run_fsm;
 extern struct system_dynamic_state system_dyn_state;
 extern float des_duty_bridge[NO_CHANNELS];             //desired duties for bridges, set by COMM interface
 extern float des_duty_buck[NO_CHANNELS];               //desired duties for bucks, set by COMM interface

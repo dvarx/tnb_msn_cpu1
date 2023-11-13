@@ -13,7 +13,7 @@
 #include <stdbool.h>
 #include "fbctrl.h"
 
-extern const unsigned int TERMINATE_REGULAR_TIMEVAL;
+extern const unsigned int TERMINATE_RES_TIMEVAL;
 
 typedef void (*fsm_function)(uint8_t);
 typedef bool fsm_flag;

@@ -492,16 +492,7 @@ void main(void)
     float ivecdtmp[3];
     // Main Loop
     while(1){
-        if(run_main_task){
-            //toggle heartbeat gpio
-            GPIO_writePin(MAIN_TASK_GPIO,1);
-
-            /* -------------------------------------
-             * update sinusoidal PWMs (do this at 1/10th of the main rate, e.g. 10kHz)
-             * -------------------------------------
-             */
-            //loop variable
-            unsigned int i=0;
+        if(run_fsm){
             unsigned int channel_counter=0;
 
             #ifndef SYSID
@@ -520,7 +511,6 @@ void main(void)
                 }
             }
             #endif
-
 
             //---------------------
             // run main state machine and control loops (do this at 1/100th of the main rate, e.g. 1kHz)
@@ -542,6 +532,19 @@ void main(void)
                     fsm_req_flags_stop[channel_counter]=1;
                 }
             }
+
+            run_fsm=false;
+        }
+        if(run_main_task){
+            //toggle heartbeat gpio
+            GPIO_writePin(MAIN_TASK_GPIO,1);
+
+            /* -------------------------------------
+             * update sinusoidal PWMs (do this at 1/10th of the main rate, e.g. 10kHz)
+             * -------------------------------------
+             */
+            //loop variable
+            unsigned int i=0;
 
             //estimate ids and iqs
             //if we are currently recording into aux buffer, use values from the normal buffer to estimate ids and iqs

@@ -57,6 +57,7 @@ struct driver_channel* driver_channels[NO_CHANNELS]={&channela,&channelb,&channe
 // ---------------------
 
 bool run_main_task=false;
+bool run_fsm=false;
 struct system_dynamic_state system_dyn_state;
 struct system_dynamic_state system_dyn_state_filtered;
 uint32_t enable_res_cap_a=0;     //variable control the resonant relay of channel a, if it is set to 1, res cap switched in
@@ -513,63 +514,70 @@ cpuTimer0ISR(void)
     GPIO_writePin(HEARTBEAT_GPIO,1);
     mastercounter++;
 
-    //process analog signals from last iteration
-    float currentcos=cosinebuf[mastercounter%period_no];
-    if(adc_record)
-        adc_buffer[6][adc_buffer_cnt]=currentcos;
 
-    //read adc results
-    float ia=conv_adc_meas_to_current_a(ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER0),0);
-    float ib=conv_adc_meas_to_current_a(ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER1),1);
-    float ic=conv_adc_meas_to_current_a(ADC_readResult(ADCDRESULT_BASE, ADC_SOC_NUMBER0),2);
+    if(driver_channels[0]->channel_state==RUN_RES||driver_channels[1]->channel_state==RUN_RES||driver_channels[2]->channel_state==RUN_RES){
+        //process analog signals from last iteration
+        float currentcos=cosinebuf[mastercounter%period_no];
+        if(adc_record)
+            adc_buffer[6][adc_buffer_cnt]=currentcos;
 
-    //record data in ADC buffer and OBS buffer if required
-    if(adc_record){
-        adc_buffer[0][adc_buffer_cnt]=ia;
-        adc_buffer[1][adc_buffer_cnt]=ib;
-        adc_buffer[2][adc_buffer_cnt]=ic;
-    }
-    if(!use_aux_current_buffer){
-        obs_buffer[0][obs_buffer_cnt]=ia;
-        obs_buffer[1][obs_buffer_cnt]=ib;
-        obs_buffer[2][obs_buffer_cnt]=ic;
-    }
-    else{
-        obs_buffer_aux[0][obs_buffer_cnt]=ia;
-        obs_buffer_aux[1][obs_buffer_cnt]=ib;
-        obs_buffer_aux[2][obs_buffer_cnt]=ic;
-    }
+        //read adc results
+        float ia=conv_adc_meas_to_current_a(ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER0),0);
+        float ib=conv_adc_meas_to_current_a(ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER1),1);
+        float ic=conv_adc_meas_to_current_a(ADC_readResult(ADCDRESULT_BASE, ADC_SOC_NUMBER0),2);
 
-    //start new sampling
-    ADC_forceMultipleSOC(ADCB_BASE, (ADC_FORCE_SOC0 | ADC_FORCE_SOC1));
-    ADC_forceMultipleSOC(ADCD_BASE, (ADC_FORCE_SOC0 ));
-
-    //update pwm if necessary
-    unsigned int i=0;
-    //set output duties for bridge [regular mode]
-    for(i=0; i<NO_CHANNELS; i++){
-        if(driver_channels[i]->channel_state==RUN_RES){
-            //compute feed forward actuation term (limits [-1,1] for this duty) - feed-forward term currently not used
-            float act_voltage_ff=actvolts[i]*cos(phasebuf[mastercounter%period_no]+actthetas[i]);
-            //store actuation voltages in ADC buffer
-            if(adc_record)
-                adc_buffer[3+i][adc_buffer_cnt]=act_voltage_ff;
-            float duty_ff=act_voltage_ff*VOLTAGE_DCLINK_INV;
-            //float duty_fb=act_voltage_fb*(1/voltage_dclink);
-
-            //convert normalized duty cycle, limit it and apply
-            float duty_bridge=0.5*(1+(duty_ff));
-            if(duty_bridge>0.95)
-                duty_bridge=0.95;
-            if(duty_bridge<0.05)
-                duty_bridge=0.05;
-            set_duty_bridge(driver_channels[i]->bridge_config,duty_bridge);
+        //record data in ADC buffer and OBS buffer if required
+        if(adc_record){
+            adc_buffer[0][adc_buffer_cnt]=ia;
+            adc_buffer[1][adc_buffer_cnt]=ib;
+            adc_buffer[2][adc_buffer_cnt]=ic;
         }
+        if(!use_aux_current_buffer){
+            obs_buffer[0][obs_buffer_cnt]=ia;
+            obs_buffer[1][obs_buffer_cnt]=ib;
+            obs_buffer[2][obs_buffer_cnt]=ic;
+        }
+        else{
+            obs_buffer_aux[0][obs_buffer_cnt]=ia;
+            obs_buffer_aux[1][obs_buffer_cnt]=ib;
+            obs_buffer_aux[2][obs_buffer_cnt]=ic;
+        }
+
+        //start new sampling
+        ADC_forceMultipleSOC(ADCB_BASE, (ADC_FORCE_SOC0 | ADC_FORCE_SOC1));
+        ADC_forceMultipleSOC(ADCD_BASE, (ADC_FORCE_SOC0 ));
+
+        //update pwm if necessary
+        unsigned int i=0;
+        //set output duties for bridge [regular mode]
+        for(i=0; i<NO_CHANNELS; i++){
+            if(driver_channels[i]->channel_state==RUN_RES){
+                //compute feed forward actuation term (limits [-1,1] for this duty) - feed-forward term currently not used
+                float act_voltage_ff=actvolts[i]*cos(phasebuf[mastercounter%period_no]+actthetas[i]);
+                //store actuation voltages in ADC buffer
+                if(adc_record)
+                    adc_buffer[3+i][adc_buffer_cnt]=act_voltage_ff;
+                float duty_ff=act_voltage_ff*VOLTAGE_DCLINK_INV;
+                //float duty_fb=act_voltage_fb*(1/voltage_dclink);
+
+                //convert normalized duty cycle, limit it and apply
+                float duty_bridge=0.5*(1+(duty_ff));
+                if(duty_bridge>0.95)
+                    duty_bridge=0.95;
+                if(duty_bridge<0.05)
+                    duty_bridge=0.05;
+                set_duty_bridge(driver_channels[i]->bridge_config,duty_bridge);
+            }
+        }
+
+        //update buffer counters
+        obs_buffer_cnt+=1;
+        adc_buffer_cnt=(1+adc_buffer_cnt)%ADC_BUF_SIZE;
     }
 
-    //update buffer counters
-    obs_buffer_cnt+=1;
-    adc_buffer_cnt=(1+adc_buffer_cnt)%ADC_BUF_SIZE;
+    if(mastercounter%500==0){
+        run_fsm=true;
+    }
 
     if(mastercounter%period_no==0){
         //write into the other currents buffer for the next frame period

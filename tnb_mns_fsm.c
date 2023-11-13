@@ -13,8 +13,10 @@
 
 struct channel_fsm coil_fsm_states[NO_CHANNELS];
 
-//number of control cycles system remains in TERMINATE_REGULAR state
-const unsigned int TERMINATE_REGULAR_TIMEVAL=(unsigned int)(300);
+//number of fsm control cycles system remains in TERMINATE_RES state
+//one fsm control cycle is 10ms atm
+const unsigned int TERMINATE_RES_TIMEVAL=(unsigned int)(100);
+const unsigned int TERMINATE_REG_TIMEVAL=(unsigned int)(100);
 
 // ---------------------------------
 // FSM flags used to trigger FSM transitions
@@ -119,7 +121,7 @@ void run_channel_fsm(struct driver_channel* channel){
     case FAULT: break;
     case TERMINATE_REG:
             //we do not need to react to a stop flag here since it is already in the process of stopping
-            if(fsm_aux_counter<1000)
+            if(fsm_aux_counter<TERMINATE_REG_TIMEVAL)
                 TERMINATE_REG_during(n);
             else{
                 TERMINATE_REG_exit(n);
@@ -129,7 +131,7 @@ void run_channel_fsm(struct driver_channel* channel){
             break;
     case TERMINATE_RES:
             //we do not need to react to a stop flag here since it is already in the process of stopping
-            if(fsm_aux_counter<TERMINATE_REGULAR_TIMEVAL)
+            if(fsm_aux_counter<TERMINATE_RES_TIMEVAL)
                 TERMINATE_RES_during(n);
             else{
                 TERMINATE_RES_exit(n);
@@ -184,6 +186,8 @@ void INIT_RES_RUN_enter(uint8_t channelno){
     GPIO_writePin(driver_channels[channelno]->buck_config->enable_gpio,DRIVER_ENABLE_POLARITY);
     //disable bridge
     GPIO_writePin(driver_channels[channelno]->bridge_config->enable_gpio,DRIVER_DISABLE_POLARITY);
+    //enable resonant mode (e.g. open switch parallel to capacitor)
+    GPIO_writePin(driver_channels[channelno]->enable_resonant_gpio,1);
 }
 void INIT_RES_RUN_during(uint8_t channelno){
     fsm_aux_counter++;
@@ -208,9 +212,6 @@ void RUNNING_RES_enter(uint8_t channelno){
         ctrl_i_dqs[i].ud=0;
         ctrl_i_dqs[i].uq=0;
     }
-
-    //enable resonant mode (e.g. open switch parallel to capacitor)
-    GPIO_writePin(driver_channels[channelno]->enable_resonant_gpio,1);
 
     //enable buck
     GPIO_writePin(driver_channels[channelno]->buck_config->enable_gpio,DRIVER_ENABLE_POLARITY);
@@ -244,7 +245,8 @@ void TERMINATE_RES_exit(uint8_t channelno){
 //INIT_RESONANT RUN state
 void INIT_REG_RUN_enter(uint8_t channelno){
     fsm_aux_counter=0;
-    GPIO_writePin(driver_channels[channelno]->enable_resonant_gpio,1);
+    //disable resonant mode (e.g. close switch parallel to capacitor)
+    GPIO_writePin(driver_channels[channelno]->enable_resonant_gpio,0);
 }
 void INIT_REG_RUN_during(uint8_t channelno){
     fsm_aux_counter++;
@@ -252,6 +254,7 @@ void INIT_REG_RUN_during(uint8_t channelno){
 void INIT_REG_RUN_exit(uint8_t channelno){return;}
 //INIT_REGULAR_RUN state
 void RUNNING_REG_enter(uint8_t channelno){
+    period_no=5;
     //configure & enable bridge
     setup_pinmux_config_bridge(driver_channels[channelno]->bridge_config);
     GPIO_writePin(driver_channels[channelno]->bridge_config->enable_gpio,DRIVER_ENABLE_POLARITY);
