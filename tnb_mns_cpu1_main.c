@@ -597,7 +597,7 @@ void main(void)
 
 
             //PID control laws, compute voltage phasor necessary for actuation
-            if(driver_channels[0]->channel_state==RUN_REGULAR&&driver_channels[1]->channel_state==RUN_REGULAR&&driver_channels[2]->channel_state==RUN_REGULAR){
+            if(driver_channels[0]->channel_state==RUN_RES&&driver_channels[1]->channel_state==RUN_RES&&driver_channels[2]->channel_state==RUN_RES){
                 //temporary storage
                 float vec1[NO_CHANNELS];
                 float vec2[NO_CHANNELS];

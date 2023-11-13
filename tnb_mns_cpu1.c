@@ -21,7 +21,7 @@
 // channel a
 struct buck_configuration cha_buck={40,41,8,GPIO_8_EPWM5A,9,GPIO_9_EPWM5B,EPWM5_BASE,false};
 struct bridge_configuration cha_bridge={30,22,23,12,GPIO_12_EPWM7A,13,GPIO_13_EPWM7B,EPWM7_BASE,false,false};
-struct driver_channel channela={0,&cha_buck,&cha_bridge,READY,83};
+struct driver_channel channela={0,&cha_buck,&cha_bridge,READY,87};
 
 // channel b
 struct buck_configuration chb_buck={35,60,15,GPIO_15_EPWM8B,14,GPIO_14_EPWM8A,EPWM8_BASE,false};
@@ -31,7 +31,7 @@ struct driver_channel channelb={1,&chb_buck,&chb_bridge,READY,85};
 // channel c
 struct buck_configuration chc_buck={95,89,4,GPIO_4_EPWM3A,5,GPIO_5_EPWM3B,EPWM3_BASE,true};
 struct bridge_configuration chc_bridge={107,133,93,0,GPIO_0_EPWM1A,1,GPIO_1_EPWM1B,EPWM1_BASE,false,false};
-struct driver_channel channelc={2,&chc_buck,&chc_bridge,READY,87};
+struct driver_channel channelc={2,&chc_buck,&chc_bridge,READY,83};
 
 // channel d
 struct buck_configuration chd_buck={32,33,2,GPIO_2_EPWM2A,3,GPIO_3_EPWM2B,EPWM2_BASE,true};
@@ -430,16 +430,16 @@ __interrupt void IPC_ISR0()
                 fsm_req_flags_stop[i]=true;
             //check the RUN_REGULAR byte
             if(ipc_tnb_mns_msg_c2000.regen_flg_byte&(1<<i))
-                fsm_req_flags_run_regular[i]=true;
+                fsm_req_flags_run_res[i]=true;
             //check the RUN_RESONANT byte
             if(ipc_tnb_mns_msg_c2000.resen_flg_byte&(1<<i))
-                fsm_req_flags_run_resonant[i]=true;
+                fsm_req_flags_run_reg[i]=true;
         }
         //check the currents and duties and translate them
         //do not allow modifying these values when the system is not running, e.g.
         //do not modify values when system in READY state
         for(i=0; i<NO_CHANNELS; i++){
-            if(driver_channels[i]->channel_state==RUN_REGULAR||driver_channels[i]->channel_state==BUCK_ENABLED||driver_channels[i]->channel_state==RUN_RESONANT){
+            if(driver_channels[i]->channel_state==RUN_RES||driver_channels[i]->channel_state==BUCK_ENABLED||driver_channels[i]->channel_state==RUN_REG){
                 //currents are sent in units of [mA]
                 des_currents[i]=(float)(ipc_tnb_mns_msg_c2000.desCurrents[i])*1e-3;
                 des_duty_buck[i]=(float)(ipc_tnb_mns_msg_c2000.desDuties[i])*(1.0/(float)(UINT16_MAX));
@@ -452,7 +452,7 @@ __interrupt void IPC_ISR0()
         //check frequencies and set them
         //changing the resonant frequency is only allowed in the RUN_RESONANT state
         for(i=0; i<NO_CHANNELS; i++){
-            if(driver_channels[i]->channel_state!=RUN_RESONANT)
+            if(driver_channels[i]->channel_state!=RUN_REG)
                 des_freq_resonant_mhz[i]=DEFAULT_RES_FREQ_MILLIHZ;
             else{
                 if(ipc_tnb_mns_msg_c2000.desFreqs[i]<MINIMUM_RES_FREQ_MILLIHZ)
@@ -505,7 +505,7 @@ __interrupt void IPC_ISR0()
 }
 
 //
-// cpuTimer0ISR - Counter for CpuTimer0 at approx. 50kHz
+// cpuTimer0ISR - Counter for CpuTimer0
 //
 __interrupt void
 cpuTimer0ISR(void)
@@ -548,7 +548,7 @@ cpuTimer0ISR(void)
     unsigned int i=0;
     //set output duties for bridge [regular mode]
     for(i=0; i<NO_CHANNELS; i++){
-        if(driver_channels[i]->channel_state==RUN_REGULAR){
+        if(driver_channels[i]->channel_state==RUN_RES){
             //compute feed forward actuation term (limits [-1,1] for this duty) - feed-forward term currently not used
             float act_voltage_ff=actvolts[i]*cos(phasebuf[mastercounter%period_no]+actthetas[i]);
             //store actuation voltages in ADC buffer

@@ -62,7 +62,7 @@ struct system_dynamic_state{
     float is_res[NO_CHANNELS];
 };
 
-enum driver_channel_state {READY=0,BUCK_ENABLED=1,INIT_REGULAR=2,RUN_REGULAR=3,INIT_RESONANT=4,RUN_RESONANT=5,FAULT=6,TERMINATE_RESONANT=7,TERMINATE_REGULAR=8};
+enum driver_channel_state {READY=0,BUCK_ENABLED=1,INIT_RES=2,RUN_RES=3,INIT_REG=4,RUN_REG=5,FAULT=6,TERMINATE_REG=7,TERMINATE_RES=8};
 
 struct driver_channel{
     uint8_t channel_no;

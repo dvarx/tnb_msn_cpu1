@@ -42,36 +42,36 @@ void BUCK_ENABLED_enter(uint8_t);
 void BUCK_ENABLED_during(uint8_t);
 void BUCK_ENABLED_exit(uint8_t);
 //INIT_REGULAR_RUN state
-void INIT_REGULAR_RUN_enter(uint8_t);
-void INIT_REGULAR_RUN_during(uint8_t);
-void INIT_REGULAR_RUN_exit(uint8_t);
+void INIT_RES_RUN_enter(uint8_t);
+void INIT_RES_RUN_during(uint8_t);
+void INIT_RES_RUN_exit(uint8_t);
 //RUNNING_REGULAR state
-void RUNNING_REGULAR_enter(uint8_t);
-void RUNNING_REGULAR_during(uint8_t);
-void RUNNING_REGULAR_exit(uint8_t);
+void RUNNING_RES_enter(uint8_t);
+void RUNNING_RES_during(uint8_t);
+void RUNNING_RES_exit(uint8_t);
 //INIT_RESONANT RUN state
-void INIT_RESONANT_RUN_enter(uint8_t);
-void INIT_RESONANT_RUN_during(uint8_t);
-void INIT_RESONANT_RUN_exit(uint8_t);
+void INIT_REG_RUN_enter(uint8_t);
+void INIT_REG_RUN_during(uint8_t);
+void INIT_REG_RUN_exit(uint8_t);
 //INIT_REGULAR_RUN state
-void RUNNING_RESONANT_enter(uint8_t);
-void RUNNING_RESONANT_during(uint8_t);
-void RUNNING_RESONANT_exit(uint8_t);
+void RUNNING_REG_enter(uint8_t);
+void RUNNING_REG_during(uint8_t);
+void RUNNING_REG_exit(uint8_t);
 //TERMINATE_RESONANT state
-void TERMINATE_RESONANT_enter(uint8_t);
-void TERMINATE_RESONANT_during(uint8_t);
-void TERMINATE_RESONANT_exit(uint8_t);
+void TERMINATE_REG_enter(uint8_t);
+void TERMINATE_REG_during(uint8_t);
+void TERMINATE_REG_exit(uint8_t);
 //TERMINATE_REGULAR state
-void TERMINATE_REGULAR_enter(uint8_t);
-void TERMINATE_REGULAR_during(uint8_t);
-void TERMINATE_REGULAR_exit(uint8_t);
+void TERMINATE_RES_enter(uint8_t);
+void TERMINATE_RES_during(uint8_t);
+void TERMINATE_RES_exit(uint8_t);
 
 // ---------------------------------
 // FSM flags used to trigger FSM transitions
 // ---------------------------------
 extern fsm_flag fsm_req_flags_en_buck[NO_CHANNELS];
-extern fsm_flag fsm_req_flags_run_regular[NO_CHANNELS];
-extern fsm_flag fsm_req_flags_run_resonant[NO_CHANNELS];
+extern fsm_flag fsm_req_flags_run_res[NO_CHANNELS];
+extern fsm_flag fsm_req_flags_run_reg[NO_CHANNELS];
 extern fsm_flag fsm_req_flags_stop[NO_CHANNELS];
 
 // ---------------------------------
