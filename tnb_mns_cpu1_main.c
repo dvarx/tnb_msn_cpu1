@@ -67,6 +67,7 @@
 bool run_main_control_task=false;
 bool enable_waveform_debugging=false;
 bool use_pi=true;
+float refcurrent=1;
 float curcos=0.0;
 float cursin=0.0;
 bool readcpu2=true;
@@ -79,6 +80,7 @@ struct comm_cpu2cpu1{
     bool en_flags[3];
     bool runreg_flags[3];
     bool stop_flags[3];
+    bool runres_flags[3];
 };
 struct comm_cpu2cpu1* msg_cpu2tocpu1=(struct comm_cpu2cpu1*)0x03B000;
 struct comm_cpu1cpu2{
@@ -90,7 +92,7 @@ struct comm_cpu1cpu2* msg_cpu1tocpu2=(struct comm_cpu1cpu2*)0x03A000;
 
 bool actsaturated[3]={false,false,false};
 
-#define SYSID
+//#define SYSID
 
 void main(void)
 {
@@ -492,6 +494,7 @@ void main(void)
     float ivecdtmp[3];
     // Main Loop
     while(1){
+        unsigned int i=0;
         if(run_fsm){
             unsigned int channel_counter=0;
 
@@ -501,10 +504,12 @@ void main(void)
                 for(i=0; i<NO_CHANNELS; i++){
                     fsm_req_flags_en_buck[i]=msg_cpu2tocpu1->en_flags[i];
                     fsm_req_flags_stop[i]=msg_cpu2tocpu1->stop_flags[i];
-                    fsm_req_flags_run_regular[i]=msg_cpu2tocpu1->runreg_flags[i];
+                    fsm_req_flags_run_reg[i]=msg_cpu2tocpu1->runreg_flags[i];
+                    fsm_req_flags_run_res[i]=msg_cpu2tocpu1->runres_flags[i];
                 }
                 //translate desired frequency from mHz to Hz
                 fres=((float)msg_cpu2tocpu1->freq);
+                omegares=2*M_PI*fres;
                 for(i=0; i<NO_CHANNELS; i++){
                     rvecd[i]=msg_cpu2tocpu1->ids[i];
                     rvecq[i]=msg_cpu2tocpu1->iqs[i];
@@ -536,71 +541,72 @@ void main(void)
             run_fsm=false;
         }
         if(run_main_task){
-            //toggle heartbeat gpio
-            GPIO_writePin(MAIN_TASK_GPIO,1);
-
-            /* -------------------------------------
-             * update sinusoidal PWMs (do this at 1/10th of the main rate, e.g. 10kHz)
-             * -------------------------------------
-             */
-            //loop variable
-            unsigned int i=0;
-
-            //estimate ids and iqs
-            //if we are currently recording into aux buffer, use values from the normal buffer to estimate ids and iqs
-            ivecdtmp[0]=0;
-            ivecdtmp[1]=0;
-            ivecdtmp[2]=0;
-            ivecqtmp[0]=0;
-            ivecqtmp[1]=0;
-            ivecqtmp[2]=0;
-            if(use_aux_current_buffer){
-                for(i=0; i<period_no; i++){
-                    ivecdtmp[0]+=obs_buffer[0][i]*cosinebuf[i];
-                    ivecdtmp[1]+=obs_buffer[1][i]*cosinebuf[i];
-                    ivecdtmp[2]+=obs_buffer[2][i]*cosinebuf[i];
-                    ivecqtmp[0]+=obs_buffer[0][i]*nsinebuf[i];
-                    ivecqtmp[1]+=obs_buffer[1][i]*nsinebuf[i];
-                    ivecqtmp[2]+=obs_buffer[2][i]*nsinebuf[i];
-                }
-            }
-            else{
-                for(i=0; i<period_no; i++){
-                    ivecdtmp[0]+=obs_buffer_aux[0][i]*cosinebuf[i];
-                    ivecdtmp[1]+=obs_buffer_aux[1][i]*cosinebuf[i];
-                    ivecdtmp[2]+=obs_buffer_aux[2][i]*cosinebuf[i];
-                    ivecqtmp[0]+=obs_buffer_aux[0][i]*nsinebuf[i];
-                    ivecqtmp[1]+=obs_buffer_aux[1][i]*nsinebuf[i];
-                    ivecqtmp[2]+=obs_buffer_aux[2][i]*nsinebuf[i];
-                }
-            }
-            ivecd[0]=ivecdtmp[0]*2/period_no;
-            ivecd[1]=ivecdtmp[1]*2/period_no;
-            ivecd[2]=ivecdtmp[2]*2/period_no;
-            ivecq[0]=ivecqtmp[0]*2/period_no;
-            ivecq[1]=ivecqtmp[1]*2/period_no;
-            ivecq[2]=ivecqtmp[2]*2/period_no;
-            //store computed ids and iqs in buffer
-            if(adc_record){
-                buffer_idq[0][buffer_idq_cnt]=ivecd[0];
-                buffer_idq[1][buffer_idq_cnt]=ivecd[1];
-                buffer_idq[2][buffer_idq_cnt]=ivecd[2];
-                buffer_idq[3][buffer_idq_cnt]=ivecq[0];
-                buffer_idq[4][buffer_idq_cnt]=ivecq[1];
-                buffer_idq[5][buffer_idq_cnt]=ivecq[2];
-                buffer_idq_cnt=(buffer_idq_cnt+1)%ADC_BUF_SIZE;
-            }
-
-            //message ids and iqs and actvolts to CPU2
-            for(i=0; i<3; i++){
-                msg_cpu1tocpu2->ids[i]=ivecd[i];
-                msg_cpu1tocpu2->iqs[i]=ivecq[i];
-                msg_cpu1tocpu2->actvolts[i]=actvolts[i];
-            }
-
-
-            //PID control laws, compute voltage phasor necessary for actuation
+            //phasor estimation and phasor control for resonant mode (run at oscillatio frequency)
             if(driver_channels[0]->channel_state==RUN_RES&&driver_channels[1]->channel_state==RUN_RES&&driver_channels[2]->channel_state==RUN_RES){
+                //toggle heartbeat gpio
+                GPIO_writePin(MAIN_TASK_GPIO,1);
+
+                /* -------------------------------------
+                 * update sinusoidal PWMs (do this at 1/10th of the main rate, e.g. 10kHz)
+                 * -------------------------------------
+                 */
+                //loop variable
+                unsigned int i=0;
+
+                //estimate ids and iqs
+                //if we are currently recording into aux buffer, use values from the normal buffer to estimate ids and iqs
+                ivecdtmp[0]=0;
+                ivecdtmp[1]=0;
+                ivecdtmp[2]=0;
+                ivecqtmp[0]=0;
+                ivecqtmp[1]=0;
+                ivecqtmp[2]=0;
+                if(use_aux_current_buffer){
+                    for(i=0; i<period_no; i++){
+                        ivecdtmp[0]+=obs_buffer[0][i]*cosinebuf[i];
+                        ivecdtmp[1]+=obs_buffer[1][i]*cosinebuf[i];
+                        ivecdtmp[2]+=obs_buffer[2][i]*cosinebuf[i];
+                        ivecqtmp[0]+=obs_buffer[0][i]*nsinebuf[i];
+                        ivecqtmp[1]+=obs_buffer[1][i]*nsinebuf[i];
+                        ivecqtmp[2]+=obs_buffer[2][i]*nsinebuf[i];
+                    }
+                }
+                else{
+                    for(i=0; i<period_no; i++){
+                        ivecdtmp[0]+=obs_buffer_aux[0][i]*cosinebuf[i];
+                        ivecdtmp[1]+=obs_buffer_aux[1][i]*cosinebuf[i];
+                        ivecdtmp[2]+=obs_buffer_aux[2][i]*cosinebuf[i];
+                        ivecqtmp[0]+=obs_buffer_aux[0][i]*nsinebuf[i];
+                        ivecqtmp[1]+=obs_buffer_aux[1][i]*nsinebuf[i];
+                        ivecqtmp[2]+=obs_buffer_aux[2][i]*nsinebuf[i];
+                    }
+                }
+                ivecd[0]=ivecdtmp[0]*2/period_no;
+                ivecd[1]=ivecdtmp[1]*2/period_no;
+                ivecd[2]=ivecdtmp[2]*2/period_no;
+                ivecq[0]=ivecqtmp[0]*2/period_no;
+                ivecq[1]=ivecqtmp[1]*2/period_no;
+                ivecq[2]=ivecqtmp[2]*2/period_no;
+                //store computed ids and iqs in buffer
+                if(adc_record){
+                    buffer_idq[0][buffer_idq_cnt]=ivecd[0];
+                    buffer_idq[1][buffer_idq_cnt]=ivecd[1];
+                    buffer_idq[2][buffer_idq_cnt]=ivecd[2];
+                    buffer_idq[3][buffer_idq_cnt]=ivecq[0];
+                    buffer_idq[4][buffer_idq_cnt]=ivecq[1];
+                    buffer_idq[5][buffer_idq_cnt]=ivecq[2];
+                    buffer_idq_cnt=(buffer_idq_cnt+1)%ADC_BUF_SIZE;
+                }
+
+                //message ids and iqs and actvolts to CPU2
+                for(i=0; i<3; i++){
+                    msg_cpu1tocpu2->ids[i]=ivecd[i];
+                    msg_cpu1tocpu2->iqs[i]=ivecq[i];
+                    msg_cpu1tocpu2->actvolts[i]=actvolts[i];
+                }
+
+
+                //PID control laws, compute voltage phasor necessary for actuation
                 //temporary storage
                 float vec1[NO_CHANNELS];
                 float vec2[NO_CHANNELS];
@@ -641,6 +647,31 @@ void main(void)
                 actthetas[1]=atan2(vvecq[1],vvecd[1]);
                 actthetas[2]=atan2(vvecq[2],vvecd[2]);
                 #endif
+            }
+
+            //closed loop control for regular mode (run at 10kHz)
+            if(driver_channels[0]->channel_state==RUN_REG&&driver_channels[1]->channel_state==RUN_REG&&driver_channels[2]->channel_state==RUN_REG){
+                readAnalogInputs();
+                runrestime+=1e-4;
+                float phase=runrestime*omegares;
+                for(i=0; i<NO_CHANNELS; i++){
+                    des_currents[i]=rvecd[i]*cos(phase)-rvecq[i]*sin(phase);
+                    //float des_current=refcurrent;
+                    float duty_fb=0;
+                    if(use_pi){
+                        bool output_saturated=fabsf((current_pi+i)->u)>=0.9*VOLTAGE_DCLINK;
+                        float act_voltage_fb=update_pid(current_pi+i,des_currents[i],system_dyn_state.is[i],output_saturated);
+                        duty_fb=act_voltage_fb*VOLTAGE_DCLINK_INV;
+                    }
+
+                    //convert normalized duty cycle, limit it and apply
+                    float duty_bridge=0.5*(1+(duty_fb));
+                    if(duty_bridge>0.95)
+                        duty_bridge=0.95;
+                    if(duty_bridge<0.05)
+                        duty_bridge=0.05;
+                    set_duty_bridge(driver_channels[i]->bridge_config,duty_bridge);
+                }
             }
 
             GPIO_writePin(MAIN_TASK_GPIO,0);

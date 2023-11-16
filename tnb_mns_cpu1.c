@@ -144,6 +144,7 @@ bool adc_record=0;
 
 //variables related to resonant control
 float fres=214;
+float omegares=2*M_PI*214;
 float actvolts[3]={0.0,0.0,0.0};
 float actthetas[3]={0.0,0.0,0.0};
 #define CTRLKP 0.0
@@ -295,6 +296,7 @@ struct tnb_mns_msg_c2000 ipc_tnb_mns_msg_c2000;
 // ------------------------------------------------------------------------------------
 
 uint32_t mastercounter=0;
+float runrestime=0.0;
 uint16_t cpuTimer1IntCount;
 uint16_t cpuTimer2IntCount;
 
@@ -514,7 +516,7 @@ cpuTimer0ISR(void)
     GPIO_writePin(HEARTBEAT_GPIO,1);
     mastercounter++;
 
-
+    //if in resonant mode, fill the ADC buffers for phasor estimation and apply the modulated voltages
     if(driver_channels[0]->channel_state==RUN_RES||driver_channels[1]->channel_state==RUN_RES||driver_channels[2]->channel_state==RUN_RES){
         //process analog signals from last iteration
         float currentcos=cosinebuf[mastercounter%period_no];

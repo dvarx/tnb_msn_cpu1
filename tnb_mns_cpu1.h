@@ -111,6 +111,8 @@ extern bool communication_active;                       //variable indicates whe
 
 //variables related to resonant control
 extern float fres;
+extern float omegares;
+extern float runrestime;
 extern float actvolts[3];
 extern float actthetas[3];
 //debugging purposes -----------------------

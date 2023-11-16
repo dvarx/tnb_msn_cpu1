@@ -254,6 +254,7 @@ void INIT_REG_RUN_during(uint8_t channelno){
 void INIT_REG_RUN_exit(uint8_t channelno){return;}
 //INIT_REGULAR_RUN state
 void RUNNING_REG_enter(uint8_t channelno){
+    runrestime=0;
     period_no=5;
     //configure & enable bridge
     setup_pinmux_config_bridge(driver_channels[channelno]->bridge_config);

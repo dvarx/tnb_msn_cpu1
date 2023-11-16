@@ -28,7 +28,7 @@ float ivecq[3];
 float ivecd[3];
 
 //current sensor calibration values
-float isensoroffsets[6]={3292,3279,3298,2048,2048,2048};
+float isensoroffsets[6]={3330,3330,3330,2048,2048,2048};
 float isensorgains[6]={0.0076219958202716825*2.0,
                        0.0076219958202716825*3.9/4.0*2.0,
                        0.0076219958202716825*4.01/4.0*2.0,
@@ -227,13 +227,13 @@ void readAnalogInputs(void){
     */
 
     // ADC B Measurements -----------------------------------------------
-    ADC_forceMultipleSOC(ADCB_BASE, (ADC_FORCE_SOC0 | ADC_FORCE_SOC2));
+    ADC_forceMultipleSOC(ADCB_BASE, (ADC_FORCE_SOC0 | ADC_FORCE_SOC1));
     // Wait for ADCB to complete, then acknowledge flag
     while(ADC_getInterruptStatus(ADCB_BASE, ADC_INT_NUMBER1) == false){}
     system_dyn_state.is[0] = conv_adc_meas_to_current_a(ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER0),0);
     //system_dyn_state.is_res[0] = conv_adc_meas_to_current_a(ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER4));    // TODO : conv factor
     //system_dyn_state.vs[0] = ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER1);
-    system_dyn_state.is[1] = conv_adc_meas_to_current_a(ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER2),1);
+    system_dyn_state.is[1] = conv_adc_meas_to_current_a(ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER1),1);
     //system_dyn_state.vs[1] = ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER3);
     ADC_clearInterruptStatus(ADCB_BASE, ADC_INT_NUMBER1);
 
