@@ -148,7 +148,7 @@ float omegares=2*M_PI*214;
 float actvolts[3]={0.0,0.0,0.0};
 float actthetas[3]={0.0,0.0,0.0};
 #define CTRLKP 0.0
-#define CTRLKI 60
+#define CTRLKI 450
 struct pi_controller_dq ctrl_i_dqs[3]={
                                    {CTRLKP,CTRLKI,0,0,0,0,0,0},
                                    {CTRLKP,CTRLKI,0,0,0,0,0,0},

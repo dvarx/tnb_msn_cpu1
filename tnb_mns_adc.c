@@ -28,7 +28,7 @@ float ivecq[3];
 float ivecd[3];
 
 //current sensor calibration values
-float isensoroffsets[6]={3330,3330,3330,2048,2048,2048};
+float isensoroffsets[6]={3297,3297,3297,2048,2048,2048};
 float isensorgains[6]={0.0076219958202716825*2.0,
                        0.0076219958202716825*3.9/4.0*2.0,
                        0.0076219958202716825*4.01/4.0*2.0,
