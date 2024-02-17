@@ -17,7 +17,7 @@
 //initializes pins & pads for buck half bridge
 void setup_pin_config_buck(const struct buck_configuration*);
 //intiializes pins & pads for bridge half bridges
-void setup_pinmux_config_bridge(const struct bridge_configuration* config);
+void setup_pinmux_config_bridge(const struct bridge_configuration* config,uint8_t channelno);
 //helper function
 void initEPWMWithoutDB(uint32_t,bool);
 //helper function

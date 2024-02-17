@@ -126,22 +126,22 @@ void main(void)
     //
     //channel A
     setup_pin_config_buck(&cha_buck);
-    setup_pinmux_config_bridge(&cha_bridge);
+    setup_pinmux_config_bridge(&cha_bridge,0);
     //channel B
     setup_pin_config_buck(&chb_buck);
-    setup_pinmux_config_bridge(&chb_bridge);
+    setup_pinmux_config_bridge(&chb_bridge,1);
     //channel C
     setup_pin_config_buck(&chc_buck);
-    setup_pinmux_config_bridge(&chc_bridge);
+    setup_pinmux_config_bridge(&chc_bridge,2);
     //channel D
     setup_pin_config_buck(&chd_buck);
-    setup_pinmux_config_bridge(&chd_bridge);
+    setup_pinmux_config_bridge(&chd_bridge,3);
     //channel E
     setup_pin_config_buck(&che_buck);
-    setup_pinmux_config_bridge(&che_bridge);
+    setup_pinmux_config_bridge(&che_bridge,4);
     //channel F
     setup_pin_config_buck(&chf_buck);
-    setup_pinmux_config_bridge(&chf_bridge);
+    setup_pinmux_config_bridge(&chf_bridge,5);
 
     //
     // Enable Half Bridges
@@ -543,11 +543,11 @@ void main(void)
                 }
                 //set_duty_bridge(driver_channels[i]->bridge_config,des_duty_bridge[i]);
             }
-            //set frequency for bridge [resonant mode]
-            for(i=0; i<NO_CHANNELS; i++){
-                if(driver_channels[i]->channel_state==RUN_RESONANT)
-                    set_freq_bridge(driver_channels[i]->bridge_config,des_freq_resonant_mhz[i]);
-            }
+            //set frequency for bridge [resonant mode] do not do this in this branch
+//            for(i=0; i<NO_CHANNELS; i++){
+//                if(driver_channels[i]->channel_state==RUN_RESONANT)
+//                    set_freq_bridge(driver_channels[i]->bridge_config,des_freq_resonant_mhz[i]);
+//            }
 
             //---------------------
             // Read State Of Bridges

@@ -11,6 +11,8 @@
 #include "stdint.h"
 #include <stdbool.h>
 
+EPWM_HSClockDivider dividers4channels[]={EPWM_HSCLOCK_DIVIDER_10,EPWM_HSCLOCK_DIVIDER_12,EPWM_HSCLOCK_DIVIDER_14,EPWM_HSCLOCK_DIVIDER_1,EPWM_HSCLOCK_DIVIDER_1,EPWM_HSCLOCK_DIVIDER_1};
+
 //sets up the pinmux and config for a buck stage
 void setup_pin_config_buck(const struct buck_configuration* config){
     //----- Buck
@@ -40,7 +42,7 @@ void setup_pin_config_buck(const struct buck_configuration* config){
 }
 
 //sets up the pinmux and epwm module config for a bridge stage. duty=50% , freq~48kHz
-void setup_pinmux_config_bridge(const struct bridge_configuration* config){
+void setup_pinmux_config_bridge(const struct bridge_configuration* config, uint8_t channelno){
     //----- Bridge U
     //Bridge Enable
     GPIO_setDirectionMode(config->enable_gpio, GPIO_DIR_MODE_OUT);   //output
@@ -66,7 +68,7 @@ void setup_pinmux_config_bridge(const struct bridge_configuration* config){
     //clock prescaling results in a PWM clock of around 50kHz
     EPWM_setClockPrescaler(config->epwmbase,
                            EPWM_CLOCK_DIVIDER_1,
-                           EPWM_HSCLOCK_DIVIDER_1);
+                           dividers4channels[channelno]);
 }
 
 void set_duty_buck(const struct buck_configuration* config, double duty){
@@ -257,7 +259,7 @@ void set_freq_bridge(const struct bridge_configuration* config,const uint32_t fr
      * TimeBasePeriod(1kHz)=5000
      * TimeBasePeriod(100Hz)=50000
      */
-    EPWM_setClockPrescaler(config->epwmbase, EPWM_CLOCK_DIVIDER_16, EPWM_HSCLOCK_DIVIDER_1);
+    EPWM_setClockPrescaler(config->epwmbase, EPWM_CLOCK_DIVIDER_1, EPWM_HSCLOCK_DIVIDER_1);
 
     unsigned int counterlimit=(((100000000)/(16*2*(freq_mhz/1000))));
 

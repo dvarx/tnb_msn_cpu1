@@ -193,7 +193,7 @@ void RUNNING_REGULAR_enter(uint8_t channelno){
     //enable buck
     GPIO_writePin(driver_channels[channelno]->buck_config->enable_gpio,DRIVER_ENABLE_POLARITY);
     //configure & enable bridge
-    setup_pinmux_config_bridge(driver_channels[channelno]->bridge_config);
+    setup_pinmux_config_bridge(driver_channels[channelno]->bridge_config,channelno);
     GPIO_writePin(driver_channels[channelno]->bridge_config->enable_gpio,DRIVER_ENABLE_POLARITY);
     //reset PID controller of the channel for regular mode here
     reset_pid(current_pi+channelno);
@@ -231,7 +231,7 @@ void INIT_RESONANT_RUN_exit(uint8_t channelno){return;}
 //INIT_REGULAR_RUN state
 void RUNNING_RESONANT_enter(uint8_t channelno){
     //configure & enable bridge
-    setup_pinmux_config_bridge(driver_channels[channelno]->bridge_config);
+    setup_pinmux_config_bridge(driver_channels[channelno]->bridge_config,channelno);
     GPIO_writePin(driver_channels[channelno]->bridge_config->enable_gpio,DRIVER_ENABLE_POLARITY);
     // TODO-PID : reset PID controller for resonant current control here
 }
