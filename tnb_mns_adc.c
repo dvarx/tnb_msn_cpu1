@@ -207,7 +207,7 @@ void initADCSOCs(void)
 /*
  * calibration measurement is of the form m=alpha'*i+beta' => i=alpha*m+beta with alpha=1/alpha' and beta=-beta'/alpha
  */
-const float calib_factor_current_alpha=1.0/132.0;
+const float calib_factor_current_alpha=20.0/4096.0*3;
 const float calib_factor_current_beta=-5.0/132.0;
 
 // This function reads the analog inputs and stores them in the system_dyn_state structure

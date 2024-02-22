@@ -19,7 +19,7 @@ extern float isensorgains[6];
 
 inline float conv_adc_meas_to_current_a(const uint16_t adc_output,uint8_t sensorno){
     //current measured by sensor is inverted relative to the defined current
-    return isensorgains[sensorno]*(float)((float)adc_output-(float)isensoroffsets[sensorno]);
+    return calib_factor_current_alpha*(float)((float)adc_output-2048);
 }
 
 void initADCs(void);
