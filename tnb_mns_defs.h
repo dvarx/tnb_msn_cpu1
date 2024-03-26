@@ -19,17 +19,17 @@
  * this can be useful for initial testing of the actuation / current sensor since it avoids
  * unstable closed loop operation in case of an erronous feedback loop
  */
-//#define FEED_FORWARD_ONLY
+#define FEED_FORWARD_ONLY
 
 /*
  * Use this configuration if the closed-loop tuning has been done
  */
-#define CLOSED_LOOP
+//#define CLOSED_LOOP
 
 
 //constants related to output inductor current PI controller
 #define RDC 3.3
-#define VIN 96
+#define VIN 60
 #define CTRL_KP 100.0
 #define CTRL_KI 20000.0
 
