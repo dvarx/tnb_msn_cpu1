@@ -11,7 +11,7 @@
 #include "stdint.h"
 #include <stdbool.h>
 
-EPWM_HSClockDivider dividers4channels[]={EPWM_HSCLOCK_DIVIDER_10,EPWM_HSCLOCK_DIVIDER_12,EPWM_HSCLOCK_DIVIDER_14,EPWM_HSCLOCK_DIVIDER_1,EPWM_HSCLOCK_DIVIDER_1,EPWM_HSCLOCK_DIVIDER_1};
+EPWM_HSClockDivider dividers4channels[]={EPWM_HSCLOCK_DIVIDER_14,EPWM_HSCLOCK_DIVIDER_12,EPWM_HSCLOCK_DIVIDER_10,EPWM_HSCLOCK_DIVIDER_1,EPWM_HSCLOCK_DIVIDER_1,EPWM_HSCLOCK_DIVIDER_1};
 
 //sets up the pinmux and config for a buck stage
 void setup_pin_config_buck(const struct buck_configuration* config){
