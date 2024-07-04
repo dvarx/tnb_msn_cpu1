@@ -17,7 +17,6 @@
 #include "comm_interface.h"
 
 #define NO_CHANNELS 9
-#define NO_DEBUG_CHANNELS 6
 #define HEARTBEAT_GPIO 40
 #define MAIN_RELAY_GPIO 92
 #define SLAVE_RELAY_GPIO 66
@@ -76,12 +75,18 @@ extern struct buck_configuration chc_buck;
 extern struct buck_configuration chd_buck;
 extern struct buck_configuration che_buck;
 extern struct buck_configuration chf_buck;
+extern struct buck_configuration chg_buck;
+extern struct buck_configuration chh_buck;
+extern struct buck_configuration chi_buck;
 extern struct driver_channel channela;
 extern struct driver_channel channelb;
 extern struct driver_channel channelc;
 extern struct driver_channel channeld;
 extern struct driver_channel channele;
 extern struct driver_channel channelf;
+extern struct driver_channel channelg;
+extern struct driver_channel channelh;
+extern struct driver_channel channeli;
 extern struct driver_channel* driver_channels[NO_CHANNELS];
 
 extern struct bridge_configuration cha_bridge;
@@ -90,6 +95,9 @@ extern struct bridge_configuration chc_bridge;
 extern struct bridge_configuration chd_bridge;
 extern struct bridge_configuration che_bridge;
 extern struct bridge_configuration chf_bridge;
+extern struct bridge_configuration chg_bridge;
+extern struct bridge_configuration chh_bridge;
+extern struct bridge_configuration chi_bridge;
 
 // ---------------------
 // Main Program related globals

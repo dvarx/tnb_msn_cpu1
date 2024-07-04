@@ -136,25 +136,35 @@ void main(void)
 
     //
     // Initialize Half Bridges
+    // buck half bridges do not need to be initialized for JECB
     //
     //channel A
-    setup_pin_config_buck(&cha_buck);
+    //setup_pin_config_buck(&cha_buck);
     setup_pinmux_config_bridge(&cha_bridge);
     //channel B
-    setup_pin_config_buck(&chb_buck);
+    //setup_pin_config_buck(&chb_buck);
     setup_pinmux_config_bridge(&chb_bridge);
     //channel C
-    setup_pin_config_buck(&chc_buck);
+    //setup_pin_config_buck(&chc_buck);
     setup_pinmux_config_bridge(&chc_bridge);
     //channel D
-    setup_pin_config_buck(&chd_buck);
+    //setup_pin_config_buck(&chd_buck);
     setup_pinmux_config_bridge(&chd_bridge);
     //channel E
-    setup_pin_config_buck(&che_buck);
+    //setup_pin_config_buck(&che_buck);
     setup_pinmux_config_bridge(&che_bridge);
     //channel F
-    setup_pin_config_buck(&chf_buck);
+    //setup_pin_config_buck(&chf_buck);
     setup_pinmux_config_bridge(&chf_bridge);
+    //channel G
+    //setup_pin_config_buck(&chf_buck);
+    setup_pinmux_config_bridge(&chg_bridge);
+    //channel H
+    //setup_pin_config_buck(&chf_buck);
+    setup_pinmux_config_bridge(&chh_bridge);
+    //channel I
+    //setup_pin_config_buck(&chf_buck);
+    setup_pinmux_config_bridge(&chi_bridge);
 
     //
     // Initialize synchronization of bridges
@@ -171,24 +181,30 @@ void main(void)
     //
     // Enable Half Bridges
     //
-    set_enabled(&cha_buck,true,true);
+    //set_enabled(&cha_buck,true,true);
     set_enabled(&cha_bridge,false,true);
-    set_enabled(&chb_buck,true,true);
+    //set_enabled(&chb_buck,true,true);
     set_enabled(&chb_bridge,false,true);
-    set_enabled(&chc_buck,true,true);
+    //set_enabled(&chc_buck,true,true);
     set_enabled(&chc_bridge,false,true);
-    set_enabled(&chd_buck,true,true);
+    //set_enabled(&chd_buck,true,true);
     set_enabled(&chd_bridge,false,true);
-    set_enabled(&che_buck,true,true);
+    //set_enabled(&che_buck,true,true);
     set_enabled(&che_bridge,false,true);
-    set_enabled(&chf_buck,true,true);
+    //set_enabled(&chf_buck,true,true);
     set_enabled(&chf_bridge,false,true);
+    //set_enabled(&chg_buck,true,true);
+    set_enabled(&chg_bridge,false,true);
+    //set_enabled(&chh_buck,true,true);
+    set_enabled(&chh_bridge,false,true);
+    //set_enabled(&chi_buck,true,true);
+    set_enabled(&chi_bridge,false,true);
 
     //
     // Initialize Reed Switch Interface
     //
     unsigned int n=0;
-    for(n=0; n<NO_DEBUG_CHANNELS; n++){
+    for(n=0; n<NO_CHANNELS; n++){
         GPIO_setDirectionMode(driver_channels[n]->enable_resonant_gpio, GPIO_DIR_MODE_OUT);   //output
         GPIO_setPadConfig(driver_channels[n]->enable_resonant_gpio,GPIO_PIN_TYPE_STD);        //push pull output
     }
@@ -441,7 +457,7 @@ void main(void)
     //
     // Initialize Outputs
     //
-    for(n=0; n<NO_DEBUG_CHANNELS; n++){
+    for(n=0; n<NO_CHANNELS; n++){
         READY_enter(n);
         driver_channels[n]->channel_state=READY;
     }
@@ -459,7 +475,7 @@ void main(void)
             //Main Relay Opening Logic
             unsigned int channel_counter=0;
             bool main_relay_active=false;
-            for(channel_counter=0; channel_counter<NO_DEBUG_CHANNELS; channel_counter++){
+            for(channel_counter=0; channel_counter<NO_CHANNELS; channel_counter++){
                 run_channel_fsm(driver_channels[channel_counter]);
                 //we enable the main relay when one channel is not in state READY anymore (e.g. when one channel requires power)
                 if(driver_channels[channel_counter]->channel_state!=READY)
@@ -470,7 +486,7 @@ void main(void)
             GPIO_writePin(LED_1_GPIO,!main_relay_active);
             //Communication Active Logic (If no communication, issue a STOP command
             if(!communication_active){
-                for(channel_counter=0; channel_counter<NO_DEBUG_CHANNELS; channel_counter++){
+                for(channel_counter=0; channel_counter<NO_CHANNELS; channel_counter++){
                     fsm_req_flags_stop[channel_counter]=1;
                 }
             }
@@ -487,9 +503,6 @@ void main(void)
             // ---
             // TODO: Filter the input reference signals
             unsigned int i=0;
-            for(i=0; i<NO_DEBUG_CHANNELS; i++){
-                update_first_order(des_duty_buck_filt+i,des_duty_buck[i]);
-            }
 
 
             //---------------------
@@ -499,12 +512,12 @@ void main(void)
             //#define OMEGA 2*3.14159265358979323846*5
             //float ides=sin(OMEGA*loop_counter*deltaT);
             if(loop_counter%periodn<periodn/2){
-                for(i=0; i<NO_DEBUG_CHANNELS; i++){
+                for(i=0; i<NO_CHANNELS; i++){
                     idess[i]=idesmags[i];
                 }
             }
             else{
-                for(i=0; i<NO_DEBUG_CHANNELS; i++){
+                for(i=0; i<NO_CHANNELS; i++){
                     idess[i]=-idesmags[i];
                 }
             }
@@ -521,7 +534,7 @@ void main(void)
             // Control Law Execution & Output Actuation
             //---------------------
             //set output duties for bridge [regular mode]
-            for(i=0; i<NO_DEBUG_CHANNELS; i++){
+            for(i=0; i<NO_CHANNELS; i++){
                 if(driver_channels[i]->channel_state==RUN_REGULAR){
                     #ifdef TUNE_CLOSED_LOOP
                         if(enable_waveform_debugging)
@@ -546,7 +559,7 @@ void main(void)
                         float act_voltage_ff=0.0;
                         //compute feedback actuation term (limits [-1,1] for this duty)
                         bool output_saturated=fabsf((current_pi+i)->u)>=0.9*voltage_dclink;
-                        des_currents[i]=idess[i];
+                        //des_currents[i]=idess[i];
                         float act_voltage_fb=update_pid(current_pi+i,des_currents[i],system_dyn_state.is[i],output_saturated);
                     #endif
                     float duty_ff=act_voltage_ff/vin;
@@ -565,7 +578,7 @@ void main(void)
                 //set_duty_bridge(driver_channels[i]->bridge_config,des_duty_bridge[i]);
             }
             //set frequency for bridge [resonant mode]
-            for(i=0; i<NO_DEBUG_CHANNELS; i++){
+            for(i=0; i<NO_CHANNELS; i++){
                 if(driver_channels[i]->channel_state==RUN_RESONANT)
                     set_freq_bridge(i,des_freq_resonant_mhz[i]);
             }

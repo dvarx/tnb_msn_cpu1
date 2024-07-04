@@ -12,7 +12,7 @@
 
 enum command{IPC_MSG_STOP_ALL=0,IPC_MSG_NEW_MSG=1};
 
-#define NO_CHANNELS 6
+#define NO_CHANNELS 9
 
 /*
  * desCurrents : are in units of [mA]
