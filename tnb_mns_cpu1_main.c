@@ -67,7 +67,15 @@
 bool run_main_control_task=false;
 bool enable_waveform_debugging=false;
 
-//float debug_bridge_duties[6]={0.5};
+#define LOGSIZE 1024
+float currentloga[LOGSIZE]={0};
+float currentlogb[LOGSIZE]={0};
+float currentlogc[LOGSIZE]={0};
+uint16_t logcounter=0;
+float idess[]={0.0,0.0,0.0,0.0,0.0,0.0};
+float idesmags[]={0.0,0.0,0.0,0.0,0.0,0.0};
+float vin=60.0;
+unsigned int periodn=10000;
 
 void main(void)
 {
@@ -95,6 +103,7 @@ void main(void)
     // Setup heartbeat GPIO & input relay gpios
     //heartbeat
     GPIO_setDirectionMode(HEARTBEAT_GPIO, GPIO_DIR_MODE_OUT);   //output
+    GPIO_setPinConfig(GPIO_40_GPIO40);                          //GPIO
     GPIO_setPadConfig(HEARTBEAT_GPIO,GPIO_PIN_TYPE_STD);        //push pull output
     //main input relay
     GPIO_setDirectionMode(MAIN_RELAY_GPIO, GPIO_DIR_MODE_OUT);   //output
@@ -110,6 +119,12 @@ void main(void)
     GPIO_setDirectionMode(LED_2_GPIO, GPIO_DIR_MODE_OUT);
     GPIO_setPadConfig(LED_2_GPIO,GPIO_PIN_TYPE_STD);
     GPIO_writePin(LED_2_GPIO,1);
+    //disable shorted PINs
+    GPIO_setPadConfig(37,GPIO_PIN_TYPE_STD);
+    GPIO_setDirectionMode(37, GPIO_DIR_MODE_IN);
+    GPIO_setPadConfig(62,GPIO_PIN_TYPE_STD);
+    GPIO_setDirectionMode(62, GPIO_DIR_MODE_IN);
+
 
     //
     // Initialize ADCs
@@ -173,7 +188,7 @@ void main(void)
     // Initialize Reed Switch Interface
     //
     unsigned int n=0;
-    for(n=0; n<NO_CHANNELS; n++){
+    for(n=0; n<NO_DEBUG_CHANNELS; n++){
         GPIO_setDirectionMode(driver_channels[n]->enable_resonant_gpio, GPIO_DIR_MODE_OUT);   //output
         GPIO_setPadConfig(driver_channels[n]->enable_resonant_gpio,GPIO_PIN_TYPE_STD);        //push pull output
     }
@@ -426,7 +441,7 @@ void main(void)
     //
     // Initialize Outputs
     //
-    for(n=0; n<NO_CHANNELS; n++){
+    for(n=0; n<NO_DEBUG_CHANNELS; n++){
         READY_enter(n);
         driver_channels[n]->channel_state=READY;
     }
@@ -444,7 +459,7 @@ void main(void)
             //Main Relay Opening Logic
             unsigned int channel_counter=0;
             bool main_relay_active=false;
-            for(channel_counter=0; channel_counter<NO_CHANNELS; channel_counter++){
+            for(channel_counter=0; channel_counter<NO_DEBUG_CHANNELS; channel_counter++){
                 run_channel_fsm(driver_channels[channel_counter]);
                 //we enable the main relay when one channel is not in state READY anymore (e.g. when one channel requires power)
                 if(driver_channels[channel_counter]->channel_state!=READY)
@@ -455,7 +470,7 @@ void main(void)
             GPIO_writePin(LED_1_GPIO,!main_relay_active);
             //Communication Active Logic (If no communication, issue a STOP command
             if(!communication_active){
-                for(channel_counter=0; channel_counter<NO_CHANNELS; channel_counter++){
+                for(channel_counter=0; channel_counter<NO_DEBUG_CHANNELS; channel_counter++){
                     fsm_req_flags_stop[channel_counter]=1;
                 }
             }
@@ -472,7 +487,7 @@ void main(void)
             // ---
             // TODO: Filter the input reference signals
             unsigned int i=0;
-            for(i=0; i<NO_CHANNELS; i++){
+            for(i=0; i<NO_DEBUG_CHANNELS; i++){
                 update_first_order(des_duty_buck_filt+i,des_duty_buck[i]);
             }
 
@@ -483,25 +498,30 @@ void main(void)
             //compute optional reference waveform
             //#define OMEGA 2*3.14159265358979323846*5
             //float ides=sin(OMEGA*loop_counter*deltaT);
-            const unsigned int periodn=500e-3/deltaT;
-            float ides=0.0;
-            if(loop_counter%periodn<periodn/2)
-                ides=1.0;
-            else
-                ides=-1.0;
-            //regulate outputs of channels
-            // ...
+            if(loop_counter%periodn<periodn/2){
+                for(i=0; i<NO_DEBUG_CHANNELS; i++){
+                    idess[i]=idesmags[i];
+                }
+            }
+            else{
+                for(i=0; i<NO_DEBUG_CHANNELS; i++){
+                    idess[i]=-idesmags[i];
+                }
+            }
 
+            //---------------------
+            // Logging for debugging purposes
+            //---------------------
+            logcounter=(logcounter+1)%LOGSIZE;
+            currentloga[logcounter]=system_dyn_state.is[0];
+            currentloga[logcounter]=system_dyn_state.is[1];
+            currentloga[logcounter]=system_dyn_state.is[2];
 
             //---------------------
             // Control Law Execution & Output Actuation
             //---------------------
-            //set output duties for buck
-            for(i=0; i<NO_CHANNELS; i++){
-                set_duty_buck(driver_channels[i]->buck_config,(des_duty_buck_filt+i)->y);
-            }
             //set output duties for bridge [regular mode]
-            for(i=0; i<NO_CHANNELS; i++){
+            for(i=0; i<NO_DEBUG_CHANNELS; i++){
                 if(driver_channels[i]->channel_state==RUN_REGULAR){
                     #ifdef TUNE_CLOSED_LOOP
                         if(enable_waveform_debugging)
@@ -510,7 +530,7 @@ void main(void)
                             ides=0.0;
                     #endif
                     //execute the PI control low
-                    float voltage_dclink=VIN*(des_duty_buck_filt+i)->y;
+                    float voltage_dclink=vin;
                     //compute feed forward actuation term (limits [-1,1] for this duty) - feed-forward term currently not used
                     #ifdef FEED_FORWARD_ONLY
                         float act_voltage_ff=des_currents[i]*RDC;
@@ -526,10 +546,11 @@ void main(void)
                         float act_voltage_ff=0.0;
                         //compute feedback actuation term (limits [-1,1] for this duty)
                         bool output_saturated=fabsf((current_pi+i)->u)>=0.9*voltage_dclink;
+                        des_currents[i]=idess[i];
                         float act_voltage_fb=update_pid(current_pi+i,des_currents[i],system_dyn_state.is[i],output_saturated);
                     #endif
-                    float duty_ff=act_voltage_ff/voltage_dclink;
-                    float duty_fb=act_voltage_fb/(voltage_dclink);
+                    float duty_ff=act_voltage_ff/vin;
+                    float duty_fb=act_voltage_fb/vin;
                     // DEBUG
                     //duty_fb=debug_bridge_duties[i];
 
@@ -544,7 +565,7 @@ void main(void)
                 //set_duty_bridge(driver_channels[i]->bridge_config,des_duty_bridge[i]);
             }
             //set frequency for bridge [resonant mode]
-            for(i=0; i<NO_CHANNELS; i++){
+            for(i=0; i<NO_DEBUG_CHANNELS; i++){
                 if(driver_channels[i]->channel_state==RUN_RESONANT)
                     set_freq_bridge(i,des_freq_resonant_mhz[i]);
             }

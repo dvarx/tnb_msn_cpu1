@@ -34,7 +34,6 @@ struct driver_channel channelc={2,&chc_buck,&chc_bridge,READY,83};
 // channel d
 struct buck_configuration chd_buck={32,33,2,GPIO_2_EPWM2A,3,GPIO_3_EPWM2B,EPWM2_BASE,false};
 struct bridge_configuration chd_bridge={48,49,54,10,GPIO_10_EPWM6A,11,GPIO_11_EPWM6B,EPWM6_BASE,false,true};
-
 struct driver_channel channeld={3,&chd_buck,&chd_bridge,READY,71}; // TODO : resonant enable pin
 
 // channel e
@@ -47,7 +46,41 @@ struct buck_configuration chf_buck={96,98,24,GPIO_24_EPWM13A,25,GPIO_25_EPWM13B,
 struct bridge_configuration chf_bridge={52,53,56,27,GPIO_27_EPWM14B,26,GPIO_26_EPWM14A,EPWM14_BASE,false,true};
 struct driver_channel channelf={5,&chf_buck,&chf_bridge,READY,126}; // TODO : resonant enable pin
 
+
+
+//struct buck_configuration{
+//    uint32_t enable_gpio;
+//    uint32_t state_gpio;
+//    uint32_t bridge_h_pin;
+//    uint32_t bridge_h_pinconfig;
+//    uint32_t bridge_l_pin;
+//    uint32_t bridge_l_pinconfig;
+//    uint32_t epwmbase;
+//    bool is_inverted;
+//};
+
+
+// channel g
+//struct buck_configuration chf_buck={96,98,24,GPIO_24_EPWM13A,25,GPIO_25_EPWM13B,EPWM13_BASE,false};
+//struct bridge_configuration chf_bridge={52,53,56,27,GPIO_27_EPWM14B,26,GPIO_26_EPWM14A,EPWM14_BASE,false,true};
+//struct driver_channel channelf={5,&chf_buck,&chf_bridge,READY,126}; // TODO : resonant enable pin
+//
+//// channel h
+//struct buck_configuration chf_buck={96,98,24,GPIO_24_EPWM13A,25,GPIO_25_EPWM13B,EPWM13_BASE,false};
+//struct bridge_configuration chf_bridge={52,53,56,27,GPIO_27_EPWM14B,26,GPIO_26_EPWM14A,EPWM14_BASE,false,true};
+//struct driver_channel channelf={5,&chf_buck,&chf_bridge,READY,126}; // TODO : resonant enable pin
+//
+//// channel i
+//struct buck_configuration chf_buck={96,98,24,GPIO_24_EPWM13A,25,GPIO_25_EPWM13B,EPWM13_BASE,false};
+//struct bridge_configuration chf_bridge={52,53,56,27,GPIO_27_EPWM14B,26,GPIO_26_EPWM14A,EPWM14_BASE,false,true};
+//struct driver_channel channelf={5,&chf_buck,&chf_bridge,READY,126}; // TODO : resonant enable pin
+
 struct driver_channel* driver_channels[NO_CHANNELS]={&channela,&channelb,&channelc,&channeld,&channele,&channelf};
+
+
+
+
+
 
 // ---------------------
 // Main Program related globals

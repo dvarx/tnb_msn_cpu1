@@ -16,10 +16,11 @@
 #include "fbctrl.h"
 #include "comm_interface.h"
 
-#define NO_CHANNELS 6
-#define HEARTBEAT_GPIO 17
+#define NO_CHANNELS 9
+#define NO_DEBUG_CHANNELS 6
+#define HEARTBEAT_GPIO 40
 #define MAIN_RELAY_GPIO 92
-#define SLAVE_RELAY_GPIO 62
+#define SLAVE_RELAY_GPIO 66
 #define DEFAULT_RES_FREQ_MILLIHZ    10000000
 #define MINIMUM_RES_FREQ_MILLIHZ    80000
 #define LED_1_GPIO 31

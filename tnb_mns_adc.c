@@ -89,10 +89,9 @@ void initADCs(void)
 //
 void initADCSOCs(void)
 {
-    /*
     //----------------------------------------------------------------
     // ADCA Configuration
-    //  ADCA measures: [iB(A0),vD(A1),iE(A2),iDres(A3),iFres(A4),iEres(A5)]
+    //  ADCA measures: [iD(A0),iG(A1),iE(A2)]
     //----------------------------------------------------------------
     #if(EX_ADC_RESOLUTION == 12)
         ADC_setupSOC(ADCA_BASE, ADC_SOC_NUMBER0, ADC_TRIGGER_SW_ONLY,
@@ -101,38 +100,31 @@ void initADCSOCs(void)
                      ADC_CH_ADCIN1, 15);
         ADC_setupSOC(ADCA_BASE, ADC_SOC_NUMBER2, ADC_TRIGGER_SW_ONLY,
                      ADC_CH_ADCIN2, 15);
-        ADC_setupSOC(ADCA_BASE, ADC_SOC_NUMBER3, ADC_TRIGGER_SW_ONLY,
-                     ADC_CH_ADCIN3, 15);
-        ADC_setupSOC(ADCA_BASE, ADC_SOC_NUMBER4, ADC_TRIGGER_SW_ONLY,
-                     ADC_CH_ADCIN4, 15);
-        ADC_setupSOC(ADCA_BASE, ADC_SOC_NUMBER5, ADC_TRIGGER_SW_ONLY,
-                     ADC_CH_ADCIN5, 15);
     #elif(EX_ADC_RESOLUTION == 16)
         ADC_setupSOC(ADCA_BASE, ADC_SOC_NUMBER0, ADC_TRIGGER_SW_ONLY,
                      ADC_CH_ADCIN0, 64);
         ADC_setupSOC(ADCA_BASE, ADC_SOC_NUMBER1, ADC_TRIGGER_SW_ONLY,
                      ADC_CH_ADCIN1, 64);
     #endif
-    */
 
     //
-    // Set SOC4 to set the interrupt 1 flag. Enable the interrupt and make
+    // Set SOC2 to set the interrupt 1 flag. Enable the interrupt and make
     // sure its flag is cleared.
     //
-    ADC_setInterruptSource(ADCA_BASE, ADC_INT_NUMBER1, ADC_SOC_NUMBER5);
+    ADC_setInterruptSource(ADCA_BASE, ADC_INT_NUMBER1, ADC_SOC_NUMBER2);
     ADC_enableInterrupt(ADCA_BASE, ADC_INT_NUMBER1);
     ADC_clearInterruptStatus(ADCA_BASE, ADC_INT_NUMBER1);
 
     //----------------------------------------------------------------
     // ADCB Configuration
-    //  ADCB measures: [iA(B0),vA(B2),iB(B4),vB(B5),iAres(B1)]
+    //  ADCB measures: [iA(B0),iB(B4)]
     //----------------------------------------------------------------
 
     #if(EX_ADC_RESOLUTION == 12)
         ADC_setupSOC(ADCB_BASE, ADC_SOC_NUMBER0, ADC_TRIGGER_SW_ONLY,
-                     ADC_CH_ADCIN0, 200);
+                     ADC_CH_ADCIN0, 15);
         ADC_setupSOC(ADCB_BASE, ADC_SOC_NUMBER1, ADC_TRIGGER_SW_ONLY,
-                     ADC_CH_ADCIN4, 200);
+                     ADC_CH_ADCIN4, 15);
     #elif(EX_ADC_RESOLUTION == 16)
         ADC_setupSOC(ADCA_BASE, ADC_SOC_NUMBER0, ADC_TRIGGER_SW_ONLY,
                      ADC_CH_ADCIN0, 64);
@@ -148,18 +140,16 @@ void initADCSOCs(void)
     ADC_enableInterrupt(ADCB_BASE, ADC_INT_NUMBER1);
     ADC_clearInterruptStatus(ADCB_BASE, ADC_INT_NUMBER1);
 
-    /*
+
     //----------------------------------------------------------------
     // ADCC Configuration
-    //  ADCC measures: [iApeak(C0),vE(C2),iF(C3),vF(C4)]
+    //  ADCC measures: [iH(C2),iF(C3)]
     //----------------------------------------------------------------
     #if(EX_ADC_RESOLUTION == 12)
-        ADC_setupSOC(ADCC_BASE, ADC_SOC_NUMBER1, ADC_TRIGGER_SW_ONLY,
+        ADC_setupSOC(ADCC_BASE, ADC_SOC_NUMBER0, ADC_TRIGGER_SW_ONLY,
                      ADC_CH_ADCIN2, 15);
-        ADC_setupSOC(ADCC_BASE, ADC_SOC_NUMBER2, ADC_TRIGGER_SW_ONLY,
+        ADC_setupSOC(ADCC_BASE, ADC_SOC_NUMBER1, ADC_TRIGGER_SW_ONLY,
                      ADC_CH_ADCIN3, 15);
-        ADC_setupSOC(ADCC_BASE, ADC_SOC_NUMBER3, ADC_TRIGGER_SW_ONLY,
-                     ADC_CH_ADCIN4, 15);
     #elif(EX_ADC_RESOLUTION == 16)
         ADC_setupSOC(ADCC_BASE, ADC_SOC_NUMBER0, ADC_TRIGGER_SW_ONLY,
                      ADC_CH_ADCIN2, 64);
@@ -171,20 +161,22 @@ void initADCSOCs(void)
     // Set SOC1 to set the interrupt 1 flag. Enable the interrupt and make
     // sure its flag is cleared.
     //
-    ADC_setInterruptSource(ADCC_BASE, ADC_INT_NUMBER1, ADC_SOC_NUMBER3);
+    ADC_setInterruptSource(ADCC_BASE, ADC_INT_NUMBER1, ADC_SOC_NUMBER1);
     ADC_enableInterrupt(ADCC_BASE, ADC_INT_NUMBER1);
     ADC_clearInterruptStatus(ADCC_BASE, ADC_INT_NUMBER1);
 
-    */
+
 
     //----------------------------------------------------------------
     // ADCD Configuration
-    //  ADCD measures: [ipeakC(D0),ipeakB(D1),iC(D2),vC(D3),]
+    //  ADCD measures: [iC(D2),Ii(D3)]
     //----------------------------------------------------------------
 
     #if(EX_ADC_RESOLUTION == 12)
         ADC_setupSOC(ADCD_BASE, ADC_SOC_NUMBER0, ADC_TRIGGER_SW_ONLY,
-                     ADC_CH_ADCIN2, 200);
+                     ADC_CH_ADCIN2, 15);
+        ADC_setupSOC(ADCD_BASE, ADC_SOC_NUMBER1, ADC_TRIGGER_SW_ONLY,
+                     ADC_CH_ADCIN3, 15);
     #elif(EX_ADC_RESOLUTION == 16)
         ADC_setupSOC(ADCC_BASE, ADC_SOC_NUMBER0, ADC_TRIGGER_SW_ONLY,
                      ADC_CH_ADCIN2, 64);
@@ -196,7 +188,7 @@ void initADCSOCs(void)
     // Set SOC1 to set the interrupt 1 flag. Enable the interrupt and make
     // sure its flag is cleared.
     //
-    ADC_setInterruptSource(ADCD_BASE, ADC_INT_NUMBER1, ADC_SOC_NUMBER0);
+    ADC_setInterruptSource(ADCD_BASE, ADC_INT_NUMBER1, ADC_SOC_NUMBER1);
     ADC_enableInterrupt(ADCD_BASE, ADC_INT_NUMBER1);
     ADC_clearInterruptStatus(ADCD_BASE, ADC_INT_NUMBER1);
 }
@@ -211,11 +203,11 @@ void initADCSOCs(void)
  * with SENSOR_MAX_VOLT_OUTPUT either 100mV/A or 50mV/A
  * and the 1.5V correspond to the reference voltage 3.0V/2
  */
-float calib_factor_current_alpha=1.5/0.05/2048;
-float calib_factor_current_betas[]={0.0,0.0,0.0};
+float calib_factor_current_alpha=-1.5/0.05/2048;
+float calib_factor_current_betas[]={0.0,0.0,0.0,1.12,0.0,0.0,0.0,0.0,0.0};
 
 inline float conv_adc_meas_to_current_a(const uint16_t adc_output,unsigned int channelno){
-    return calib_factor_current_alpha*(float)((int16_t)adc_output-(int16_t)2048)+calib_factor_current_betas[channelno];
+    return calib_factor_current_alpha*(float)((int16_t)adc_output-(int16_t)2048)-calib_factor_current_betas[channelno];
 }
 
 
@@ -230,48 +222,39 @@ uint16_t buffer_cnt=0;
 // This function reads the analog inputs and stores them in the system_dyn_state structure
 void readAnalogInputs(void){
     // ADC A Measurements -----------------------------------------------
-    /*
-    ADC_forceMultipleSOC(ADCA_BASE, (ADC_FORCE_SOC0 | ADC_FORCE_SOC1 | ADC_FORCE_SOC2 | ADC_FORCE_SOC3| ADC_FORCE_SOC4 | ADC_FORCE_SOC5));
+    ADC_forceMultipleSOC(ADCA_BASE, (ADC_FORCE_SOC0 | ADC_FORCE_SOC1 | ADC_FORCE_SOC2));
     // Wait for ADCA to complete, then acknowledge flag
+    // ADCA measures: [iD(A0),iG(A1),iE(A2)]
     while(ADC_getInterruptStatus(ADCA_BASE, ADC_INT_NUMBER1) == false){}
-    system_dyn_state.is[3] = conv_adc_meas_to_current_a(ADC_readResult(ADCARESULT_BASE, ADC_SOC_NUMBER0));
-    system_dyn_state.vs[3] = ADC_readResult(ADCARESULT_BASE, ADC_SOC_NUMBER1);
-    system_dyn_state.is[4] = conv_adc_meas_to_current_a(ADC_readResult(ADCARESULT_BASE, ADC_SOC_NUMBER2));
-    system_dyn_state.is_res[3] = conv_adc_meas_to_current_a(ADC_readResult(ADCARESULT_BASE, ADC_SOC_NUMBER3));    // TODO : conv factor
-    system_dyn_state.is_res[5] = conv_adc_meas_to_current_a(ADC_readResult(ADCARESULT_BASE, ADC_SOC_NUMBER4));    // TODO : conv factor
-    system_dyn_state.is_res[4] = conv_adc_meas_to_current_a(ADC_readResult(ADCARESULT_BASE, ADC_SOC_NUMBER5));    // TODO : conv factor
+    system_dyn_state.is[3] = conv_adc_meas_to_current_a(ADC_readResult(ADCARESULT_BASE, ADC_SOC_NUMBER0),3);
+    system_dyn_state.is[6] = conv_adc_meas_to_current_a(ADC_readResult(ADCARESULT_BASE, ADC_SOC_NUMBER1),6);
+    system_dyn_state.is[4] = conv_adc_meas_to_current_a(ADC_readResult(ADCARESULT_BASE, ADC_SOC_NUMBER2),4);
     ADC_clearInterruptStatus(ADCA_BASE, ADC_INT_NUMBER1);
-    */
 
     // ADC B Measurements -----------------------------------------------
     ADC_forceMultipleSOC(ADCB_BASE, (ADC_FORCE_SOC0 | ADC_FORCE_SOC1));
     // Wait for ADCB to complete, then acknowledge flag
+    // ADCB measures: [iA(B0),iB(B4)]
     while(ADC_getInterruptStatus(ADCB_BASE, ADC_INT_NUMBER1) == false){}
     system_dyn_state.is[0] = conv_adc_meas_to_current_a(ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER0),0);
-    //system_dyn_state.is_res[0] = conv_adc_meas_to_current_a(ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER4));    // TODO : conv factor
-    //system_dyn_state.vs[0] = ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER1);
     system_dyn_state.is[1] = conv_adc_meas_to_current_a(ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER1),1);
-    //system_dyn_state.vs[1] = ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER3);
     ADC_clearInterruptStatus(ADCB_BASE, ADC_INT_NUMBER1);
 
     // ADC C Measurements -----------------------------------------------
-    /*
-    ADC_forceMultipleSOC(ADCC_BASE, (ADC_FORCE_SOC1 | ADC_FORCE_SOC2 | ADC_FORCE_SOC3));
+    ADC_forceMultipleSOC(ADCC_BASE, (ADC_FORCE_SOC0 | ADC_FORCE_SOC1 | ADC_FORCE_SOC2));
     // Wait for ADCC to complete, then acknowledge flag
+    // ADCC measures: [iH(C2),iF(C3)]
     while(ADC_getInterruptStatus(ADCC_BASE, ADC_INT_NUMBER1) == false){}
-    system_dyn_state.vs[4] = ADC_readResult(ADCCRESULT_BASE, ADC_SOC_NUMBER1);
-    system_dyn_state.is[5] = conv_adc_meas_to_current_a(ADC_readResult(ADCCRESULT_BASE, ADC_SOC_NUMBER2));
-    system_dyn_state.vs[5] = ADC_readResult(ADCCRESULT_BASE, ADC_SOC_NUMBER3);
+    system_dyn_state.is[7] = conv_adc_meas_to_current_a(ADC_readResult(ADCCRESULT_BASE, ADC_SOC_NUMBER0),7);
+    system_dyn_state.is[5] = conv_adc_meas_to_current_a(ADC_readResult(ADCCRESULT_BASE, ADC_SOC_NUMBER1),5);
     ADC_clearInterruptStatus(ADCC_BASE, ADC_INT_NUMBER1);
-    */
 
     // ADC D Measurements -----------------------------------------------
-    ADC_forceMultipleSOC(ADCD_BASE, (ADC_FORCE_SOC0));
+    ADC_forceMultipleSOC(ADCD_BASE, (ADC_FORCE_SOC0 | ADC_FORCE_SOC1));
     // Wait for ADCD to complete, then acknowledge flag
+    // ADCD measures: [iC(D2),Ii(D3)]
     while(ADC_getInterruptStatus(ADCD_BASE, ADC_INT_NUMBER1) == false){}
     system_dyn_state.is[2] = conv_adc_meas_to_current_a(ADC_readResult(ADCDRESULT_BASE, ADC_SOC_NUMBER0),2);
-    //system_dyn_state.vs[2] = ADC_readResult(ADCDRESULT_BASE, ADC_SOC_NUMBER1);
-    //system_dyn_state.is_res[2] = conv_adc_meas_to_current_a(ADC_readResult(ADCDRESULT_BASE, ADC_SOC_NUMBER2));  // TODO : conv factor
-    //system_dyn_state.is_res[1]= conv_adc_meas_to_current_a(ADC_readResult(ADCDRESULT_BASE, ADC_SOC_NUMBER3));   // TODO : conv factor
+    system_dyn_state.is[8] = conv_adc_meas_to_current_a(ADC_readResult(ADCDRESULT_BASE, ADC_SOC_NUMBER1),8);
     ADC_clearInterruptStatus(ADCD_BASE, ADC_INT_NUMBER1);
 }
