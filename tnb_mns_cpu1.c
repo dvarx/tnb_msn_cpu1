@@ -54,12 +54,12 @@ struct driver_channel channelg={6,&chg_buck,&chg_bridge,READY,0}; // TODO : reso
 // channel h
 struct buck_configuration chh_buck={0};
 struct bridge_configuration chh_bridge={125,53,56,16,GPIO_16_EPWM9A,17,GPIO_17_EPWM9B,EPWM9_BASE,false,true};
-struct driver_channel channelh={7,&chg_buck,&chg_bridge,READY,0}; // TODO : resonant enable pin
+struct driver_channel channelh={7,&chh_buck,&chh_bridge,READY,0}; // TODO : resonant enable pin
 
 // channel i
 struct buck_configuration chi_buck={0};
 struct bridge_configuration chi_bridge={96,53,56,24,GPIO_24_EPWM13A,25,GPIO_25_EPWM13B,EPWM13_BASE,false,true};
-struct driver_channel channeli={8,&chg_buck,&chg_bridge,READY,0}; // TODO : resonant enable pin
+struct driver_channel channeli={8,&chi_buck,&chi_bridge,READY,0}; // TODO : resonant enable pin
 
 
 struct driver_channel* driver_channels[NO_CHANNELS]={&channela,&channelb,&channelc,&channeld,&channele,&channelf,&channelg,&channelh,&channeli};
@@ -90,9 +90,15 @@ struct pi_controller current_pi[NO_CHANNELS]={
                                  {CTRL_KP,CTRL_KI,0.0,0.0,0.0,0.0},
                                  {CTRL_KP,CTRL_KI,0.0,0.0,0.0,0.0},
                                  {CTRL_KP,CTRL_KI,0.0,0.0,0.0,0.0},
+                                 {CTRL_KP,CTRL_KI,0.0,0.0,0.0,0.0},
+                                 {CTRL_KP,CTRL_KI,0.0,0.0,0.0,0.0},
+                                 {CTRL_KP,CTRL_KI,0.0,0.0,0.0,0.0},
                                  {CTRL_KP,CTRL_KI,0.0,0.0,0.0,0.0}
 };
 struct first_order des_duty_buck_filt[NO_CHANNELS]={
+                                 {1.0/(1.0+2.0*TAU_BUCK_DUTY/deltaT),1.0/(1.0+2.0*TAU_BUCK_DUTY/deltaT),-(1.0-2.0*TAU_BUCK_DUTY/deltaT)/(1.0+2.0*TAU_BUCK_DUTY/deltaT),0,0,0},
+                                 {1.0/(1.0+2.0*TAU_BUCK_DUTY/deltaT),1.0/(1.0+2.0*TAU_BUCK_DUTY/deltaT),-(1.0-2.0*TAU_BUCK_DUTY/deltaT)/(1.0+2.0*TAU_BUCK_DUTY/deltaT),0,0,0},
+                                 {1.0/(1.0+2.0*TAU_BUCK_DUTY/deltaT),1.0/(1.0+2.0*TAU_BUCK_DUTY/deltaT),-(1.0-2.0*TAU_BUCK_DUTY/deltaT)/(1.0+2.0*TAU_BUCK_DUTY/deltaT),0,0,0},
                                  {1.0/(1.0+2.0*TAU_BUCK_DUTY/deltaT),1.0/(1.0+2.0*TAU_BUCK_DUTY/deltaT),-(1.0-2.0*TAU_BUCK_DUTY/deltaT)/(1.0+2.0*TAU_BUCK_DUTY/deltaT),0,0,0},
                                  {1.0/(1.0+2.0*TAU_BUCK_DUTY/deltaT),1.0/(1.0+2.0*TAU_BUCK_DUTY/deltaT),-(1.0-2.0*TAU_BUCK_DUTY/deltaT)/(1.0+2.0*TAU_BUCK_DUTY/deltaT),0,0,0},
                                  {1.0/(1.0+2.0*TAU_BUCK_DUTY/deltaT),1.0/(1.0+2.0*TAU_BUCK_DUTY/deltaT),-(1.0-2.0*TAU_BUCK_DUTY/deltaT)/(1.0+2.0*TAU_BUCK_DUTY/deltaT),0,0,0},

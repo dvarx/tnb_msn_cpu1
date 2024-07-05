@@ -23,10 +23,10 @@ struct tnb_mns_msg{
     uint16_t desCurrentsRes[NO_CHANNELS];   //currents in [A]
     uint16_t desDuties[NO_CHANNELS];
     uint32_t desFreqs[NO_CHANNELS];         //frequencies in [mHz]
-    uint8_t stp_flg_byte;
-    uint8_t buck_flg_byte;
-    uint8_t regen_flg_byte;
-    uint8_t  resen_flg_byte;
+    uint16_t stp_flg_byte;
+    uint16_t buck_flg_byte;
+    uint16_t regen_flg_byte;
+    uint16_t  resen_flg_byte;
 };
 
 struct tnb_mns_msg_c2000{

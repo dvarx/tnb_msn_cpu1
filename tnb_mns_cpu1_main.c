@@ -72,8 +72,8 @@ float currentloga[LOGSIZE]={0};
 float currentlogb[LOGSIZE]={0};
 float currentlogc[LOGSIZE]={0};
 uint16_t logcounter=0;
-float idess[]={0.0,0.0,0.0,0.0,0.0,0.0};
-float idesmags[]={0.0,0.0,0.0,0.0,0.0,0.0};
+float idess[NO_CHANNELS]={0};
+float idesmags[NO_CHANNELS]={0};
 float vin=60.0;
 unsigned int periodn=10000;
 
@@ -203,11 +203,11 @@ void main(void)
     //
     // Initialize Reed Switch Interface
     //
-    unsigned int n=0;
-    for(n=0; n<NO_CHANNELS; n++){
-        GPIO_setDirectionMode(driver_channels[n]->enable_resonant_gpio, GPIO_DIR_MODE_OUT);   //output
-        GPIO_setPadConfig(driver_channels[n]->enable_resonant_gpio,GPIO_PIN_TYPE_STD);        //push pull output
-    }
+//    unsigned int n=0;
+//    for(n=0; n<NO_CHANNELS; n++){
+//        GPIO_setDirectionMode(driver_channels[n]->enable_resonant_gpio, GPIO_DIR_MODE_OUT);   //output
+//        GPIO_setPadConfig(driver_channels[n]->enable_resonant_gpio,GPIO_PIN_TYPE_STD);        //push pull output
+//    }
 
     //
     // Setup main control task interrupt
@@ -457,6 +457,7 @@ void main(void)
     //
     // Initialize Outputs
     //
+    unsigned int n=0;
     for(n=0; n<NO_CHANNELS; n++){
         READY_enter(n);
         driver_channels[n]->channel_state=READY;
@@ -559,13 +560,11 @@ void main(void)
                         float act_voltage_ff=0.0;
                         //compute feedback actuation term (limits [-1,1] for this duty)
                         bool output_saturated=fabsf((current_pi+i)->u)>=0.9*voltage_dclink;
-                        //des_currents[i]=idess[i];
+                        des_currents[i]=idess[i];
                         float act_voltage_fb=update_pid(current_pi+i,des_currents[i],system_dyn_state.is[i],output_saturated);
                     #endif
                     float duty_ff=act_voltage_ff/vin;
                     float duty_fb=act_voltage_fb/vin;
-                    // DEBUG
-                    //duty_fb=debug_bridge_duties[i];
 
                     //convert normalized duty cycle, limit it and apply
                     float duty_bridge=0.5*(1+(duty_ff+duty_fb));

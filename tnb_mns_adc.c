@@ -204,7 +204,7 @@ void initADCSOCs(void)
  * and the 1.5V correspond to the reference voltage 3.0V/2
  */
 float calib_factor_current_alpha=-1.5/0.05/2048;
-float calib_factor_current_betas[]={0.0,0.0,0.0,1.12,0.0,0.0,0.0,0.0,0.0};
+float calib_factor_current_betas[]={0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
 
 inline float conv_adc_meas_to_current_a(const uint16_t adc_output,unsigned int channelno){
     return calib_factor_current_alpha*(float)((int16_t)adc_output-(int16_t)2048)-calib_factor_current_betas[channelno];
@@ -243,18 +243,18 @@ void readAnalogInputs(void){
     // ADC C Measurements -----------------------------------------------
     ADC_forceMultipleSOC(ADCC_BASE, (ADC_FORCE_SOC0 | ADC_FORCE_SOC1 | ADC_FORCE_SOC2));
     // Wait for ADCC to complete, then acknowledge flag
-    // ADCC measures: [iH(C2),iF(C3)]
+    // ADCC measures: [iI(C2),iF(C3)]
     while(ADC_getInterruptStatus(ADCC_BASE, ADC_INT_NUMBER1) == false){}
-    system_dyn_state.is[7] = conv_adc_meas_to_current_a(ADC_readResult(ADCCRESULT_BASE, ADC_SOC_NUMBER0),7);
+    system_dyn_state.is[8] = conv_adc_meas_to_current_a(ADC_readResult(ADCCRESULT_BASE, ADC_SOC_NUMBER0),7);
     system_dyn_state.is[5] = conv_adc_meas_to_current_a(ADC_readResult(ADCCRESULT_BASE, ADC_SOC_NUMBER1),5);
     ADC_clearInterruptStatus(ADCC_BASE, ADC_INT_NUMBER1);
 
     // ADC D Measurements -----------------------------------------------
     ADC_forceMultipleSOC(ADCD_BASE, (ADC_FORCE_SOC0 | ADC_FORCE_SOC1));
     // Wait for ADCD to complete, then acknowledge flag
-    // ADCD measures: [iC(D2),Ii(D3)]
+    // ADCD measures: [iC(D2),iH(D3)]
     while(ADC_getInterruptStatus(ADCD_BASE, ADC_INT_NUMBER1) == false){}
     system_dyn_state.is[2] = conv_adc_meas_to_current_a(ADC_readResult(ADCDRESULT_BASE, ADC_SOC_NUMBER0),2);
-    system_dyn_state.is[8] = conv_adc_meas_to_current_a(ADC_readResult(ADCDRESULT_BASE, ADC_SOC_NUMBER1),8);
+    system_dyn_state.is[7] = conv_adc_meas_to_current_a(ADC_readResult(ADCDRESULT_BASE, ADC_SOC_NUMBER1),8);
     ADC_clearInterruptStatus(ADCD_BASE, ADC_INT_NUMBER1);
 }
