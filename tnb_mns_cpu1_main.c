@@ -512,6 +512,7 @@ void main(void)
             //compute optional reference waveform
             //#define OMEGA 2*3.14159265358979323846*5
             //float ides=sin(OMEGA*loop_counter*deltaT);
+            #ifdef RECTANGULAR_TEST_CURRENTS
             if(loop_counter%periodn<periodn/2){
                 for(i=0; i<NO_CHANNELS; i++){
                     idess[i]=idesmags[i];
@@ -522,6 +523,7 @@ void main(void)
                     idess[i]=-idesmags[i];
                 }
             }
+            #endif
 
             //---------------------
             // Logging for debugging purposes
@@ -560,7 +562,9 @@ void main(void)
                         float act_voltage_ff=0.0;
                         //compute feedback actuation term (limits [-1,1] for this duty)
                         bool output_saturated=fabsf((current_pi+i)->u)>=0.9*voltage_dclink;
+                        #ifdef RECTANGULAR_TEST_CURRENTS
                         des_currents[i]=idess[i];
+                        #endif
                         float act_voltage_fb=update_pid(current_pi+i,des_currents[i],system_dyn_state.is[i],output_saturated);
                     #endif
                     float duty_ff=act_voltage_ff/vin;

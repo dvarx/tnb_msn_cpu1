@@ -25,6 +25,8 @@
  * Use this configuration if the closed-loop tuning has been done
  */
 #define CLOSED_LOOP
+//set this compiler macro to track rectangular currents for tuning
+//#define RECTANGULAR_TEST_CURRENTS
 
 
 //constants related to output inductor current PI controller
