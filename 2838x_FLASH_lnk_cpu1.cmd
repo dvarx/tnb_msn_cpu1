@@ -77,7 +77,7 @@ SECTIONS
    .bss             : >> RAMGS5 | RAMGS6 | RAMGS7 | RAMGS8 | RAMGS9
    .bss:output      : > RAMLS3
    .bss:cio         : > RAMLS5
-   .data            : > RAMLS5 | RAMLS6 | RAMLS7
+   .data            : > RAMLS5 | RAMLS6 | RAMLS7 | RAMGS8 | RAMGS9 | RAMGS10
    .sysmem          : > RAMLS5
    /* Initalized sections go in Flash */
    .const           : > FLASH5, ALIGN(8)
