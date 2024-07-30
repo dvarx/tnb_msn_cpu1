@@ -107,7 +107,13 @@ struct first_order des_duty_buck_filt[NO_CHANNELS]={
                                  {1.0/(1.0+2.0*TAU_BUCK_DUTY/deltaT),1.0/(1.0+2.0*TAU_BUCK_DUTY/deltaT),-(1.0-2.0*TAU_BUCK_DUTY/deltaT)/(1.0+2.0*TAU_BUCK_DUTY/deltaT),0,0,0}
 };
 uint32_t des_freq_resonant_mhz[NO_CHANNELS]={DEFAULT_RES_FREQ_MILLIHZ,DEFAULT_RES_FREQ_MILLIHZ,DEFAULT_RES_FREQ_MILLIHZ};
+float des_currents_res[NO_CHANNELS]={0.4};
 struct tnb_mns_msg_c2000 ipc_tnb_mns_msg_c2000;
+#pragma DATA_SECTION(ipc_tnb_mns_state_msg, "MSGRAM_CPU_TO_CM")
+struct tnb_mns_msg_sysstate ipc_tnb_mns_state_msg;
+
+
+
 // ------------------------------------------------------------------------------------
 // Main CPU Timer Related Functions
 // ------------------------------------------------------------------------------------
@@ -261,24 +267,24 @@ __interrupt void IPC_ISR0()
                 //currents are sent in units of [mA]
                 des_currents[i]=(float)(ipc_tnb_mns_msg_c2000.desCurrents[i])*1e-3;
                 des_duty_buck[i]=(float)(ipc_tnb_mns_msg_c2000.desDuties[i])*(1.0/(float)(UINT16_MAX));
+                des_currents_res[i]=(float)(ipc_tnb_mns_msg_c2000.desCurrentsRes[i])*1e-3;
+
             }
             else{
                 des_currents[i]=0.0;
                 des_duty_buck[i]=0.0;
+                des_currents_res[i]=0.4;
             }
         }
-        //check frequencies and set them
-        //changing the resonant frequency is only allowed in the RUN_RESONANT state
-        for(i=0; i<NO_CHANNELS; i++){
-            if(driver_channels[i]->channel_state!=RUN_RESONANT)
-                des_freq_resonant_mhz[i]=DEFAULT_RES_FREQ_MILLIHZ;
-            else{
-                if(ipc_tnb_mns_msg_c2000.desFreqs[i]<MINIMUM_RES_FREQ_MILLIHZ)
-                    des_freq_resonant_mhz[i]=MINIMUM_RES_FREQ_MILLIHZ;
-                else
-                    des_freq_resonant_mhz[i]=(uint32_t)(ipc_tnb_mns_msg_c2000.desFreqs[i]);
-            }
+        //JECB : write the systems dynamics to the system dynamic variable here
+        unsigned int channelno=0;
+        for(channelno=0; channelno<NO_CHANNELS; channelno++){
+            ipc_tnb_mns_state_msg.states[channelno]=driver_channels[channelno]->channel_state;
         }
+        IPC_sendCommand(IPC_CPU1_L_CM_R, IPC_FLAG0, IPC_ADDR_CORRECTION_ENABLE,
+                        IPC_MSG_NEW_MSG, &ipc_tnb_mns_state_msg, sizeof(ipc_tnb_mns_state_msg));
+
+
         //set the communication_active variable
         communication_active=true;
         //reset the timer

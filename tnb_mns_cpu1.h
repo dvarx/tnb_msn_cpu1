@@ -112,6 +112,7 @@ extern uint32_t des_freq_resonant_mhz[NO_CHANNELS];     //desired frequencies fo
 extern struct first_order des_duty_buck_filt[NO_CHANNELS];
 extern struct pi_controller current_pi[NO_CHANNELS];
 extern struct tnb_mns_msg ipc_tnb_mns_msg;
+extern struct tnb_mns_msg_sysstate ipc_tnb_mns_state_msg;
 extern bool communication_active;                       //variable indicates whether there is a TCP connection active (true if a package was received in the last 200ms)
 
 // ---------------------

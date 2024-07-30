@@ -210,6 +210,10 @@ inline float conv_adc_meas_to_current_a(const uint16_t adc_output,unsigned int c
     return calib_factor_current_alpha*(float)((int16_t)adc_output-(int16_t)2048)-calib_factor_current_betas[channelno];
 }
 
+inline int16_t conv_float_ampere_to_int_milliampere(const float current){
+    return (int16_t)(current*1000.0);
+}
+
 
 #define BUFFER_NO 512
 uint16_t buffer_i0s[BUFFER_NO];
@@ -257,4 +261,8 @@ void readAnalogInputs(void){
     system_dyn_state.is[2] = conv_adc_meas_to_current_a(ADC_readResult(ADCDRESULT_BASE, ADC_SOC_NUMBER0),2);
     system_dyn_state.is[7] = conv_adc_meas_to_current_a(ADC_readResult(ADCDRESULT_BASE, ADC_SOC_NUMBER1),8);
     ADC_clearInterruptStatus(ADCD_BASE, ADC_INT_NUMBER1);
+
+    unsigned int channelno=0;
+    for(channelno=0; channelno<NO_CHANNELS; channelno++)
+        ipc_tnb_mns_state_msg.currents[channelno] = conv_float_ampere_to_int_milliampere(system_dyn_state.is[channelno]);
 }

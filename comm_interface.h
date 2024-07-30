@@ -23,10 +23,10 @@ struct tnb_mns_msg{
     uint16_t desCurrentsRes[NO_CHANNELS];   //currents in [A]
     uint16_t desDuties[NO_CHANNELS];
     uint32_t desFreqs[NO_CHANNELS];         //frequencies in [mHz]
-    uint16_t stp_flg_byte;
-    uint16_t buck_flg_byte;
-    uint16_t regen_flg_byte;
-    uint16_t  resen_flg_byte;
+    uint8_t stp_flg_byte;
+    uint8_t buck_flg_byte;
+    uint8_t regen_flg_byte;
+    uint8_t  resen_flg_byte;
 };
 
 struct tnb_mns_msg_c2000{
@@ -38,6 +38,16 @@ struct tnb_mns_msg_c2000{
     uint16_t buck_flg_byte;
     uint16_t regen_flg_byte;
     uint16_t  resen_flg_byte;
+};
+
+
+//struct for receiving the state of the TNB MNS system
+struct tnb_mns_msg_sysstate{
+    uint16_t states[NO_CHANNELS];
+    int16_t currents[NO_CHANNELS];          // [mA]
+    uint16_t duties[NO_CHANNELS];
+    uint32_t freqs[NO_CHANNELS];
+    int16_t currents_res[NO_CHANNELS];      // [mA]
 };
 
 
