@@ -67,11 +67,11 @@
 bool run_main_control_task=false;
 bool enable_waveform_debugging=false;
 
-#define LOGSIZE 1024
-float currentloga[LOGSIZE]={0};
-float currentlogb[LOGSIZE]={0};
-float currentlogc[LOGSIZE]={0};
-uint16_t logcounter=0;
+#define DBG_LOGSIZE 2048
+uint16_t dbg_logcounter=0;
+float dbg_currentlog[DBG_LOGSIZE];
+uint8_t dbg_enablelog=1;
+uint8_t dbg_channeltosample=0;
 float idess[NO_CHANNELS]={0};
 float idesmags[NO_CHANNELS]={0};
 float vin=60.0;
@@ -175,8 +175,12 @@ void main(void)
     EPWM_disablePhaseShiftLoad(driver_channels[0]->bridge_config->epwmbase);
     //set phase shift register to zero
     EPWM_setPhaseShift(driver_channels[0]->bridge_config->epwmbase, 0);
-    //Hint : when channel 1,2,3,4 or 5 enter resonant mode, their pwm counter will be synchronized to channel 0
-    // channel 0 always needs to be in resonant mode if one of the other coils is in resonant mode
+    //synchronize all channel to channel 0
+    unsigned int channelno=0;
+    for(channelno=1; channelno< NO_CHANNELS; channelno++){
+        synchronize_pwm_tochannel0(driver_channels,channelno);
+    }
+
 
     //
     // Enable Half Bridges
@@ -504,6 +508,10 @@ void main(void)
             // ---
             // TODO: Filter the input reference signals
             unsigned int i=0;
+            if(dbg_enablelog){
+                dbg_logcounter=(dbg_logcounter+1)%DBG_LOGSIZE;
+                dbg_currentlog[dbg_logcounter]=system_dyn_state.is[dbg_channeltosample];
+            }
 
 
             //---------------------
@@ -524,14 +532,6 @@ void main(void)
                 }
             }
             #endif
-
-            //---------------------
-            // Logging for debugging purposes
-            //---------------------
-            logcounter=(logcounter+1)%LOGSIZE;
-            currentloga[logcounter]=system_dyn_state.is[0];
-            currentloga[logcounter]=system_dyn_state.is[1];
-            currentloga[logcounter]=system_dyn_state.is[2];
 
             //---------------------
             // Control Law Execution & Output Actuation
@@ -566,6 +566,7 @@ void main(void)
                         des_currents[i]=idess[i];
                         #endif
                         float act_voltage_fb=update_pid(current_pi+i,des_currents[i],system_dyn_state.is[i],output_saturated);
+                        //float act_voltage_fb=RDC*des_currents[i];
                     #endif
                     float duty_ff=act_voltage_ff/vin;
                     float duty_fb=act_voltage_fb/vin;

@@ -65,7 +65,7 @@ void setup_pinmux_config_bridge(const struct bridge_configuration* config){
     setup_epwm_deadband(config->epwmbase);
     //clock prescaling results in a PWM clock of around 50kHz
     EPWM_setClockPrescaler(config->epwmbase,
-                           EPWM_CLOCK_DIVIDER_1,
+                           EPWM_CLOCK_DIVIDER_2,
                            EPWM_HSCLOCK_DIVIDER_1);
 }
 
@@ -134,6 +134,7 @@ void init_epwm(uint32_t base,bool is_buck)
     }
     else{
         EPWM_setCounterCompareValue(base, EPWM_COUNTER_COMPARE_A, EPWM_TIMER_TBPRD_BRIDGE/2);
+        EPWM_setCounterCompareValue(base, EPWM_COUNTER_COMPARE_B, EPWM_TIMER_TBPRD_BRIDGE/2);
     }
 
     //
@@ -143,6 +144,12 @@ void init_epwm(uint32_t base,bool is_buck)
     EPWM_setActionQualifierAction(base,EPWM_AQ_OUTPUT_A,EPWM_AQ_OUTPUT_LOW,EPWM_AQ_OUTPUT_ON_TIMEBASE_UP_CMPA);
     EPWM_setActionQualifierAction(base,EPWM_AQ_OUTPUT_A,EPWM_AQ_OUTPUT_NO_CHANGE,EPWM_AQ_OUTPUT_ON_TIMEBASE_PERIOD);
     EPWM_setActionQualifierAction(base,EPWM_AQ_OUTPUT_A,EPWM_AQ_OUTPUT_HIGH,EPWM_AQ_OUTPUT_ON_TIMEBASE_DOWN_CMPA);
+
+    // enable ADC triggering for EPWM module <base>.
+    EPWM_setADCTriggerSource(base,EPWM_SOC_A,EPWM_SOC_TBCTR_PERIOD);
+    //EPWM_setADCTriggerSource(base,EPWM_SOC_A,EPWM_SOC_TBCTR_ZERO);
+    EPWM_enableADCTrigger(base,EPWM_SOC_A);
+    EPWM_setADCTriggerEventPrescale(base,EPWM_SOC_A,1);
 }
 
 void setup_epwm_deadband(uint32_t base)
@@ -157,8 +164,8 @@ void setup_epwm_deadband(uint32_t base)
     // Set the RED and FED values
     //
     // TODO : The constant value of 40 here sets the interlock of the buck stage to around 400ns, might need to adjust / optimize this at some point
-    EPWM_setFallingEdgeDelayCount(base, 60);
-    EPWM_setRisingEdgeDelayCount(base, 60);
+    EPWM_setFallingEdgeDelayCount(base, 20);
+    EPWM_setRisingEdgeDelayCount(base, 20);
 
     //
     // Invert only the Falling Edge delayed output (AHC)
