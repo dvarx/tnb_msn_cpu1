@@ -144,13 +144,15 @@ void initADCSOCs(void)
 
     //----------------------------------------------------------------
     // ADCC Configuration
-    //  ADCC measures: [iH(C2),iF(C3)]
+    //  ADCC measures: [iH(C2),iF(C3),vDC1(C5)]
     //----------------------------------------------------------------
     #if(EX_ADC_RESOLUTION == 12)
         ADC_setupSOC(ADCC_BASE, ADC_SOC_NUMBER0, ADC_TRIGGER_EPWM9_SOCA,
                      ADC_CH_ADCIN2, 15);
         ADC_setupSOC(ADCC_BASE, ADC_SOC_NUMBER1, ADC_TRIGGER_EPWM14_SOCA,
                      ADC_CH_ADCIN3, 15);
+        ADC_setupSOC(ADCC_BASE, ADC_SOC_NUMBER2, ADC_TRIGGER_EPWM14_SOCA,
+                             ADC_CH_ADCIN5, 15);
     #elif(EX_ADC_RESOLUTION == 16)
         ADC_setupSOC(ADCC_BASE, ADC_SOC_NUMBER0, ADC_TRIGGER_SW_ONLY,
                      ADC_CH_ADCIN2, 64);
@@ -170,7 +172,7 @@ void initADCSOCs(void)
 
     //----------------------------------------------------------------
     // ADCD Configuration
-    //  ADCD measures: [iC(D2),Ii(D3)]
+    //  ADCD measures: [iC(D2),Ii(D3),VDC2(D4),VDC3(D5)]
     //----------------------------------------------------------------
 
     #if(EX_ADC_RESOLUTION == 12)
@@ -178,6 +180,10 @@ void initADCSOCs(void)
                      ADC_CH_ADCIN2, 15);
         ADC_setupSOC(ADCD_BASE, ADC_SOC_NUMBER1, ADC_TRIGGER_EPWM13_SOCA,
                      ADC_CH_ADCIN3, 15);
+        ADC_setupSOC(ADCD_BASE, ADC_SOC_NUMBER2, ADC_TRIGGER_EPWM13_SOCA,
+                     ADC_CH_ADCIN4, 15);
+        ADC_setupSOC(ADCD_BASE, ADC_SOC_NUMBER3, ADC_TRIGGER_EPWM13_SOCA,
+                     ADC_CH_ADCIN5, 15);
     #elif(EX_ADC_RESOLUTION == 16)
         ADC_setupSOC(ADCC_BASE, ADC_SOC_NUMBER0, ADC_TRIGGER_SW_ONLY,
                      ADC_CH_ADCIN2, 64);
@@ -209,6 +215,12 @@ float calib_factor_current_betas[]={0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
 
 inline float conv_adc_meas_to_current_a(const uint16_t adc_output,unsigned int channelno){
     return calib_factor_current_alpha*(float)((int16_t)adc_output-(int16_t)2048)-calib_factor_current_betas[channelno];
+}
+
+float calib_factor_dclinkvoltage_alpha=0.13355592;
+float calib_factor_dclinkvoltage_beta=-1739;
+inline float conv_adc_meas_to_dcvoltage_v(const uint16_t adc_output){
+    return calib_factor_dclinkvoltage_alpha*(float)((int16_t)adc_output+calib_factor_dclinkvoltage_beta);
 }
 
 inline int16_t conv_float_ampere_to_int_milliampere(const float current){
@@ -251,6 +263,7 @@ void readAnalogInputs(void){
 //    while(ADC_getInterruptStatus(ADCC_BASE, ADC_INT_NUMBER1) == false){}
     system_dyn_state.is[8] = conv_adc_meas_to_current_a(ADC_readResult(ADCCRESULT_BASE, ADC_SOC_NUMBER0),7);
     system_dyn_state.is[5] = conv_adc_meas_to_current_a(ADC_readResult(ADCCRESULT_BASE, ADC_SOC_NUMBER1),5);
+    system_dyn_state.dc_link_voltages[0] = conv_adc_meas_to_dcvoltage_v(ADC_readResult(ADCCRESULT_BASE, ADC_SOC_NUMBER2));
 
     // ADC D Measurements -----------------------------------------------
 //    ADC_forceMultipleSOC(ADCD_BASE, (ADC_FORCE_SOC0 | ADC_FORCE_SOC1));
@@ -259,9 +272,16 @@ void readAnalogInputs(void){
 //    while(ADC_getInterruptStatus(ADCD_BASE, ADC_INT_NUMBER1) == false){}
     system_dyn_state.is[2] = conv_adc_meas_to_current_a(ADC_readResult(ADCDRESULT_BASE, ADC_SOC_NUMBER0),2);
     system_dyn_state.is[7] = conv_adc_meas_to_current_a(ADC_readResult(ADCDRESULT_BASE, ADC_SOC_NUMBER1),8);
+    system_dyn_state.dc_link_voltages[1] = conv_adc_meas_to_dcvoltage_v(ADC_readResult(ADCCRESULT_BASE, ADC_SOC_NUMBER2));
+    system_dyn_state.dc_link_voltages[2] = conv_adc_meas_to_dcvoltage_v(ADC_readResult(ADCCRESULT_BASE, ADC_SOC_NUMBER3));
 //    ADC_clearInterruptStatus(ADCD_BASE, ADC_INT_NUMBER1);
 
+    //JECB: update system state
     unsigned int channelno=0;
-    for(channelno=0; channelno<NO_CHANNELS; channelno++)
+    for(channelno=0; channelno<NO_CHANNELS; channelno++){
         ipc_tnb_mns_state_msg.currents[channelno] = conv_float_ampere_to_int_milliampere(system_dyn_state.is[channelno]);
+    }
+    ipc_tnb_mns_state_msg.dclink_voltages[0]=system_dyn_state.dc_link_voltages[0];
+    ipc_tnb_mns_state_msg.dclink_voltages[1]=system_dyn_state.dc_link_voltages[1];
+    ipc_tnb_mns_state_msg.dclink_voltages[2]=system_dyn_state.dc_link_voltages[2];
 }

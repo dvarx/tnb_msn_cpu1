@@ -57,6 +57,7 @@ struct system_dynamic_state{
     float is[NO_CHANNELS];
     float vs[NO_CHANNELS];
     float is_res[NO_CHANNELS];
+    float dc_link_voltages[3];
 };
 
 enum driver_channel_state {READY=0,BUCK_ENABLED=1,INIT_REGULAR=2,RUN_REGULAR=3,INIT_RESONANT=4,RUN_RESONANT=5,FAULT=6,TERMINATE_RESONANT=7,TERMINATE_REGULAR=8};

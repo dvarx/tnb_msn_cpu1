@@ -69,13 +69,15 @@ bool enable_waveform_debugging=false;
 
 #define DBG_LOGSIZE 2048
 uint16_t dbg_logcounter=0;
-float dbg_currentlog[DBG_LOGSIZE];
+float dbg_voltlog[DBG_LOGSIZE];
 uint8_t dbg_enablelog=1;
 uint8_t dbg_channeltosample=0;
 float idess[NO_CHANNELS]={0};
 float idesmags[NO_CHANNELS]={0};
 float vin=60.0;
+float dclinkvoltsfilt[3]={0};
 unsigned int periodn=10000;
+#define MAX_DC_LINK_VOLTAGE 120
 
 void main(void)
 {
@@ -509,10 +511,18 @@ void main(void)
             // TODO: Filter the input reference signals
             unsigned int i=0;
             if(dbg_enablelog){
+                for(channel_counter=0; channel_counter<3; channel_counter++){
+                    dclinkvoltsfilt[channel_counter]=0.75*dclinkvoltsfilt[channel_counter]+0.25*system_dyn_state.dc_link_voltages[channel_counter];
+                }
                 dbg_logcounter=(dbg_logcounter+1)%DBG_LOGSIZE;
-                dbg_currentlog[dbg_logcounter]=system_dyn_state.is[dbg_channeltosample];
+                dbg_voltlog[dbg_logcounter]=dclinkvoltsfilt[0];
             }
-
+            //shut down if DCLINKVOLT too high
+            if((dclinkvoltsfilt[0]>MAX_DC_LINK_VOLTAGE)||(dclinkvoltsfilt[1]>MAX_DC_LINK_VOLTAGE)||(dclinkvoltsfilt[2]>MAX_DC_LINK_VOLTAGE)){
+                for(channel_counter=0; channel_counter<NO_CHANNELS; channel_counter++){
+                    fsm_req_flags_stop[channel_counter]=1;
+                }
+            }
 
             //---------------------
             // Control Law Execution

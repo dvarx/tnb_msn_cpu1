@@ -47,7 +47,7 @@ struct tnb_mns_msg_sysstate{
     int16_t currents[NO_CHANNELS];          // [mA]
     uint16_t duties[NO_CHANNELS];
     uint32_t freqs[NO_CHANNELS];
-    int16_t currents_res[NO_CHANNELS];      // [mA]
+    int16_t dclink_voltages[NO_CHANNELS];      // [mA]
 };
 
 
