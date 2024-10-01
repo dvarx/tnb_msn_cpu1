@@ -58,9 +58,11 @@ void run_channel_fsm(struct driver_channel* channel){
                     channel->channel_state=INIT_REGULAR;
                 }
                 else if(fsm_req_flags_run_resonant[channel->channel_no]){
-                    BUCK_ENABLED_exit(n);
-                    INIT_RESONANT_RUN_enter(n);
-                    channel->channel_state=INIT_RESONANT;
+                    //we do not use the run_resonant state in this branch
+//                    BUCK_ENABLED_exit(n);
+//                    INIT_RESONANT_RUN_enter(n);
+//                    channel->channel_state=INIT_RESONANT;
+                    break;
                 }
                 else{
                     BUCK_ENABLED_during(n);
@@ -193,7 +195,7 @@ void RUNNING_REGULAR_enter(uint8_t channelno){
     //enable buck
     GPIO_writePin(driver_channels[channelno]->buck_config->enable_gpio,DRIVER_ENABLE_POLARITY);
     //configure & enable bridge
-    setup_pinmux_config_bridge(driver_channels[channelno]->bridge_config,channelno);
+    //setup_pinmux_config_bridge(driver_channels[channelno]->bridge_config,channelno);
     GPIO_writePin(driver_channels[channelno]->bridge_config->enable_gpio,DRIVER_ENABLE_POLARITY);
     //reset PID controller of the channel for regular mode here
     reset_pid(current_pi+channelno);

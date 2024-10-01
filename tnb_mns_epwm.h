@@ -31,4 +31,6 @@ void set_duty_bridge(const struct bridge_configuration*,double);
 //enables or disables the associated half bridge
 void set_enabled(void*,bool,bool);
 
+void synchronize_pwm_to_epwm12(struct driver_channel**, const unsigned int);
+
 #endif /* TNB_MNS_EPWM_H_ */

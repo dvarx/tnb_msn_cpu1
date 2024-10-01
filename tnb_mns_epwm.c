@@ -230,6 +230,41 @@ void set_enabled(void* config,bool is_buck,bool enable){
     }
 }
 
+/*
+void setup_phase_control(struct driver_channel** channels,const float* phaseoffsets){
+    //phaseoffsets: 5 phase offsets relative to phase 0
+
+    // TODO : Implement phase shift load and synchronization
+    uint16_t phase1=2*EPWM_TIMER_TBPRD_BRIDGE*phase1_in;
+    uint16_t phase2=2*EPWM_TIMER_TBPRD_BRIDGE*phase2_in;
+
+    // -- Channel 0 Setup
+    //enable sync output of EPWM of channel 0, sync output will be generated when timer reaches zero
+    EPWM_enableSyncOutPulseSource(channels[0]->bridge_config->epwmbase,EPWM_SYNCOUTEN_ZEROEN);
+    //channel 0 does not do a phase shift load
+    EPWM_disablePhaseShiftLoad(channels[0]->bridge_config->epwmbase);
+    //set phase shift register to zero
+    EPWM_setPhaseShift(channels[0]->bridge_config->epwmbase, 0);
+    // -- Channel 1 Setup
+    //set the sync input source to EPWM7 (the EPWM generator of channel bridge 0)
+    EPWM_setSyncInPulseSource(channels[1]->bridge_config->epwmbase,EPWM_SYNC_IN_PULSE_SRC_SYNCOUT_EPWM7);
+    //enable phase shift load for channel 1
+    EPWM_enablePhaseShiftLoad(channels[1]->bridge_config->epwmbase);
+    //set phase shift register
+    EPWM_setPhaseShift(channels[1]->bridge_config->epwmbase, phaseoffsets[0]);
+}
+*/
+
+void synchronize_pwm_to_epwm12(struct driver_channel** channels, const unsigned int channel_to_sync){
+    //we use EPWM12 as a synchronization source
+    EPWM_setSyncInPulseSource(channels[channel_to_sync]->bridge_config->epwmbase,EPWM_SYNC_IN_PULSE_SRC_SYNCOUT_EPWM12);
+    //enable phase shift load for channel <channel_to_sync>
+    EPWM_enablePhaseShiftLoad(channels[channel_to_sync]->bridge_config->epwmbase);
+    //set phase shift register to zero
+    EPWM_setPhaseShift(channels[channel_to_sync]->bridge_config->epwmbase, 0);
+    return;
+}
+
 //set pwm frequency of bridge
 void set_freq_bridge(const struct bridge_configuration* config,const uint32_t freq_mhz){
     /* General Formulas & Relationships (see also OneNote notes)

@@ -143,6 +143,36 @@ void main(void)
     setup_pin_config_buck(&chf_buck);
     setup_pinmux_config_bridge(&chf_bridge,5);
 
+
+    //
+    // Initialize synchronization of bridges
+    //
+    //enable phase synchronization for all PWM channels
+    //synchronization is to ePWM12 module on Pin22
+    unsigned int channelno=0;
+    for(channelno=0; channelno< NO_CHANNELS; channelno++){
+        synchronize_pwm_to_epwm12(driver_channels,channelno);
+    }
+    //enable PWM outputs of ePWM12
+    GPIO_setDirectionMode(22, GPIO_DIR_MODE_OUT);   //output
+    GPIO_setPadConfig(22,GPIO_PIN_TYPE_STD);        //push pull output
+    GPIO_setPinConfig(GPIO_22_EPWM12A);
+    //synchronize ePWM12 to itself
+    EPWM_setSyncInPulseSource(EPWM12_BASE,EPWM_SYNC_IN_PULSE_SRC_SYNCOUT_EPWM12);
+    //enable phase shift load for channel <channel_to_sync>
+    EPWM_enablePhaseShiftLoad(EPWM12_BASE);
+    //set phase shift register to zero
+    EPWM_setPhaseShift(EPWM12_BASE, 0);
+    //set up ePWM12
+    initEPWMWithoutDB(EPWM12_BASE,false);
+    setupEPWMActiveHighComplementary(EPWM12_BASE);
+    EPWM_setClockPrescaler(EPWM12_BASE, EPWM_CLOCK_DIVIDER_1, EPWM_HSCLOCK_DIVIDER_1);
+    EPWM_setTimeBasePeriod(EPWM12_BASE, EPWM_TIMER_TBPRD_BRIDGE/2);
+    EPWM_setCounterCompareValue(EPWM12_BASE, EPWM_COUNTER_COMPARE_A, EPWM_TIMER_TBPRD_BRIDGE/4);
+    //enable sync output of EPWM12
+    EPWM_enableSyncOutPulseSource(EPWM12_BASE,EPWM_SYNC_OUT_PULSE_ON_SOFTWARE);
+    EPWM_forceSyncPulse(EPWM12_BASE);
+
     //
     // Enable Half Bridges
     //
@@ -469,10 +499,10 @@ void main(void)
             // ---
             // TODO: Filter the input reference signals
             unsigned int i=0;
-            for(i=0; i<NO_CHANNELS; i++){
-                //update_first_order(des_duty_buck_filt+i,des_duty_buck[i]); //don't need this without buck stage
-                update_second_order_system(des_current_filt+i,des_currents[i]);
-            }
+//            for(i=0; i<NO_CHANNELS; i++){
+//                //update_first_order(des_duty_buck_filt+i,des_duty_buck[i]); //don't need this without buck stage
+//                update_second_order_system(des_current_filt+i,des_currents[i]);
+//            }
 
 
             //---------------------
