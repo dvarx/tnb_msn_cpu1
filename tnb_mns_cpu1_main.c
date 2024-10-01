@@ -153,22 +153,39 @@ void main(void)
     for(channelno=0; channelno< NO_CHANNELS; channelno++){
         synchronize_pwm_to_epwm12(driver_channels,channelno);
     }
-    //enable PWM outputs of ePWM12
-    GPIO_setDirectionMode(22, GPIO_DIR_MODE_OUT);   //output
-    GPIO_setPadConfig(22,GPIO_PIN_TYPE_STD);        //push pull output
-    GPIO_setPinConfig(GPIO_22_EPWM12A);
-    //synchronize ePWM12 to itself
-    EPWM_setSyncInPulseSource(EPWM12_BASE,EPWM_SYNC_IN_PULSE_SRC_SYNCOUT_EPWM12);
+    //enable PWM outputs of ePWM11
+    GPIO_setDirectionMode(20, GPIO_DIR_MODE_OUT);   //output
+    GPIO_setPadConfig(20,GPIO_PIN_TYPE_STD);        //push pull output
+    GPIO_setPinConfig(GPIO_20_EPWM11A);
+    //set up ePWM11 (DAQ sample clock)
+    initEPWMWithoutDB(EPWM11_BASE,false);
+    setupEPWMActiveHighComplementary(EPWM11_BASE);
+    EPWM_setClockPrescaler(EPWM11_BASE, EPWM_CLOCK_DIVIDER_1, EPWM_HSCLOCK_DIVIDER_1);
+    EPWM_setTimeBasePeriod(EPWM11_BASE, EPWM_TIMER_TBPRD_BRIDGE/2);
+    EPWM_setCounterCompareValue(EPWM11_BASE, EPWM_COUNTER_COMPARE_A, EPWM_TIMER_TBPRD_BRIDGE/4);
+    //enable PWM outputs of ePWM16
+    GPIO_setDirectionMode(30, GPIO_DIR_MODE_OUT);   //output
+    GPIO_setPadConfig(30,GPIO_PIN_TYPE_STD);        //push pull output
+    GPIO_setPinConfig(GPIO_30_EPWM16A);
+    //set up ePWM16 (DAQ trigger clock)
+    /*
+     * setting the time base of EPWM16 to 240 will result in a EPWM16 period corresponds to one base frame
+     * we set it to 120 so that the DAQ card is always triggered after two base_frames have passed
+     */
+    initEPWMWithoutDB(EPWM16_BASE,false);
+    setupEPWMActiveHighComplementary(EPWM16_BASE);
+    EPWM_setClockPrescaler(EPWM16_BASE, EPWM_CLOCK_DIVIDER_128, EPWM_HSCLOCK_DIVIDER_10);
+    EPWM_setTimeBasePeriod(EPWM16_BASE, 120);
+    EPWM_setCounterCompareValue(EPWM16_BASE, EPWM_COUNTER_COMPARE_A, 120/2);
+    //synchronize ePWM11and ePWM16 to ePWM12
+    EPWM_setSyncInPulseSource(EPWM11_BASE,EPWM_SYNC_IN_PULSE_SRC_SYNCOUT_EPWM12);
+    EPWM_setSyncInPulseSource(EPWM16_BASE,EPWM_SYNC_IN_PULSE_SRC_SYNCOUT_EPWM12);
     //enable phase shift load for channel <channel_to_sync>
-    EPWM_enablePhaseShiftLoad(EPWM12_BASE);
+    EPWM_enablePhaseShiftLoad(EPWM11_BASE);
+    EPWM_enablePhaseShiftLoad(EPWM16_BASE);
     //set phase shift register to zero
-    EPWM_setPhaseShift(EPWM12_BASE, 0);
-    //set up ePWM12
-    initEPWMWithoutDB(EPWM12_BASE,false);
-    setupEPWMActiveHighComplementary(EPWM12_BASE);
-    EPWM_setClockPrescaler(EPWM12_BASE, EPWM_CLOCK_DIVIDER_1, EPWM_HSCLOCK_DIVIDER_1);
-    EPWM_setTimeBasePeriod(EPWM12_BASE, EPWM_TIMER_TBPRD_BRIDGE/2);
-    EPWM_setCounterCompareValue(EPWM12_BASE, EPWM_COUNTER_COMPARE_A, EPWM_TIMER_TBPRD_BRIDGE/4);
+    EPWM_setPhaseShift(EPWM11_BASE, 0);
+    EPWM_setPhaseShift(EPWM16_BASE, 0);
     //enable sync output of EPWM12
     EPWM_enableSyncOutPulseSource(EPWM12_BASE,EPWM_SYNC_OUT_PULSE_ON_SOFTWARE);
     EPWM_forceSyncPulse(EPWM12_BASE);
