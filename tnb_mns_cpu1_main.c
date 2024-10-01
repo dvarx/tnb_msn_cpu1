@@ -174,7 +174,7 @@ void main(void)
      */
     initEPWMWithoutDB(EPWM16_BASE,false);
     setupEPWMActiveHighComplementary(EPWM16_BASE);
-    EPWM_setClockPrescaler(EPWM16_BASE, EPWM_CLOCK_DIVIDER_128, EPWM_HSCLOCK_DIVIDER_10);
+    EPWM_setClockPrescaler(EPWM16_BASE, EPWM_CLOCK_DIVIDER_128, EPWM_HSCLOCK_DIVIDER_14);
     EPWM_setTimeBasePeriod(EPWM16_BASE, 120);
     EPWM_setCounterCompareValue(EPWM16_BASE, EPWM_COUNTER_COMPARE_A, 120/2);
     //synchronize ePWM11and ePWM16 to ePWM12
