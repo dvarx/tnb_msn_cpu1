@@ -160,9 +160,9 @@ void main(void)
     //set up ePWM11 (DAQ sample clock)
     initEPWMWithoutDB(EPWM11_BASE,false);
     setupEPWMActiveHighComplementary(EPWM11_BASE);
-    EPWM_setClockPrescaler(EPWM11_BASE, EPWM_CLOCK_DIVIDER_1, EPWM_HSCLOCK_DIVIDER_1);
-    EPWM_setTimeBasePeriod(EPWM11_BASE, EPWM_TIMER_TBPRD_BRIDGE/2);
-    EPWM_setCounterCompareValue(EPWM11_BASE, EPWM_COUNTER_COMPARE_A, EPWM_TIMER_TBPRD_BRIDGE/4);
+    EPWM_setClockPrescaler(EPWM11_BASE, EPWM_CLOCK_DIVIDER_1, EPWM_HSCLOCK_DIVIDER_8);
+    EPWM_setTimeBasePeriod(EPWM11_BASE, EPWM_TIMER_TBPRD_BRIDGE/4);
+    EPWM_setCounterCompareValue(EPWM11_BASE, EPWM_COUNTER_COMPARE_A, EPWM_TIMER_TBPRD_BRIDGE/8);
     //enable PWM outputs of ePWM16
     GPIO_setDirectionMode(30, GPIO_DIR_MODE_OUT);   //output
     GPIO_setPadConfig(30,GPIO_PIN_TYPE_STD);        //push pull output
