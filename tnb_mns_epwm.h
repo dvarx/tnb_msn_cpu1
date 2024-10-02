@@ -12,7 +12,7 @@
 #include <stdint.h>
 
 #define EPWM_TIMER_TBPRD_BUCK       512UL
-#define EPWM_TIMER_TBPRD_BRIDGE     1024UL
+#define EPWM_TIMER_TBPRD_BRIDGE     128UL
 
 //initializes pins & pads for buck half bridge
 void setup_pin_config_buck(const struct buck_configuration*);
@@ -27,10 +27,11 @@ void set_duty_buck(const struct buck_configuration*,double);
 //set pwm frequency of bridge
 void set_freq_bridge(const struct bridge_configuration*,const uint32_t);
 //set the duty cycle of bridge half bridegs
-void set_duty_bridge(const struct bridge_configuration*,double);
+void set_duty_bridge(const struct bridge_configuration*,double,uint8_t channelno);
 //enables or disables the associated half bridge
 void set_enabled(void*,bool,bool);
 
 void synchronize_pwm_to_epwm12(struct driver_channel**, const unsigned int);
+void init_trigger_epwm(uint32_t base);
 
 #endif /* TNB_MNS_EPWM_H_ */

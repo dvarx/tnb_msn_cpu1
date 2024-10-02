@@ -172,11 +172,7 @@ void main(void)
      * setting the time base of EPWM16 to 240 will result in a EPWM16 period corresponds to one base frame
      * we set it to 120 so that the DAQ card is always triggered after two base_frames have passed
      */
-    initEPWMWithoutDB(EPWM16_BASE,false);
-    setupEPWMActiveHighComplementary(EPWM16_BASE);
-    EPWM_setClockPrescaler(EPWM16_BASE, EPWM_CLOCK_DIVIDER_128, EPWM_HSCLOCK_DIVIDER_14);
-    EPWM_setTimeBasePeriod(EPWM16_BASE, 120);
-    EPWM_setCounterCompareValue(EPWM16_BASE, EPWM_COUNTER_COMPARE_A, 120/2);
+    init_trigger_epwm(EPWM16_BASE);
     //synchronize ePWM11and ePWM16 to ePWM12
     EPWM_setSyncInPulseSource(EPWM11_BASE,EPWM_SYNC_IN_PULSE_SRC_SYNCOUT_EPWM12);
     EPWM_setSyncInPulseSource(EPWM16_BASE,EPWM_SYNC_IN_PULSE_SRC_SYNCOUT_EPWM12);
@@ -585,7 +581,7 @@ void main(void)
                         duty_bridge=0.9;
                     if(duty_bridge<0.1)
                         duty_bridge=0.1;
-                    set_duty_bridge(driver_channels[i]->bridge_config,duty_bridge);
+                    set_duty_bridge(driver_channels[i]->bridge_config,duty_bridge,i);
                 }
                 //set_duty_bridge(driver_channels[i]->bridge_config,des_duty_bridge[i]);
             }

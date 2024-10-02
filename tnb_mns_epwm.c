@@ -11,7 +11,7 @@
 #include "stdint.h"
 #include <stdbool.h>
 
-EPWM_HSClockDivider dividers4channels[]={EPWM_HSCLOCK_DIVIDER_14,EPWM_HSCLOCK_DIVIDER_12,EPWM_HSCLOCK_DIVIDER_10,EPWM_HSCLOCK_DIVIDER_1,EPWM_HSCLOCK_DIVIDER_1,EPWM_HSCLOCK_DIVIDER_1};
+const unsigned int timebasemultipliers[]={14,12,10,10,10,10};
 
 //sets up the pinmux and config for a buck stage
 void setup_pin_config_buck(const struct buck_configuration* config){
@@ -65,10 +65,12 @@ void setup_pinmux_config_bridge(const struct bridge_configuration* config, uint8
     //PWM Setup to ~ 50kHz 50% duty
     initEPWMWithoutDB(config->epwmbase,false);
     setupEPWMActiveHighComplementary(config->epwmbase);
+    EPWM_setTimeBasePeriod(config->epwmbase, EPWM_TIMER_TBPRD_BRIDGE*timebasemultipliers[channelno]);
+    EPWM_setCounterCompareValue(config->epwmbase, EPWM_COUNTER_COMPARE_A, EPWM_TIMER_TBPRD_BRIDGE*timebasemultipliers[channelno]/2);
     //clock prescaling results in a PWM clock of around 50kHz
     EPWM_setClockPrescaler(config->epwmbase,
                            EPWM_CLOCK_DIVIDER_1,
-                           dividers4channels[channelno]);
+                           EPWM_HSCLOCK_DIVIDER_8);
 }
 
 void set_duty_buck(const struct buck_configuration* config, double duty){
@@ -84,16 +86,16 @@ void set_duty_buck(const struct buck_configuration* config, double duty){
     }
 }
 
-void set_duty_bridge(const struct bridge_configuration* config, double duty){
-    uint16_t duty_int=duty*EPWM_TIMER_TBPRD_BRIDGE;
+void set_duty_bridge(const struct bridge_configuration* config, double duty, const uint8_t channelno){
+    uint16_t duty_int=duty*EPWM_TIMER_TBPRD_BRIDGE*timebasemultipliers[channelno];
     //set the duty based on whether the channel has an inverted duty logic or not
     if(config->is_inverted){
-        EPWM_setCounterCompareValue(config->epwmbase, EPWM_COUNTER_COMPARE_A, EPWM_TIMER_TBPRD_BRIDGE-duty_int);
+        EPWM_setCounterCompareValue(config->epwmbase, EPWM_COUNTER_COMPARE_A, EPWM_TIMER_TBPRD_BRIDGE*timebasemultipliers[channelno]-duty_int);
         EPWM_setCounterCompareValue(config->epwmbase, EPWM_COUNTER_COMPARE_B, duty_int);
     }
     else{
         EPWM_setCounterCompareValue(config->epwmbase, EPWM_COUNTER_COMPARE_A, duty_int);
-        EPWM_setCounterCompareValue(config->epwmbase, EPWM_COUNTER_COMPARE_B, EPWM_TIMER_TBPRD_BRIDGE-duty_int);
+        EPWM_setCounterCompareValue(config->epwmbase, EPWM_COUNTER_COMPARE_B, EPWM_TIMER_TBPRD_BRIDGE*timebasemultipliers[channelno]-duty_int);
     }
 }
 
@@ -142,11 +144,11 @@ void initEPWMWithoutDB(uint32_t base,bool is_buck)
     //
     EPWM_setActionQualifierAction(base,
                                       EPWM_AQ_OUTPUT_A,
-                                      EPWM_AQ_OUTPUT_LOW,
+                                      EPWM_AQ_OUTPUT_HIGH,
                                       EPWM_AQ_OUTPUT_ON_TIMEBASE_ZERO);
     EPWM_setActionQualifierAction(base,
                                       EPWM_AQ_OUTPUT_A,
-                                      EPWM_AQ_OUTPUT_HIGH,
+                                      EPWM_AQ_OUTPUT_LOW,
                                       EPWM_AQ_OUTPUT_ON_TIMEBASE_UP_CMPA);
     EPWM_setActionQualifierAction(base,
                                       EPWM_AQ_OUTPUT_A,
@@ -154,26 +156,26 @@ void initEPWMWithoutDB(uint32_t base,bool is_buck)
                                       EPWM_AQ_OUTPUT_ON_TIMEBASE_PERIOD);
     EPWM_setActionQualifierAction(base,
                                       EPWM_AQ_OUTPUT_A,
-                                      EPWM_AQ_OUTPUT_LOW,
+                                      EPWM_AQ_OUTPUT_HIGH,
                                       EPWM_AQ_OUTPUT_ON_TIMEBASE_DOWN_CMPA);
 
 
-    EPWM_setActionQualifierAction(base,
-                                      EPWM_AQ_OUTPUT_B,
-                                      EPWM_AQ_OUTPUT_LOW,
-                                      EPWM_AQ_OUTPUT_ON_TIMEBASE_ZERO);
-    EPWM_setActionQualifierAction(base,
-                                      EPWM_AQ_OUTPUT_B,
-                                      EPWM_AQ_OUTPUT_HIGH,
-                                      EPWM_AQ_OUTPUT_ON_TIMEBASE_UP_CMPB);
-    EPWM_setActionQualifierAction(base,
-                                      EPWM_AQ_OUTPUT_B,
-                                      EPWM_AQ_OUTPUT_NO_CHANGE,
-                                      EPWM_AQ_OUTPUT_ON_TIMEBASE_PERIOD);
-    EPWM_setActionQualifierAction(base,
-                                      EPWM_AQ_OUTPUT_B,
-                                      EPWM_AQ_OUTPUT_LOW,
-                                      EPWM_AQ_OUTPUT_ON_TIMEBASE_DOWN_CMPB);
+//    EPWM_setActionQualifierAction(base,
+//                                      EPWM_AQ_OUTPUT_B,
+//                                      EPWM_AQ_OUTPUT_LOW,
+//                                      EPWM_AQ_OUTPUT_ON_TIMEBASE_ZERO);
+//    EPWM_setActionQualifierAction(base,
+//                                      EPWM_AQ_OUTPUT_B,
+//                                      EPWM_AQ_OUTPUT_HIGH,
+//                                      EPWM_AQ_OUTPUT_ON_TIMEBASE_UP_CMPB);
+//    EPWM_setActionQualifierAction(base,
+//                                      EPWM_AQ_OUTPUT_B,
+//                                      EPWM_AQ_OUTPUT_NO_CHANGE,
+//                                      EPWM_AQ_OUTPUT_ON_TIMEBASE_PERIOD);
+//    EPWM_setActionQualifierAction(base,
+//                                      EPWM_AQ_OUTPUT_B,
+//                                      EPWM_AQ_OUTPUT_LOW,
+//                                      EPWM_AQ_OUTPUT_ON_TIMEBASE_DOWN_CMPB);
 
 }
 
@@ -189,8 +191,8 @@ void setupEPWMActiveHighComplementary(uint32_t base)
     // Set the RED and FED values
     //
     // TODO : The constant value of 40 here sets the interlock of the buck stage to around 400ns, might need to adjust / optimize this at some point
-    EPWM_setFallingEdgeDelayCount(base, 60);
-    EPWM_setRisingEdgeDelayCount(base, 60);
+    EPWM_setFallingEdgeDelayCount(base, 10);
+    EPWM_setRisingEdgeDelayCount(base, 10);
 
     //
     // Invert only the Falling Edge delayed output (AHC)
@@ -228,6 +230,31 @@ void set_enabled(void* config,bool is_buck,bool enable){
             GPIO_writePin(config_->enable_gpio,DRIVER_DISABLE_POLARITY);
 
     }
+}
+
+void init_trigger_epwm(uint32_t base){
+    initEPWMWithoutDB(base,false);
+    setupEPWMActiveHighComplementary(base);
+    EPWM_setClockPrescaler(base, EPWM_CLOCK_DIVIDER_1, EPWM_HSCLOCK_DIVIDER_8);
+    EPWM_setTimeBasePeriod(base, EPWM_TIMER_TBPRD_BRIDGE*420);
+    EPWM_setCounterCompareValue(base, EPWM_COUNTER_COMPARE_A, EPWM_TIMER_TBPRD_BRIDGE*420/2);
+
+    EPWM_setActionQualifierAction(base,
+                                      EPWM_AQ_OUTPUT_A,
+                                      EPWM_AQ_OUTPUT_HIGH,
+                                      EPWM_AQ_OUTPUT_ON_TIMEBASE_ZERO);
+    EPWM_setActionQualifierAction(base,
+                                      EPWM_AQ_OUTPUT_A,
+                                      EPWM_AQ_OUTPUT_NO_CHANGE,
+                                      EPWM_AQ_OUTPUT_ON_TIMEBASE_UP_CMPA);
+    EPWM_setActionQualifierAction(base,
+                                      EPWM_AQ_OUTPUT_A,
+                                      EPWM_AQ_OUTPUT_LOW,
+                                      EPWM_AQ_OUTPUT_ON_TIMEBASE_PERIOD);
+    EPWM_setActionQualifierAction(base,
+                                      EPWM_AQ_OUTPUT_A,
+                                      EPWM_AQ_OUTPUT_NO_CHANGE,
+                                      EPWM_AQ_OUTPUT_ON_TIMEBASE_DOWN_CMPA);
 }
 
 /*

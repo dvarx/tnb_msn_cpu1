@@ -207,7 +207,7 @@ void RUNNING_REGULAR_during(uint8_t channelno){
 void RUNNING_REGULAR_exit(uint8_t channelno){
     //set the duty to 50% in order to generate 0V across the coil so the current can die down
     //we then enter the TERMINATE_REGULAR mode wait a bit and finally disable the driver stage
-    set_duty_bridge(driver_channels[channelno]->bridge_config,0.5);
+    set_duty_bridge(driver_channels[channelno]->bridge_config,0.5,channelno);
 }
 //TERMINATE_REGULAR state
 void TERMINATE_REGULAR_enter(uint8_t channelno){
