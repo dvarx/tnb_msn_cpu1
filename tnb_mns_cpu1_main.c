@@ -77,7 +77,8 @@ float idesmags[NO_CHANNELS]={0};
 float vin=60.0;
 float dclinkvoltsfilt[3]={0};
 unsigned int periodn=10000;
-#define MAX_DC_LINK_VOLTAGE 120
+#define MAX_DC_LINK_VOLTAGE 120*100
+unsigned int overvoltage_counter=0;
 
 void main(void)
 {
@@ -519,6 +520,7 @@ void main(void)
             }
             //shut down if DCLINKVOLT too high
             if((dclinkvoltsfilt[0]>MAX_DC_LINK_VOLTAGE)||(dclinkvoltsfilt[1]>MAX_DC_LINK_VOLTAGE)||(dclinkvoltsfilt[2]>MAX_DC_LINK_VOLTAGE)){
+                overvoltage_counter=overvoltage_counter+1;
                 for(channel_counter=0; channel_counter<NO_CHANNELS; channel_counter++){
                     fsm_req_flags_stop[channel_counter]=1;
                 }
