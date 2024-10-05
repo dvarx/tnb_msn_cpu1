@@ -163,25 +163,25 @@ void main(void)
     EPWM_setClockPrescaler(EPWM11_BASE, EPWM_CLOCK_DIVIDER_1, EPWM_HSCLOCK_DIVIDER_8);
     EPWM_setTimeBasePeriod(EPWM11_BASE, EPWM_TIMER_TBPRD_BRIDGE/2);
     EPWM_setCounterCompareValue(EPWM11_BASE, EPWM_COUNTER_COMPARE_A, EPWM_TIMER_TBPRD_BRIDGE/4);
-    //enable PWM outputs of ePWM16
-    GPIO_setDirectionMode(30, GPIO_DIR_MODE_OUT);   //output
-    GPIO_setPadConfig(30,GPIO_PIN_TYPE_STD);        //push pull output
-    GPIO_setPinConfig(GPIO_30_EPWM16A);
-    //set up ePWM16 (DAQ trigger clock)
+    //enable PWM outputs of EPWM5
+    GPIO_setDirectionMode(8, GPIO_DIR_MODE_OUT);   //output
+    GPIO_setPadConfig(8,GPIO_PIN_TYPE_STD);        //push pull output
+    GPIO_setPinConfig(GPIO_8_EPWM5A);
+    //set up EPWM5 (DAQ trigger clock)
     /*
-     * setting the time base of EPWM16 to 240 will result in a EPWM16 period corresponds to one base frame
+     * setting the time base of EPWM5 to 240 will result in a EPWM5 period corresponds to one base frame
      * we set it to 120 so that the DAQ card is always triggered after two base_frames have passed
      */
-    init_trigger_epwm(EPWM16_BASE);
-    //synchronize ePWM11and ePWM16 to ePWM12
+    init_trigger_epwm(EPWM5_BASE);
+    //synchronize ePWM11and EPWM5 to ePWM12
     EPWM_setSyncInPulseSource(EPWM11_BASE,EPWM_SYNC_IN_PULSE_SRC_SYNCOUT_EPWM12);
-    EPWM_setSyncInPulseSource(EPWM16_BASE,EPWM_SYNC_IN_PULSE_SRC_SYNCOUT_EPWM12);
+    EPWM_setSyncInPulseSource(EPWM5_BASE,EPWM_SYNC_IN_PULSE_SRC_SYNCOUT_EPWM12);
     //enable phase shift load for channel <channel_to_sync>
     EPWM_enablePhaseShiftLoad(EPWM11_BASE);
-    EPWM_enablePhaseShiftLoad(EPWM16_BASE);
+    EPWM_enablePhaseShiftLoad(EPWM5_BASE);
     //set phase shift register to zero
     EPWM_setPhaseShift(EPWM11_BASE, 0);
-    EPWM_setPhaseShift(EPWM16_BASE, 0);
+    EPWM_setPhaseShift(EPWM5_BASE, 0);
     //enable sync output of EPWM12
     EPWM_enableSyncOutPulseSource(EPWM12_BASE,EPWM_SYNC_OUT_PULSE_ON_SOFTWARE);
     EPWM_forceSyncPulse(EPWM12_BASE);
@@ -189,7 +189,7 @@ void main(void)
     //
     // Enable Half Bridges
     //
-    set_enabled(&cha_buck,true,true);
+    //set_enabled(&cha_buck,true,true);
     set_enabled(&cha_bridge,false,true);
     set_enabled(&chb_buck,true,true);
     set_enabled(&chb_bridge,false,true);
