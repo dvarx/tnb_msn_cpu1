@@ -217,10 +217,10 @@ inline float conv_adc_meas_to_current_a(const uint16_t adc_output,unsigned int c
     return calib_factor_current_alpha*(float)((int16_t)adc_output-(int16_t)2048)-calib_factor_current_betas[channelno];
 }
 
-float calib_factor_dclinkvoltage_alpha=0.13355592;
-float calib_factor_dclinkvoltage_beta=-1739;
+float calib_factor_dclinkvoltage_alpha=0.111563662;
+float calib_factor_dclinkvoltage_beta=-192.6278239;
 inline float conv_adc_meas_to_dcvoltage_v(const uint16_t adc_output){
-    return calib_factor_dclinkvoltage_alpha*(float)((int16_t)adc_output+calib_factor_dclinkvoltage_beta);
+    return 100*(calib_factor_dclinkvoltage_alpha*adc_output+calib_factor_dclinkvoltage_beta);
 }
 
 inline int16_t conv_float_ampere_to_int_milliampere(const float current){
@@ -272,8 +272,8 @@ void readAnalogInputs(void){
 //    while(ADC_getInterruptStatus(ADCD_BASE, ADC_INT_NUMBER1) == false){}
     system_dyn_state.is[2] = conv_adc_meas_to_current_a(ADC_readResult(ADCDRESULT_BASE, ADC_SOC_NUMBER0),2);
     system_dyn_state.is[7] = conv_adc_meas_to_current_a(ADC_readResult(ADCDRESULT_BASE, ADC_SOC_NUMBER1),8);
-    system_dyn_state.dc_link_voltages[1] = conv_adc_meas_to_dcvoltage_v(ADC_readResult(ADCCRESULT_BASE, ADC_SOC_NUMBER2));
-    system_dyn_state.dc_link_voltages[2] = conv_adc_meas_to_dcvoltage_v(ADC_readResult(ADCCRESULT_BASE, ADC_SOC_NUMBER3));
+    system_dyn_state.dc_link_voltages[1] = conv_adc_meas_to_dcvoltage_v(ADC_readResult(ADCDRESULT_BASE, ADC_SOC_NUMBER2));
+    system_dyn_state.dc_link_voltages[2] = conv_adc_meas_to_dcvoltage_v(ADC_readResult(ADCDRESULT_BASE, ADC_SOC_NUMBER3));
 //    ADC_clearInterruptStatus(ADCD_BASE, ADC_INT_NUMBER1);
 
     //JECB: update system state
