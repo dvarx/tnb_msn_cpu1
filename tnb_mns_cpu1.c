@@ -100,6 +100,8 @@ struct second_order_system des_current_filt[NO_CHANNELS]={
 uint32_t des_freq_resonant_mhz[NO_CHANNELS]={DEFAULT_RES_FREQ_MILLIHZ,DEFAULT_RES_FREQ_MILLIHZ,DEFAULT_RES_FREQ_MILLIHZ};
 float des_currents_res[NO_CHANNELS]={0.4};
 struct tnb_mns_msg_c2000 ipc_tnb_mns_msg_c2000;
+#pragma DATA_SECTION(ipc_tnb_mns_state_msg, "MSGRAM_CPU_TO_CM")
+struct tnb_mns_msg_sysstate ipc_tnb_mns_state_msg;
 
 // ---------------------
 // Ripple Localization related variables
@@ -272,6 +274,15 @@ __interrupt void IPC_ISR0()
                 des_currents_res[i]=0.4;
             }
         }
+
+        //JECB : write the systems dynamics to the system dynamic variable here
+        unsigned int channelno=0;
+        for(channelno=0; channelno<NO_CHANNELS; channelno++){
+            ipc_tnb_mns_state_msg.states[channelno]=driver_channels[channelno]->channel_state;
+        }
+        IPC_sendCommand(IPC_CPU1_L_CM_R, IPC_FLAG0, IPC_ADDR_CORRECTION_ENABLE,
+                        IPC_MSG_NEW_MSG, &ipc_tnb_mns_state_msg, sizeof(ipc_tnb_mns_state_msg));
+
         //in this branch we interpret these fields as the frame time of the oscillations
         for(i=0; i<NO_CHANNELS; i++){
             frame_period_ms=(uint32_t)(ipc_tnb_mns_msg_c2000.desFreqs[0]);
