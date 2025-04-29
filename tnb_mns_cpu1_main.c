@@ -59,8 +59,8 @@
 #include "tnb_mns_fsm.h"
 #include "fbctrl.h"
 #include "tnb_mns_cpu1.h"
-#include "tnb_mns_defs.h"
 #include <math.h>
+#include <mdriver_hw_defs.h>
 #include "ipc.h"
 #include "tnb_mns_cpu1.h"
 

@@ -8,6 +8,7 @@
 #ifndef TNB_MNS_CPU1_H_
 #define TNB_MNS_CPU1_H_
 
+#include <mdriver_hw_defs.h>
 #include <stdint.h>
 #include "driverlib.h"
 #include "device.h"
@@ -16,7 +17,6 @@
 #include "fbctrl.h"
 #include "comm_interface.h"
 
-#define NO_CHANNELS 3
 #define HEARTBEAT_GPIO 70
 #define MAIN_RELAY_GPIO 92
 #define SLAVE_RELAY_GPIO 62
@@ -55,9 +55,9 @@ struct bridge_configuration{
 };
 
 struct system_dynamic_state{
-    float is[NO_CHANNELS];
-    float vs[NO_CHANNELS];
-    float is_res[NO_CHANNELS];
+    float is[NO_CHANNELS];      //A
+    float vs[NO_CHANNELS];      //A
+    float is_res[NO_CHANNELS];  //A
 };
 
 enum driver_channel_state {READY=0,BUCK_ENABLED=1,INIT_REGULAR=2,RUN_REGULAR=3,INIT_RESONANT=4,RUN_RESONANT=5,FAULT=6,TERMINATE_RESONANT=7,TERMINATE_REGULAR=8};
@@ -90,6 +90,8 @@ extern struct bridge_configuration chc_bridge;
 extern struct bridge_configuration chd_bridge;
 extern struct bridge_configuration che_bridge;
 extern struct bridge_configuration chf_bridge;
+
+extern struct tnb_mns_msg_sysstate ipc_tnb_mns_state_msg;
 
 // ---------------------
 // Main Program related globals

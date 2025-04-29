@@ -5,11 +5,11 @@
  *      Author: dvarx
  */
 
+#include <mdriver_hw_defs.h>
 #include "tnb_mns_cpu1.h"
 #include "driverlib.h"
 #include "device.h"
 #include "fbctrl.h"
-#include "tnb_mns_defs.h"
 #include "tnb_mns_fsm.h"
 
 float frame_period_ms=200;
@@ -275,7 +275,7 @@ __interrupt void IPC_ISR0()
             }
         }
 
-        //JECB : write the systems dynamics to the system dynamic variable here
+        //fill out the system dynamic state and send back to CM
         unsigned int channelno=0;
         for(channelno=0; channelno<NO_CHANNELS; channelno++){
             ipc_tnb_mns_state_msg.states[channelno]=driver_channels[channelno]->channel_state;
