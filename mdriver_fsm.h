@@ -1,15 +1,15 @@
 /*
- * tnb_mns_fsm.h
+ * mdriver_fsm.h
  *
  *  Created on: Oct 19, 2021
  *      Author: dvarx
  */
 
-#ifndef TNB_MNS_FSM_H_
-#define TNB_MNS_FSM_H_
+#ifndef MDRIVER_FSM_H_
+#define MDRIVER_FSM_H_
 
+#include <mdriver_cpu1.h>
 #include <stdint.h>
-#include "tnb_mns_cpu1.h"
 #include <stdbool.h>
 #include "fbctrl.h"
 
@@ -79,4 +79,4 @@ extern fsm_flag fsm_req_flags_stop[NO_CHANNELS];
 // ---------------------------------
 
 
-#endif /* TNB_MNS_FSM_H_ */
+#endif /* MDRIVER_FSM_H_ */

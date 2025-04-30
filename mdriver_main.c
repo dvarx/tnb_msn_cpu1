@@ -1,5 +1,7 @@
 //#############################################################################
+// mdriver_main.c
 //
+// derived from
 // FILE:   cm_common_config_c28x.c
 //
 // TITLE:  C28x Common Configurations to be used for the CM Side.
@@ -52,17 +54,17 @@
 //
 #include "driverlib.h"
 #include "device.h"
-#include "tnb_mns_cpu1.h"
-#include "tnb_mns_epwm.h"
-#include "tnb_mns_adc.h"
 #include <stdbool.h>
-#include "tnb_mns_fsm.h"
 #include "fbctrl.h"
-#include "tnb_mns_cpu1.h"
 #include <math.h>
+#include <mdriver_adc.h>
+#include <mdriver_cpu1.h>
+#include <mdriver_cpu1.h>
+#include <mdriver_cpu1.h>
+#include <mdriver_epwm.h>
+#include <mdriver_fsm.h>
 #include <mdriver_hw_defs.h>
 #include "ipc.h"
-#include "tnb_mns_cpu1.h"
 
 bool run_main_control_task=false;
 bool enable_waveform_debugging=false;

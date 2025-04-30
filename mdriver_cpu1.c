@@ -1,16 +1,16 @@
 /*
- * tnb_mns_cpu1.c
+ * mdriver_cpu1.c
  *
  *  Created on: 14.10.2021
  *      Author: dvarx
  */
 
+#include <mdriver_cpu1.h>
+#include <mdriver_fsm.h>
 #include <mdriver_hw_defs.h>
-#include "tnb_mns_cpu1.h"
 #include "driverlib.h"
 #include "device.h"
 #include "fbctrl.h"
-#include "tnb_mns_fsm.h"
 
 float frame_period_ms=200;
 
@@ -99,9 +99,9 @@ struct second_order_system des_current_filt[NO_CHANNELS]={
 
 uint32_t des_freq_resonant_mhz[NO_CHANNELS]={DEFAULT_RES_FREQ_MILLIHZ,DEFAULT_RES_FREQ_MILLIHZ,DEFAULT_RES_FREQ_MILLIHZ};
 float des_currents_res[NO_CHANNELS]={0.4};
-struct tnb_mns_msg_c2000 ipc_tnb_mns_msg_c2000;
-#pragma DATA_SECTION(ipc_tnb_mns_state_msg, "MSGRAM_CPU_TO_CM")
-struct tnb_mns_msg_sysstate ipc_tnb_mns_state_msg;
+struct mdriver_msg ipc_mdriver_msg;
+#pragma DATA_SECTION(ipc_mdriver_state_msg, "MSGRAM_CPU_TO_CM")
+struct mdriver_sysstate ipc_mdriver_state_msg;
 
 // ---------------------
 // Ripple Localization related variables
@@ -238,23 +238,23 @@ __interrupt void IPC_ISR0()
 
     if(command == IPC_MSG_NEW_MSG){
         //copy tnb mns message
-        memcpy(&ipc_tnb_mns_msg_c2000,(struct tnb_mns_msg*)addr,sizeof(ipc_tnb_mns_msg_c2000));
+        memcpy(&ipc_mdriver_msg,(struct mdriver_msg*)addr,sizeof(ipc_mdriver_msg));
 
         //check flags and copy their values in the flag arrays used by the FSM
         unsigned short i=0;
 
         for(i=0; i<NO_CHANNELS; i++){
             //check the BUCK_EN byte
-            if(ipc_tnb_mns_msg_c2000.buck_flg_byte&(1<<i))
+            if(ipc_mdriver_msg.buck_flg_byte&(1<<i))
                 fsm_req_flags_en_buck[i]=true;
             //check the STOP byte
-            if(ipc_tnb_mns_msg_c2000.stp_flg_byte&(1<<i))
+            if(ipc_mdriver_msg.stp_flg_byte&(1<<i))
                 fsm_req_flags_stop[i]=true;
             //check the RUN_REGULAR byte
-            if(ipc_tnb_mns_msg_c2000.regen_flg_byte&(1<<i))
+            if(ipc_mdriver_msg.regen_flg_byte&(1<<i))
                 fsm_req_flags_run_regular[i]=true;
             //check the RUN_RESONANT byte
-            if(ipc_tnb_mns_msg_c2000.resen_flg_byte&(1<<i))
+            if(ipc_mdriver_msg.resen_flg_byte&(1<<i))
                 fsm_req_flags_run_resonant[i]=true;
         }
         //check the currents and duties and translate them
@@ -263,9 +263,9 @@ __interrupt void IPC_ISR0()
         for(i=0; i<NO_CHANNELS; i++){
             if(driver_channels[i]->channel_state==RUN_REGULAR||driver_channels[i]->channel_state==BUCK_ENABLED||driver_channels[i]->channel_state==RUN_RESONANT){
                 //currents are sent in units of [mA]
-                des_currents[i]=(float)(ipc_tnb_mns_msg_c2000.desCurrents[i])*1e-3;
-                des_duty_buck[i]=(float)(ipc_tnb_mns_msg_c2000.desDuties[i])*(1.0/(float)(UINT16_MAX));
-                des_currents_res[i]=(float)(ipc_tnb_mns_msg_c2000.desCurrentsRes[i])*1e-3;
+                des_currents[i]=(float)(ipc_mdriver_msg.desCurrents[i])*1e-3;
+                des_duty_buck[i]=(float)(ipc_mdriver_msg.desDuties[i])*(1.0/(float)(UINT16_MAX));
+                des_currents_res[i]=(float)(ipc_mdriver_msg.desCurrentsRes[i])*1e-3;
 
             }
             else{
@@ -278,14 +278,14 @@ __interrupt void IPC_ISR0()
         //fill out the system dynamic state and send back to CM
         unsigned int channelno=0;
         for(channelno=0; channelno<NO_CHANNELS; channelno++){
-            ipc_tnb_mns_state_msg.states[channelno]=driver_channels[channelno]->channel_state;
+            ipc_mdriver_state_msg.states[channelno]=driver_channels[channelno]->channel_state;
         }
         IPC_sendCommand(IPC_CPU1_L_CM_R, IPC_FLAG0, IPC_ADDR_CORRECTION_ENABLE,
-                        IPC_MSG_NEW_MSG, &ipc_tnb_mns_state_msg, sizeof(ipc_tnb_mns_state_msg));
+                        IPC_MSG_NEW_MSG, &ipc_mdriver_state_msg, sizeof(ipc_mdriver_state_msg));
 
         //in this branch we interpret these fields as the frame time of the oscillations
         for(i=0; i<NO_CHANNELS; i++){
-            frame_period_ms=(uint32_t)(ipc_tnb_mns_msg_c2000.desFreqs[0]);
+            frame_period_ms=(uint32_t)(ipc_mdriver_msg.desFreqs[0]);
         }
         //set the communication_active variable
         communication_active=true;

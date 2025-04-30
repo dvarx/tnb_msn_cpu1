@@ -1,18 +1,18 @@
 /*
- * tnb_mns_cpu1.h
+ * mdriver_cpu1.h
  *
  *  Created on: 14.10.2021
  *      Author: dvarx
  */
 
-#ifndef TNB_MNS_CPU1_H_
-#define TNB_MNS_CPU1_H_
+#ifndef MDRIVER_CPU1_H_
+#define MDRIVER_CPU1_H_
 
+#include <mdriver_cpu1.h>
 #include <mdriver_hw_defs.h>
 #include <stdint.h>
 #include "driverlib.h"
 #include "device.h"
-#include "tnb_mns_cpu1.h"
 #include "stdint.h"
 #include "fbctrl.h"
 #include "comm_interface.h"
@@ -91,7 +91,7 @@ extern struct bridge_configuration chd_bridge;
 extern struct bridge_configuration che_bridge;
 extern struct bridge_configuration chf_bridge;
 
-extern struct tnb_mns_msg_sysstate ipc_tnb_mns_state_msg;
+extern struct mdriver_sysstate ipc_mdriver_state_msg;
 
 // ---------------------
 // Main Program related globals
@@ -107,7 +107,6 @@ extern float des_currents_res[NO_CHANNELS];
 extern struct first_order des_duty_buck_filt[NO_CHANNELS];
 extern struct second_order_system des_current_filt[NO_CHANNELS];
 extern struct pi_controller current_pi[NO_CHANNELS];
-extern struct tnb_mns_msg ipc_tnb_mns_msg;
 extern bool communication_active;                       //variable indicates whether there is a TCP connection active (true if a package was received in the last 200ms)
 
 // ---------------------
@@ -135,4 +134,4 @@ void initCPUTimers(void);
 void configCPUTimer(uint32_t, uint32_t);
 
 
-#endif /* TNB_MNS_CPU1_H_ */
+#endif /* MDRIVER_CPU1_H_ */

@@ -1,11 +1,11 @@
 /*
- * tnb_mns_epwm.c
+ * mdriver_epwm.c
  *
  *  Created on: 14.10.2021
  *      Author: dvarx
  */
 
-#include "tnb_mns_epwm.h"
+#include <mdriver_epwm.h>
 #include "driverlib.h"
 #include "device.h"
 #include "stdint.h"

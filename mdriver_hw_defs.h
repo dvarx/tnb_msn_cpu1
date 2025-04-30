@@ -1,5 +1,5 @@
 /*
- * tnb_mns_defs.h
+ * mdriver_defs.h
  *
  *  Created on: Dec 9, 2021
  *      Author: dvarx
@@ -27,7 +27,6 @@
  * define the USE_CALIBRATED_CURRENT_SENSORS below to allow for calibrated current measurements
  * the calibration parameters of the current sensor calibration can be added in `hardware_defs.c`
  */
-//#define USE_CALIBRATED_CURRENT_SENSORS
 
 //enable this definition to use calibrated current sensors
 extern const float calib_factor_current_alphas[];

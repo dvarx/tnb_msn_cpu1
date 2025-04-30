@@ -1,15 +1,15 @@
 /*
- * tnb_mns_adc.c
+ * mdriver_adc.c
  *
  *  Created on: Oct 17, 2021
  *      Author: dvarx
  */
 
+#include <mdriver_cpu1.h>
 #include <mdriver_hw_defs.h>
 #include "driverlib.h"
 #include "device.h"
 #include "stdbool.h"
-#include "tnb_mns_cpu1.h"
 
 //
 // Defines
@@ -270,5 +270,5 @@ void readAnalogInputs(void){
     //copy the values into the state message sent back via TCP
     unsigned int i=0;
     for(i=0; i<NO_CHANNELS; i++)
-        ipc_tnb_mns_state_msg.currents[i]=1000*system_dyn_state.is[i];
+        ipc_mdriver_state_msg.currents[i]=1000*system_dyn_state.is[i];
 }

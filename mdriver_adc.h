@@ -1,12 +1,12 @@
 /*
- * tnb_mns_adc.h
+ * mdriver_adc.h
  *
  *  Created on: Oct 17, 2021
  *      Author: dvarx
  */
 
-#ifndef TNB_MNS_ADC_H_
-#define TNB_MNS_ADC_H_
+#ifndef MDRIVER_ADC_H_
+#define MDRIVER_ADC_H_
 
 void initADCs(void);
 
@@ -16,4 +16,4 @@ void readAnalogInputs(void);
 
 
 
-#endif /* TNB_MNS_ADC_H_ */
+#endif /* MDRIVER_ADC_H_ */

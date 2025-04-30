@@ -1,14 +1,14 @@
 /*
- * tnb_mns_epwm.h
+ * mdriver_epwm.h
  *
  *  Created on: 14.10.2021
  *      Author: dvarx
  */
 
-#ifndef TNB_MNS_EPWM_H_
-#define TNB_MNS_EPWM_H_
+#ifndef MDRIVER_EPWM_H_
+#define MDRIVER_EPWM_H_
 
-#include "tnb_mns_cpu1.h"
+#include <mdriver_cpu1.h>
 #include <stdint.h>
 
 #define EPWM_TIMER_TBPRD_BUCK       512UL
@@ -34,4 +34,4 @@ void set_enabled(void*,bool,bool);
 void synchronize_pwm_to_epwm12(struct driver_channel**, const unsigned int);
 void init_trigger_epwm(uint32_t base);
 
-#endif /* TNB_MNS_EPWM_H_ */
+#endif /* MDRIVER_EPWM_H_ */
