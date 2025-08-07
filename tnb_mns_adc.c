@@ -245,7 +245,7 @@ void readAnalogInputs(void){
     // Wait for ADCB to complete, then acknowledge flag
     while(ADC_getInterruptStatus(ADCB_BASE, ADC_INT_NUMBER1) == false){}
 
-    buffer_i0s[buffer_cnt]=ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER0);
+    buffer_i0s[buffer_cnt]=ADC_readResult(ADCARESULT_BASE, ADC_SOC_NUMBER4);
     system_dyn_state.is[0] = conv_adc_meas_to_current_a(buffer_i0s[buffer_cnt],0);
     buffer_i0s_fl[buffer_cnt]=system_dyn_state.is[0];
 

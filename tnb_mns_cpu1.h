@@ -22,8 +22,10 @@
 #define SLAVE_RELAY_GPIO 62
 #define DEFAULT_RES_FREQ_MILLIHZ    10000000
 #define MINIMUM_RES_FREQ_MILLIHZ    80000
-#define LED_1_GPIO 31
-#define LED_2_GPIO 34
+#define LED_GREEN_1 48
+#define LED_GREEN_2 38
+#define LED_RED 41
+#define LED_BLUE 37
 #define COMMUNICATION_TIMEOUT_MS    500
 //define the pin polarity of the voltage needed to enable the ate driver
 #define DRIVER_ENABLE_POLARITY 0
@@ -63,7 +65,7 @@ enum driver_channel_state {READY=0,BUCK_ENABLED=1,INIT_REGULAR=2,RUN_REGULAR=3,I
 
 struct driver_channel{
     uint8_t channel_no;
-    struct buck_configuration* buck_config;
+//    struct buck_configuration* buck_config;
     struct bridge_configuration* bridge_config;
     enum driver_channel_state channel_state;
     uint32_t enable_resonant_gpio;

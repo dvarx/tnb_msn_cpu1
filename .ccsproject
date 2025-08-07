@@ -12,4 +12,6 @@
 	<templateProperties value="id=ethernet_c28x_config.projectspec.ethernet_c28x_config"/>
 	<origin value="C:/Users/dvarx/src/tnb_msn_cpu1"/>
 	<filesToOpen value=""/>
+	<connection value="common/targetdb/connections/TIXDS110_Connection.xml"/>
+	<isTargetManual value="false"/>
 </projectOptions>

@@ -150,7 +150,7 @@ void run_channel_fsm(struct driver_channel* channel){
 // ---------------------------------
 void READY_enter(uint8_t channelno){
     //disable buck
-    GPIO_writePin(driver_channels[channelno]->buck_config->enable_gpio,DRIVER_DISABLE_POLARITY);
+    //GPIO_writePin(driver_channels[channelno]->buck_config->enable_gpio,DRIVER_DISABLE_POLARITY);
     //disable bridge
     GPIO_writePin(driver_channels[channelno]->bridge_config->enable_gpio,DRIVER_DISABLE_POLARITY);
     //reset desBucks
@@ -165,7 +165,7 @@ void READY_exit(uint8_t channelno){return;}
 //BUCK_ENABLED state
 void BUCK_ENABLED_enter(uint8_t channelno){
     //enable buck
-    GPIO_writePin(driver_channels[channelno]->buck_config->enable_gpio,DRIVER_ENABLE_POLARITY);
+    //GPIO_writePin(driver_channels[channelno]->buck_config->enable_gpio,DRIVER_ENABLE_POLARITY);
     //disable bridge
     GPIO_writePin(driver_channels[channelno]->bridge_config->enable_gpio,DRIVER_DISABLE_POLARITY);
     //reset the desired buck duty cycle to zero
@@ -180,7 +180,7 @@ void INIT_REGULAR_RUN_enter(uint8_t channelno){
     //reset the init regular counter
     fsm_aux_counter=0;
     //enable buck
-    GPIO_writePin(driver_channels[channelno]->buck_config->enable_gpio,DRIVER_ENABLE_POLARITY);
+    //GPIO_writePin(driver_channels[channelno]->buck_config->enable_gpio,DRIVER_ENABLE_POLARITY);
     //disable bridge
     GPIO_writePin(driver_channels[channelno]->bridge_config->enable_gpio,DRIVER_DISABLE_POLARITY);
 }
@@ -191,7 +191,7 @@ void INIT_REGULAR_RUN_exit(uint8_t channelno){return;}
 //RUNNING_REGULAR state
 void RUNNING_REGULAR_enter(uint8_t channelno){
     //enable buck
-    GPIO_writePin(driver_channels[channelno]->buck_config->enable_gpio,DRIVER_ENABLE_POLARITY);
+    //GPIO_writePin(driver_channels[channelno]->buck_config->enable_gpio,DRIVER_ENABLE_POLARITY);
     //configure & enable bridge
     setup_pinmux_config_bridge(driver_channels[channelno]->bridge_config);
     GPIO_writePin(driver_channels[channelno]->bridge_config->enable_gpio,DRIVER_ENABLE_POLARITY);

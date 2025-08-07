@@ -1,51 +1,9 @@
-//#############################################################################
-//
-// FILE:   cm_common_config_c28x.c
-//
-// TITLE:  C28x Common Configurations to be used for the CM Side.
-//
-//! \addtogroup driver_example_list
-//! <h1>C28x Common Configurations</h1>
-//!
-//! This example configures the GPIOs and Allocates the shared peripherals
-//! according to the defines selected by the users.
-//!
-//
-//#############################################################################
-// $TI Release: F2838x Support Library v3.04.00.00 $
-// $Release Date: Fri Feb 12 19:08:49 IST 2021 $
-// $Copyright:
-// Copyright (C) 2021 Texas Instruments Incorporated - http://www.ti.com/
-//
-// Redistribution and use in source and binary forms, with or without 
-// modification, are permitted provided that the following conditions 
-// are met:
-// 
-//   Redistributions of source code must retain the above copyright 
-//   notice, this list of conditions and the following disclaimer.
-// 
-//   Redistributions in binary form must reproduce the above copyright
-//   notice, this list of conditions and the following disclaimer in the 
-//   documentation and/or other materials provided with the   
-//   distribution.
-// 
-//   Neither the name of Texas Instruments Incorporated nor the names of
-//   its contributors may be used to endorse or promote products derived
-//   from this software without specific prior written permission.
-// 
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT 
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT 
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE 
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// $
-//#############################################################################
+/*
+ * ############################################################
+ * Program code for standalone uC board based on TMS320F28388S v1.0
+ * This is a minimally working example that blinks the output LED
+ * ############################################################
+ */
 
 //
 // Included Files
@@ -103,13 +61,13 @@ void main(void)
     GPIO_setDirectionMode(SLAVE_RELAY_GPIO, GPIO_DIR_MODE_OUT);   //output
     GPIO_setPadConfig(SLAVE_RELAY_GPIO,GPIO_PIN_TYPE_STD);        //push pull output
     //LED 1 for debugging
-    GPIO_setDirectionMode(LED_1_GPIO, GPIO_DIR_MODE_OUT);
-    GPIO_setPadConfig(LED_1_GPIO,GPIO_PIN_TYPE_STD);
-    GPIO_writePin(LED_1_GPIO,1);
+    GPIO_setDirectionMode(LED_GREEN_1, GPIO_DIR_MODE_OUT);
+    GPIO_setPadConfig(LED_GREEN_1,GPIO_PIN_TYPE_STD);
+    GPIO_writePin(LED_GREEN_1,1);
     //LED 2 for debugging
-    GPIO_setDirectionMode(LED_2_GPIO, GPIO_DIR_MODE_OUT);
-    GPIO_setPadConfig(LED_2_GPIO,GPIO_PIN_TYPE_STD);
-    GPIO_writePin(LED_2_GPIO,1);
+    GPIO_setDirectionMode(LED_GREEN_2, GPIO_DIR_MODE_OUT);
+    GPIO_setPadConfig(LED_GREEN_2,GPIO_PIN_TYPE_STD);
+    GPIO_writePin(LED_GREEN_2,1);
 
     //
     // Initialize ADCs
@@ -123,22 +81,16 @@ void main(void)
     // Initialize Half Bridges
     //
     //channel A
-    setup_pin_config_buck(&cha_buck);
     setup_pinmux_config_bridge(&cha_bridge);
     //channel B
-    setup_pin_config_buck(&chb_buck);
     setup_pinmux_config_bridge(&chb_bridge);
     //channel C
-    setup_pin_config_buck(&chc_buck);
     setup_pinmux_config_bridge(&chc_bridge);
     //channel D
-    setup_pin_config_buck(&chd_buck);
     setup_pinmux_config_bridge(&chd_bridge);
     //channel E
-    setup_pin_config_buck(&che_buck);
     setup_pinmux_config_bridge(&che_bridge);
     //channel F
-    setup_pin_config_buck(&chf_buck);
     setup_pinmux_config_bridge(&chf_bridge);
 
     //
@@ -156,17 +108,17 @@ void main(void)
     //
     // Enable Half Bridges
     //
-    set_enabled(&cha_buck,true,true);
+    //set_enabled(&cha_buck,true,true);
     set_enabled(&cha_bridge,false,true);
-    set_enabled(&chb_buck,true,true);
+    //set_enabled(&chb_buck,true,true);
     set_enabled(&chb_bridge,false,true);
-    set_enabled(&chc_buck,true,true);
+    //set_enabled(&chc_buck,true,true);
     set_enabled(&chc_bridge,false,true);
-    set_enabled(&chd_buck,true,true);
+    //set_enabled(&chd_buck,true,true);
     set_enabled(&chd_bridge,false,true);
-    set_enabled(&che_buck,true,true);
+    //set_enabled(&che_buck,true,true);
     set_enabled(&che_bridge,false,true);
-    set_enabled(&chf_buck,true,true);
+    //set_enabled(&chf_buck,true,true);
     set_enabled(&chf_bridge,false,true);
 
     //
@@ -436,7 +388,7 @@ void main(void)
     while(1){
         if(run_main_task){
             //toggle heartbeat gpio
-            GPIO_togglePin(HEARTBEAT_GPIO);
+            GPIO_togglePin(LED_GREEN_1);
 
             //---------------------
             // State Machine
@@ -452,7 +404,7 @@ void main(void)
             }
             GPIO_writePin(MAIN_RELAY_GPIO,main_relay_active);
             GPIO_writePin(SLAVE_RELAY_GPIO,main_relay_active);
-            GPIO_writePin(LED_1_GPIO,!main_relay_active);
+            //GPIO_writePin(LED_1_GPIO,!main_relay_active);
             //Communication Active Logic (If no communication, issue a STOP command
             if(!communication_active){
                 for(channel_counter=0; channel_counter<NO_CHANNELS; channel_counter++){
@@ -497,9 +449,9 @@ void main(void)
             // Control Law Execution & Output Actuation
             //---------------------
             //set output duties for buck
-            for(i=0; i<NO_CHANNELS; i++){
-                set_duty_buck(driver_channels[i]->buck_config,(des_duty_buck_filt+i)->y);
-            }
+//            for(i=0; i<NO_CHANNELS; i++){
+//                set_duty_buck(driver_channels[i]->buck_config,(des_duty_buck_filt+i)->y);
+//            }
             //set output duties for bridge [regular mode]
             for(i=0; i<NO_CHANNELS; i++){
                 if(driver_channels[i]->channel_state==RUN_REGULAR){
@@ -553,15 +505,15 @@ void main(void)
             //---------------------
             // Read State Of Bridges
             //---------------------
-            uint32_t cha_buck_state=GPIO_readPin(cha_buck.state_gpio);
+            //uint32_t cha_buck_state=GPIO_readPin(cha_buck.state_gpio);
             uint32_t cha_bridge_state_u=GPIO_readPin(cha_bridge.state_v_gpio);
             uint32_t cha_bridge_state_v=GPIO_readPin(cha_bridge.state_u_gpio);
 
-            uint32_t chb_buck_state=GPIO_readPin(chb_buck.state_gpio);
+            //uint32_t chb_buck_state=GPIO_readPin(chb_buck.state_gpio);
             uint32_t chb_bridge_state_u=GPIO_readPin(chb_bridge.state_v_gpio);
             uint32_t chb_bridge_state_v=GPIO_readPin(chb_bridge.state_u_gpio);
 
-            uint32_t chc_buck_state=GPIO_readPin(chc_buck.state_gpio);
+            //uint32_t chc_buck_state=GPIO_readPin(chc_buck.state_gpio);
             uint32_t chc_bridge_state_u=GPIO_readPin(chc_bridge.state_v_gpio);
             uint32_t chc_bridge_state_v=GPIO_readPin(chc_bridge.state_u_gpio);
 
