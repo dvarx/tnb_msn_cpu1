@@ -30,11 +30,10 @@ bool enable_waveform_debugging=false;
 void main(void)
 {
 
-    //
-    // Initialize device clock and peripherals
-    //
+    //----------------------------------------------------------------------------------------------
+    // Initialize device clock & peripherals
+    //----------------------------------------------------------------------------------------------
     Device_init();
-
     //
     // Boot CM core
     //
@@ -43,43 +42,42 @@ void main(void)
 #else
     Device_bootCM(BOOTMODE_BOOT_TO_S0RAM);
 #endif
-
-    //
     // Disable pin locks and enable internal pull-ups.
-    //
     Device_initGPIO();
 
-    //
-    // Setup heartbeat GPIO & input relay gpios
+    //----------------------------------------------------------------------------------------------
+    // Setup heartbeat GPIO & LED GPIOs
+    //----------------------------------------------------------------------------------------------
     //heartbeat
     GPIO_setDirectionMode(HEARTBEAT_GPIO, GPIO_DIR_MODE_OUT);   //output
     GPIO_setPadConfig(HEARTBEAT_GPIO,GPIO_PIN_TYPE_STD);        //push pull output
     //main input relay
-    GPIO_setDirectionMode(MAIN_RELAY_GPIO, GPIO_DIR_MODE_OUT);   //output
-    GPIO_setPadConfig(MAIN_RELAY_GPIO,GPIO_PIN_TYPE_STD);        //push pull output
+    //GPIO_setDirectionMode(MAIN_RELAY_GPIO, GPIO_DIR_MODE_OUT);   //output
+    //GPIO_setPadConfig(MAIN_RELAY_GPIO,GPIO_PIN_TYPE_STD);        //push pull output
     //input relay to slave
-    GPIO_setDirectionMode(SLAVE_RELAY_GPIO, GPIO_DIR_MODE_OUT);   //output
-    GPIO_setPadConfig(SLAVE_RELAY_GPIO,GPIO_PIN_TYPE_STD);        //push pull output
+    //GPIO_setDirectionMode(SLAVE_RELAY_GPIO, GPIO_DIR_MODE_OUT);   //output
+    //GPIO_setPadConfig(SLAVE_RELAY_GPIO,GPIO_PIN_TYPE_STD);        //push pull output
     //LED 1 for debugging
-    GPIO_setDirectionMode(LED_GREEN_1, GPIO_DIR_MODE_OUT);
-    GPIO_setPadConfig(LED_GREEN_1,GPIO_PIN_TYPE_STD);
-    GPIO_writePin(LED_GREEN_1,1);
+    GPIO_setDirectionMode(LED_GREEN, GPIO_DIR_MODE_OUT);
+    GPIO_setPadConfig(LED_GREEN,GPIO_PIN_TYPE_STD);
+    GPIO_writePin(LED_GREEN,1);
     //LED 2 for debugging
-    GPIO_setDirectionMode(LED_GREEN_2, GPIO_DIR_MODE_OUT);
-    GPIO_setPadConfig(LED_GREEN_2,GPIO_PIN_TYPE_STD);
-    GPIO_writePin(LED_GREEN_2,1);
+    //GPIO_setDirectionMode(LED_GREEN_2, GPIO_DIR_MODE_OUT);
+    //GPIO_setPadConfig(LED_GREEN_2,GPIO_PIN_TYPE_STD);
+    //GPIO_writePin(LED_GREEN_2,1);
 
-    //
+    //----------------------------------------------------------------------------------------------
     // Initialize ADCs
-    //
+    //----------------------------------------------------------------------------------------------
     //setup ADC clock, single-ended mode, enable ADCs
-    initADCs();
+    //initADCs();
     //setup ADC SOC configurations
-    initADCSOCs();
+    //initADCSOCs();
 
-    //
+    //----------------------------------------------------------------------------------------------
     // Initialize Half Bridges
-    //
+    //----------------------------------------------------------------------------------------------
+    /*
     //channel A
     setup_pinmux_config_bridge(&cha_bridge);
     //channel B
@@ -120,30 +118,36 @@ void main(void)
     set_enabled(&che_bridge,false,true);
     //set_enabled(&chf_buck,true,true);
     set_enabled(&chf_bridge,false,true);
+    */
 
-    //
+    //----------------------------------------------------------------------------------------------
     // Initialize Reed Switch Interface
-    //
+    //----------------------------------------------------------------------------------------------
+    /*
     unsigned int n=0;
     for(n=0; n<NO_CHANNELS; n++){
         GPIO_setDirectionMode(driver_channels[n]->enable_resonant_gpio, GPIO_DIR_MODE_OUT);   //output
         GPIO_setPadConfig(driver_channels[n]->enable_resonant_gpio,GPIO_PIN_TYPE_STD);        //push pull output
     }
+    */
 
-    //
-    // Setup main control task interrupt
-    //
+    //----------------------------------------------------------------------------------------------
+    // Setup of main interrupts
+    // - main control interrupt
+    // - inter process communication with CM
+    // - communication active interrupt
+    //----------------------------------------------------------------------------------------------
     // Initializes PIE and clears PIE registers. Disables CPU interrupts.
     Interrupt_initModule();
     // Initializes the PIE vector table with pointers to the shell Interrupt Service Routines (ISRs)
     Interrupt_initVectorTable();
     //--------------- IPC interrupt ---------------
     //clear any IPC flags
-    IPC_clearFlagLtoR(IPC_CPU1_L_CM_R, IPC_FLAG_ALL);
+    //IPC_clearFlagLtoR(IPC_CPU1_L_CM_R, IPC_FLAG_ALL);
     //register IPC interrupt from CM to CPU1 using IPC_INT0
-    IPC_registerInterrupt(IPC_CPU1_L_CM_R, IPC_INT0, IPC_ISR0);
+    //IPC_registerInterrupt(IPC_CPU1_L_CM_R, IPC_INT0, IPC_ISR0);
     //synchronize CM and CPU1 using IPC_FLAG31
-    IPC_sync(IPC_CPU1_L_CM_R, IPC_FLAG31);
+    //IPC_sync(IPC_CPU1_L_CM_R, IPC_FLAG31);
     //--------------- CPU1 Timer0 interrupt (main task) ---------------
     // Register ISR for cupTimer0
     Interrupt_register(INT_TIMER0, &cpuTimer0ISR);
@@ -157,15 +161,15 @@ void main(void)
     CPUTimer_startTimer(CPUTIMER0_BASE);
     //--------------- CPU1 Timer1 interrupt (communication active) ---------------
     // Register ISR for cupTimer1
-    Interrupt_register(INT_TIMER1, &cpuTimer1ISR);
+    //Interrupt_register(INT_TIMER1, &cpuTimer1ISR);
     // Initialize CPUTimer1
-    configCPUTimer(CPUTIMER1_BASE, 500000);
+    //configCPUTimer(CPUTIMER1_BASE, 500000);
     // Enable CPUTimer0 Interrupt within CPUTimer1 Module
-    CPUTimer_enableInterrupt(CPUTIMER1_BASE);
+    //CPUTimer_enableInterrupt(CPUTIMER1_BASE);
     // Enable TIMER1 Interrupt on CPU coming from TIMER1
-    Interrupt_enable(INT_TIMER1);
+    //Interrupt_enable(INT_TIMER1);
     // Start CPUTimer0
-    CPUTimer_startTimer(CPUTIMER1_BASE);
+    //CPUTimer_startTimer(CPUTIMER1_BASE);
 
     // Enable Global Interrupt (INTM) and realtime interrupt (DBGM)
     EINT;
@@ -375,25 +379,29 @@ void main(void)
     SysCtl_setCMClk(SYSCTL_CMCLKOUT_DIV_1, SYSCTL_SOURCE_AUXPLL);
 #endif
 
-    //
+    //----------------------------------------------------------------------------------------------
     // Initialize Outputs
-    //
+    //----------------------------------------------------------------------------------------------
+    /*
+    int n;
     for(n=0; n<NO_CHANNELS; n++){
         READY_enter(n);
         driver_channels[n]->channel_state=READY;
     }
+    */
 
     uint32_t loop_counter=0;
     // Main Loop
     while(1){
         if(run_main_task){
             //toggle heartbeat gpio
-            GPIO_togglePin(LED_GREEN_1);
+            GPIO_togglePin(LED_GREEN);
 
-            //---------------------
+            //----------------------------------------------------------------------------------------------
             // State Machine
-            //---------------------
+            //----------------------------------------------------------------------------------------------
             //Main Relay Opening Logic
+            /*
             unsigned int channel_counter=0;
             bool main_relay_active=false;
             for(channel_counter=0; channel_counter<NO_CHANNELS; channel_counter++){
@@ -411,13 +419,14 @@ void main(void)
                     fsm_req_flags_stop[channel_counter]=1;
                 }
             }
+            */
 
 
 
-            //---------------------
+            //----------------------------------------------------------------------------------------------
             // Signal Acquisition & Filtering
-            //---------------------
-
+            //----------------------------------------------------------------------------------------------
+            /*
             // Read ADCs sequentially, this updates the system_dyn_state structure
             readAnalogInputs();
             // TODO: Filter the acquired analog signals in system_dyn_state_filtered
@@ -427,11 +436,13 @@ void main(void)
             for(i=0; i<NO_CHANNELS; i++){
                 update_first_order(des_duty_buck_filt+i,des_duty_buck[i]);
             }
+            */
 
 
-            //---------------------
+            //----------------------------------------------------------------------------------------------
             // Control Law Execution
-            //---------------------
+            //----------------------------------------------------------------------------------------------
+            /*
             //compute optional reference waveform
             //#define OMEGA 2*3.14159265358979323846*5
             //float ides=sin(OMEGA*loop_counter*deltaT);
@@ -443,11 +454,13 @@ void main(void)
                 ides=-1.0;
             //regulate outputs of channels
             // ...
+             * */
 
 
-            //---------------------
+            //----------------------------------------------------------------------------------------------
             // Control Law Execution & Output Actuation
-            //---------------------
+            //----------------------------------------------------------------------------------------------
+            /*
             //set output duties for buck
 //            for(i=0; i<NO_CHANNELS; i++){
 //                set_duty_buck(driver_channels[i]->buck_config,(des_duty_buck_filt+i)->y);
@@ -516,6 +529,7 @@ void main(void)
             //uint32_t chc_buck_state=GPIO_readPin(chc_buck.state_gpio);
             uint32_t chc_bridge_state_u=GPIO_readPin(chc_bridge.state_v_gpio);
             uint32_t chc_bridge_state_v=GPIO_readPin(chc_bridge.state_u_gpio);
+            */
 
             run_main_task=false;
             loop_counter=loop_counter+1;
